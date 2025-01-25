@@ -31,6 +31,10 @@ function comms() {
   return { register, send }
 }
 
+const leaders = (nodes) => nodes.filter((node) => node.state === 'leader')
+
+const followers = (nodes) => nodes.filter((node) => node.state === 'follower')
+
 test('test elect n=3', async (t) => {
   t.plan(2)
   const coms = comms()
@@ -39,17 +43,17 @@ test('test elect n=3', async (t) => {
   start(nodes)
   await sleep(100)
 
-  const leaders = nodes.filter((node) => node.state === 'leader')
-  t.equal(1, leaders.length, '1 leader')
+  let arr = leaders(nodes)
+  t.equal(1, arr.length, '1 leader')
 
-  const followers = nodes.filter((node) => node.state === 'follower')
-  t.equal(2, followers.length, '2 followers')
+  let debug = arr[0]
+  console.log(123, debug)
 
-  let idk = leaders[0]
-  console.log(123, idk)
+  arr = followers(nodes)
+  t.equal(2, arr.length, '2 followers')
 
-  idk = followers[0]
-  console.log(456, idk)
+  debug = arr[0]
+  console.log(456, debug)
 
   t.teardown(() => stop(nodes))
 })
