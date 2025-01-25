@@ -43,3 +43,39 @@ test('test elect n=3 and 1 offline', async (t) => {
 
   t.teardown(() => stop(nodes))
 })
+
+test('test elect n=5', async (t) => {
+  t.plan(2)
+  const coms = comms()
+  const nodes = open(coms, 5)
+  start(nodes)
+  await sleep(100)
+
+  let arr = leaders(nodes)
+  t.equal(1, arr.length, '1 leader')
+
+  arr = followers(nodes)
+  t.equal(4, arr.length, '4 followers')
+
+  t.teardown(() => stop(nodes))
+})
+
+test('test elect n=5 and 1 offline', async (t) => {
+  t.plan(4)
+  const allowSend = (to, from, msg) => from !== 5
+  const coms = comms(allowSend)
+  const nodes = open(coms, 5)
+  start(nodes)
+  await sleep(100)
+
+  let arr = leaders(nodes)
+  t.equal(1, arr.length, '1 leader')
+  t.ok(arr[0].nodeId !== 5, 'leader is not node 5')
+
+  arr = followers(nodes)
+  t.equal(3, arr.length, '3 followers')
+  const ok = arr.every((node) => node.nodeId !== 5)
+  t.ok(ok, 'followers are not node 5')
+
+  t.teardown(() => stop(nodes))
+})
