@@ -11,11 +11,14 @@ function open(comms, n=1) {
   })
 }
 
-function comms() {
+const allowAll = (to, from, msg) => true
+
+function comms(allowSend=allowAll) {
   const nodes = []
   const register = (node) => nodes.push(node)
 
   function send(to, from, msg) {
+    if (!allowSend(to, from, msg)) { return }
     const node = nodes.find((node) => node.nodeId === to)
     if (!node) { throw new Error(`node ${from} send to ${to} not found`) }
     node.onReceive(from, msg)
