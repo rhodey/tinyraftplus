@@ -13,14 +13,13 @@ test('test elect n=3', async (t) => {
   let arr = leaders(nodes)
   t.equal(1, arr.length, '1 leader')
 
-  let debug = arr[0]
-  console.log(123, debug)
-
   arr = followers(nodes)
   t.equal(2, arr.length, '2 followers')
 
-  debug = arr[0]
-  console.log(456, debug)
+  /*
+  const node = arr[0]
+  const { nodeId, nodes, state, leader, followers, term } = node
+  */
 
   t.teardown(() => stop(nodes))
 })
