@@ -11,14 +11,19 @@ function open(comms, n=1) {
   })
 }
 
-const allowAll = (to, from, msg) => true
+const sendAll = (to, from, msg) => true
+const delayNone = (to, from, msg) => 0
 
-function comms(allowSend=allowAll) {
+const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
+
+function comms(allowSend=sendAll, delaySend=delayNone) {
   const nodes = []
   const register = (node) => nodes.push(node)
 
-  function send(to, from, msg) {
+  async function send(to, from, msg) {
     if (!allowSend(to, from, msg)) { return }
+    const delay = delaySend(to, from, msg)
+    if (delay) { await sleep(delay) }
     const node = nodes.find((node) => node.nodeId === to)
     if (!node) { throw new Error(`node ${from} send to ${to} not found`) }
     node.onReceive(from, msg)
@@ -26,8 +31,6 @@ function comms(allowSend=allowAll) {
 
   return { register, send }
 }
-
-const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 
 const start = (nodes) => nodes.forEach((node) => node.start())
 
