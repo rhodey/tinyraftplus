@@ -1,8 +1,6 @@
 const test = require('tape')
 const lib = require('../index.js')
 
-const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
-
 function open(comms, n=1) {
   const nodes = []
   for (let i = 1; i <= n; i++) { nodes.push(i) }
@@ -13,10 +11,6 @@ function open(comms, n=1) {
     return node
   })
 }
-
-const start = (nodes) => nodes.forEach((node) => node.start())
-
-const stop = (nodes) => nodes.forEach((node) => node.stop())
 
 function comms() {
   const nodes = []
@@ -30,6 +24,12 @@ function comms() {
 
   return { register, send }
 }
+
+const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
+
+const start = (nodes) => nodes.forEach((node) => node.start())
+
+const stop = (nodes) => nodes.forEach((node) => node.stop())
 
 const leaders = (nodes) => nodes.filter((node) => node.state === 'leader')
 
