@@ -47,12 +47,18 @@ test('test n=5 update n=7', async (t) => {
     }
   }
 
-  arr = leaders(nodes)
-  if (arr.length !== 1) {
-    t.equal(arr.length, 1, '1 leader')
+  if (total >= 15_000) {
+    t.fail('test timed out')
     error = true
   }
 
+  arr = leaders(nodes)
+  if (arr.length !== 1) {
+    t.equal(arr.length, 1, '1 leader end')
+    error = true
+  }
+
+  t.ok(!error, 'no error')
   t.teardown(() => coms.close())
 })
 
@@ -67,9 +73,10 @@ test('test n=7 update n=5', async (t) => {
   arr = followers(nodes)
   t.equal(arr.length, 6, '6 followers')
 
+  stop([nodes[5], nodes[6]])
+  // todo: old nodes think they are leader
   nodes = nodes.filter((node) => node.nodeId !== 6)
   nodes = nodes.filter((node) => node.nodeId !== 7)
-  // todo: old nodes think they are leader
 
   const ids = nodes.map((node) => node.nodeId)
   nodes.forEach((node) => node.setNodes(ids))
@@ -88,7 +95,9 @@ test('test n=7 update n=5', async (t) => {
       break
     }
 
-    const count = arr[0]?.followers?.length
+    let count = arr[0]?.followers?.length
+    count = count ? count : 0
+    count -= 1 // followers array includes self
 
     if (count === 4) {
       t.equal(count, 4, '4 followers')
@@ -96,9 +105,14 @@ test('test n=7 update n=5', async (t) => {
     }
   }
 
+  if (total >= 15_000) {
+    t.fail('test timed out')
+    error = true
+  }
+
   arr = leaders(nodes)
   if (arr.length !== 1) {
-    t.equal(arr.length, 1, '1 leader')
+    t.equal(arr.length, 1, '1 leader end')
     error = true
   }
 

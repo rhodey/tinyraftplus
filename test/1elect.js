@@ -114,9 +114,14 @@ test('test elect n=5 and 1 delayed', async (t) => {
     }
   }
 
+  if (total >= 15_000) {
+    t.fail('test timed out')
+    error = true
+  }
+
   arr = leaders(nodes)
   if (arr.length !== 1) {
-    t.equal(arr.length, 1, '1 leader')
+    t.equal(arr.length, 1, '1 leader end')
     error = true
   }
 
@@ -185,9 +190,14 @@ test('test elect n=5 and 2 delayed', async (t) => {
     }
   }
 
+  if (total >= 15_000) {
+    t.fail('test timed out')
+    error = true
+  }
+
   arr = leaders(nodes)
   if (arr.length !== 1) {
-    t.equal(arr.length, 1, '1 leader')
+    t.equal(arr.length, 1, '1 leader end')
     error = true
   }
 
