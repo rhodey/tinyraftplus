@@ -47,9 +47,12 @@ class TinyRaftNode extends TinyRaft {
     return this.log.open()
   }
 
-  start() {
-    if (this.open()) { return }
-    if (this._stopped) { throw new Error('raft node stopped') }
+  async start() {
+    if (this._stopped) { throw new Error('raft node is stopped') }
+    if (this.open()) {
+      super.start()
+      return
+    }
     return this.log.start().then(() => super.start())
   }
 
@@ -66,7 +69,6 @@ class TinyRaftNode extends TinyRaft {
 
   onReceive(from, msg) {
     if (this._stopped) { return }
-    /*
     super.emit('receive', [from, msg])
     if (this.leader === from) { this.markAlive() }
     if (msg.type === 'fwd') {
@@ -76,7 +78,6 @@ class TinyRaftNode extends TinyRaft {
       // todo: apply and ack
       return
     }
-    */
     super.onReceive(from, msg)
   }
 
@@ -116,13 +117,13 @@ class TinyRaftNode extends TinyRaft {
   }
 
   async append(data) {
-    if (this._stopped) { throw new Error('raft node stopped') }
+    if (this._stopped) { throw new Error('raft node is stopped') }
 
     const leader = await _awaitLeader()
     if (this.nodeId === leader) {
       const need = this.minFollowers
       const have = this.followers.length - 1
-      if (have < need) { throw new Error(`append need ${need} followers have ${have}`) }
+      if (have < need) { throw new Error(`append needs ${need} followers have ${have}`) }
 
       const next = this.log.seq + 1
       return this.log.append(next, data).then((now) => {
@@ -167,13 +168,13 @@ class TinyRaftLog {
   }
 
   async head() {
-    if (!this._open) { throw new Error('log not open') }
+    if (!this._open) { throw new Error('log is not open') }
     if (this.seq < 0) { return null }
     return this.log[this.seq]
   }
 
   async append(seq, data) {
-    if (!this._open) { throw new Error('log not open') }
+    if (!this._open) { throw new Error('log is not open') }
     if ((this.seq + 1) !== seq) { return this.seq }
     this.log.push(data)
     this.seq = seq
@@ -181,7 +182,7 @@ class TinyRaftLog {
   }
 
   async remove(seq) {
-    if (!this._open) { throw new Error('log not open') }
+    if (!this._open) { throw new Error('log is not open') }
     if (seq > this.seq) { return 0 }
     this.log = this.log.slice(0, seq)
     const removed = 1 + (this.seq - seq)

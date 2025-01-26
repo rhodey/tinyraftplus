@@ -204,8 +204,6 @@ test('test elect n=5 and 2 delayed', async (t) => {
 
     const count = arr[0]?.followers?.length - 1
     arr = followers(nodes)
-    const idk = nodes.find((node) => node.nodeId === 5)
-    console.log(123, arr.length, count, idk.state)
 
     if (arr.length === 4 && count === 4) {
       t.equal(arr.length, 4, '4 followers')
