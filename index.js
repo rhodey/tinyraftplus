@@ -1,9 +1,9 @@
 const TinyRaft = require('tinyraft')
 
 const defaults = {
-  electionTimeout: 2500,
   heartbeatTimeout: 500,
-  leadershipTimeout: 5000,
+  electionTimeout: 2_500,
+  leadershipTimeout: 5_000,
   initialTerm: 0, leaderPriority: 0,
 }
 

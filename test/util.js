@@ -14,23 +14,29 @@ function open(comms, n=1) {
 const sendAll = (to, from, msg) => true
 const delayNone = (to, from, msg) => 0
 
-const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
-
 function comms(allowSend=sendAll, delaySend=delayNone) {
-  const nodes = []
+  let nodes = []
   const register = (node) => nodes.push(node)
+
+  function close() {
+    stop(nodes)
+    nodes = null
+  }
 
   async function send(to, from, msg) {
     if (!allowSend(to, from, msg)) { return }
     const delay = delaySend(to, from, msg)
     if (delay) { await sleep(delay) }
+    if (!nodes) { return }
     const node = nodes.find((node) => node.nodeId === to)
     if (!node) { throw new Error(`node ${from} send to ${to} not found`) }
     node.onReceive(from, msg)
   }
 
-  return { register, send }
+  return { register, send, close }
 }
+
+const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 
 const start = (nodes) => nodes.forEach((node) => node.start())
 
