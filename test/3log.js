@@ -1,10 +1,10 @@
 const test = require('tape')
-const lib = require('../index.js')
+const { TinyRaftLog } = require('../index.js')
 const { open, comms, sleep, start, stop, leaders, followers } = require('./util.js')
 
 test('test open and append 3', async (t) => {
   t.plan(11)
-  const log = lib.log()
+  const log = new TinyRaftLog()
 
   await log.open()
   t.equal(log.seq, -1, 'seq = -1')
@@ -37,7 +37,7 @@ test('test open and append 3', async (t) => {
 
 test('test append out of order', async (t) => {
   t.plan(2)
-  const log = lib.log()
+  const log = new TinyRaftLog()
 
   await log.open()
   await log.append(0, {})
@@ -54,7 +54,7 @@ test('test append out of order', async (t) => {
 
 test('test append and remove', async (t) => {
   t.plan(3)
-  const log = lib.log()
+  const log = new TinyRaftLog()
 
   await log.open()
   await log.append(0, {})

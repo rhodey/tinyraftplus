@@ -1,6 +1,8 @@
 const crypto = require('crypto')
 const TinyRaft = require('tinyraft')
 
+const noop = () => {}
+
 const defaults = {
   heartbeatTimeout: 500,
   electionTimeout: 2_500,
@@ -8,41 +10,38 @@ const defaults = {
   initialTerm: 0, leaderPriority: 0,
 }
 
-function open(nodeId, nodes, send, opts={}) {
-  const minAcks = Math.ceil(nodes.length / 2)
-  opts = { ...opts, nodeId, nodes, minAcks, send }
-  opts = { ...defaults, ...opts }
-  return new TinyRaftLog(opts)
-}
-
 function awaitChange(node, fn) {
   return new Promise((res, rej) => {
-    node.on('change', (st) => {
-      if (fn(st)) { res() }
-    })
+    const listen = (state) => {
+      if (!fn(state)) { return }
+      node.removeListener('change', listen)
+      res()
+    }
+    node.on('change', listen)
   })
 }
 
-const noop = () => {}
-
-function awaitResolve(arr, min) {
-  let count = 0
+function awaitResolve(promises, count) {
   return new Promise((res, rej) => {
-    arr.forEach((promise) => {
+    let c = 0
+    promises.forEach((promise) => {
       promise.then(() => {
-        if (++count < min) { return }
+        if (++c < count) { return }
         res()
       }).catch(noop)
     })
   })
 }
 
-class TinyRaftLog extends TinyRaft {
-  constructor(config) {
-    super(config)
+class TinyRaftNode extends TinyRaft {
+  constructor(nodeId, nodes, send, log, opts={}) {
+    const minimumAcks = Math.ceil(nodes.length / 2)
+    opts = { ...opts, nodeId, nodes, minimumAcks, send }
+    opts = { ...defaults, ...opts }
+    super(opts)
+    this.minimumAcks = minimumAcks
     this.stopped = false
-    this.minAcks = opts.minAcks
-    this.log = []
+    this.log = log
   }
 
   start() {
@@ -74,36 +73,46 @@ class TinyRaftLog extends TinyRaft {
     return awaitChange(this, fn).then(() => state.leader)
   }
 
-  async _awaitReceive(cid) {
+  _awaitAck(from, cid) {
     return new Promise((res, rej) => {
-      const fn = (arr) => {
-        const [from, msg] = arr
+      const listen = (arr) => {
+        const [fromm, msg] = arr
+        if (from !== fromm) { return }
         if (cid !== msg.cid) { return }
-        this.removeListener('receive', fn)
+        this.removeListener('receive', listen)
         res(msg)
       }
-      this.on('receive', fn)
+      this.on('receive', listen)
     })
   }
 
-  async _sendRpc(to, data) {
+  async _fwdNext(data) {
     const cid = crypto.randomUUID()
-    const msg = { ...data, type: 'logrpc', cid }
-    const acks = this._awaitReceive(cid)
-    super.send(to, msg)
-    await awaitResolve(acks, this.minAcks)
+    const msg = { type: 'next', cid, data }
+    const acks = this.followers.map((id) => {
+      const ack = this._awaitAck(id, cid)
+      super.send(id, msg)
+      return ack
+    })
+
+    return awaitResolve(acks, this.minimumAcks)
   }
 
   async append(data) {
     const leader = await _awaitLeader()
     if (this.nodeId === leader) {
-      this.log.push(data)
-      return this._sendRpc(data)
+      const next = this.log.seq + 1
+      return this.log.append(next, data).then((now) => {
+        if (now !== next) { throw new Error(`expected ${next} have ${now}`) }
+        return this._fwdNext(data)
+      })
     }
+
+    // todo: fwd to leader
   }
 }
 
-class TinyLog {
+class TinyRaftLog {
   constructor(config={}) {
     this.config = config
     this.seq = null
@@ -146,6 +155,6 @@ function log(opts={}) {
 }
 
 module.exports = {
-  open,
-  log,
+  TinyRaftNode,
+  TinyRaftLog
 }

@@ -1,12 +1,13 @@
-const lib = require('../index.js')
+const { TinyRaftNode, TinyRaftLog } = require('../index.js')
 
-function open(comms, n=1, b=null, opts={}) {
+function open(comms, a=1, b=null, opts={}) {
   b = b ? b : 1
   const nodes = []
-  for (let i = b; i <= n; i++) { nodes.push(i) }
+  for (let i = b; i <= a; i++) { nodes.push(i) }
   return nodes.map((id) => {
+    const log = new TinyRaftLog()
     const send = (to, msg) => comms.send(to, id, msg)
-    const node = lib.open(id, nodes, send, opts)
+    const node = new TinyRaftNode(id, nodes, send, log, opts)
     comms.register(node)
     return node
   })
