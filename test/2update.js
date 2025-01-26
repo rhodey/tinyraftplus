@@ -63,7 +63,7 @@ test('test n=5 update n=7', async (t) => {
   }
 
   t.ok(!error, 'no error')
-  t.teardown(() => coms.close())
+  t.teardown(() => stop(nodes))
 })
 
 test('test n=7 update n=5', async (t) => {
@@ -120,5 +120,5 @@ test('test n=7 update n=5', async (t) => {
   }
 
   t.ok(!error, 'no error')
-  t.teardown(() => coms.close())
+  t.teardown(() => stop(nodes))
 })

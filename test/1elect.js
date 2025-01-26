@@ -22,7 +22,7 @@ test('test elect n=3', async (t) => {
   t.equal(arr.length, 2, '2 followers')
   t.equal(count, 2, '2 followers again')
 
-  t.teardown(() => coms.close())
+  t.teardown(() => stop(nodes))
 })
 
 test('test elect n=3 and 1 offline', async (t) => {
@@ -43,7 +43,7 @@ test('test elect n=3 and 1 offline', async (t) => {
   t.equal(count, 1, '1 follower again')
   t.ok(arr[0].nodeId !== 3, 'follower not node 3')
 
-  t.teardown(() => coms.close())
+  t.teardown(() => stop(nodes))
 })
 
 test('test elect n=5', async (t) => {
@@ -61,7 +61,7 @@ test('test elect n=5', async (t) => {
   t.equal(arr.length, 4, '4 followers')
   t.equal(count, 4, '4 followers again')
 
-  t.teardown(() => coms.close())
+  t.teardown(() => stop(nodes))
 })
 
 test('test elect n=5 and 1 offline', async (t) => {
@@ -83,7 +83,7 @@ test('test elect n=5 and 1 offline', async (t) => {
   const ok = arr.every((node) => node.nodeId !== 5)
   t.ok(ok, 'followers not node 5')
 
-  t.teardown(() => coms.close())
+  t.teardown(() => stop(nodes))
 })
 
 test('test elect n=5 and 1 delayed', async (t) => {
@@ -138,7 +138,7 @@ test('test elect n=5 and 1 delayed', async (t) => {
   }
 
   t.ok(!error, 'no error')
-  t.teardown(() => coms.close())
+  t.teardown(() => stop(nodes))
 })
 
 test('test elect n=5 and 2 offline', async (t) => {
@@ -163,7 +163,7 @@ test('test elect n=5 and 2 offline', async (t) => {
   ok = arr.every((node) => node.nodeId !== 5)
   t.ok(ok, 'followers not node 5')
 
-  t.teardown(() => coms.close())
+  t.teardown(() => stop(nodes))
 })
 
 test('test elect n=5 and 2 delayed', async (t) => {
@@ -220,5 +220,5 @@ test('test elect n=5 and 2 delayed', async (t) => {
   }
 
   t.ok(!error, 'no error')
-  t.teardown(() => coms.close())
+  t.teardown(() => stop(nodes))
 })
