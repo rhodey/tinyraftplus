@@ -13,8 +13,10 @@ test('test n=5 update n=7', async (t) => {
 
   let arr = leaders(nodes)
   t.equal(arr.length, 1, '1 leader')
+  const count = arr[0]?.followers?.length - 1
   arr = followers(nodes)
   t.equal(arr.length, 4, '4 followers')
+  t.equal(count, 4, '4 followers')
 
   let more = open(coms, 7, 6)
   t.equal(more.length, 2, 'open 2 more')
