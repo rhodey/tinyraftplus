@@ -20,7 +20,7 @@ test('test elect n=3', async (t) => {
 
   arr = followers(nodes)
   t.equal(arr.length, 2, '2 followers')
-  t.equal(count, 2, '2 followers')
+  t.equal(count, 2, '2 followers again')
 
   t.teardown(() => coms.close())
 })
@@ -40,7 +40,7 @@ test('test elect n=3 and 1 offline', async (t) => {
 
   arr = followers(nodes)
   t.equal(arr.length, 1, '1 follower')
-  t.equal(count, 1, '1 followers')
+  t.equal(count, 1, '1 follower again')
   t.ok(arr[0].nodeId !== 3, 'follower not node 3')
 
   t.teardown(() => coms.close())
@@ -59,7 +59,7 @@ test('test elect n=5', async (t) => {
 
   arr = followers(nodes)
   t.equal(arr.length, 4, '4 followers')
-  t.equal(count, 4, '4 followers')
+  t.equal(count, 4, '4 followers again')
 
   t.teardown(() => coms.close())
 })
@@ -79,7 +79,7 @@ test('test elect n=5 and 1 offline', async (t) => {
 
   arr = followers(nodes)
   t.equal(arr.length, 3, '3 followers')
-  t.equal(count, 3, '3 followers')
+  t.equal(count, 3, '3 followers again')
   const ok = arr.every((node) => node.nodeId !== 5)
   t.ok(ok, 'followers not node 5')
 
@@ -99,7 +99,7 @@ test('test elect n=5 and 1 delayed', async (t) => {
 
   arr = followers(nodes)
   t.equal(arr.length, 3, '3 followers')
-  t.equal(count, 3, '3 followers')
+  t.equal(count, 3, '3 followers again')
   const ok = arr.every((node) => node.nodeId !== 5)
   t.ok(ok, 'followers not node 5')
 
@@ -155,7 +155,7 @@ test('test elect n=5 and 2 offline', async (t) => {
 
   arr = followers(nodes)
   t.equal(arr.length, 2, '2 followers')
-  t.equal(count, 2, '2 followers')
+  t.equal(count, 2, '2 followers again')
   let ok = arr.every((node) => node.nodeId !== 4)
   t.ok(ok, 'followers not node 4')
   ok = arr.every((node) => node.nodeId !== 5)
@@ -177,7 +177,7 @@ test('test elect n=5 and 2 delayed', async (t) => {
 
   arr = followers(nodes)
   t.equal(arr.length, 2, '2 followers')
-  t.equal(count, 2, '2 followers')
+  t.equal(count, 2, '2 followers again')
   let ok = arr.every((node) => node.nodeId !== 4)
   t.ok(ok, 'followers not node 4')
   ok = arr.every((node) => node.nodeId !== 5)
