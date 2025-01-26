@@ -1,6 +1,5 @@
 const test = require('tape')
 const { TinyRaftLog } = require('../index.js')
-const { open, comms, sleep, start, stop, leaders, followers } = require('./util.js')
 
 test('test open and append 3', async (t) => {
   t.plan(11)
