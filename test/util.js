@@ -1,8 +1,9 @@
 const lib = require('../index.js')
 
-function open(comms, n=1, opts={}) {
+function open(comms, n=1, b=null, opts={}) {
+  b = b ? b : 1
   const nodes = []
-  for (let i = 1; i <= n; i++) { nodes.push(i) }
+  for (let i = b; i <= n; i++) { nodes.push(i) }
   return nodes.map((id) => {
     const send = (to, msg) => comms.send(to, id, msg)
     const node = lib.open(id, nodes, send, opts)
