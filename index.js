@@ -86,7 +86,7 @@ class TinyRaftLog extends TinyRaft {
     })
   }
 
-  _sendRpc(to, data) {
+  async _sendRpc(to, data) {
     const cid = crypto.randomUUID()
     const msg = { ...data, type: 'logrpc', cid }
     const acks = this._awaitReceive(cid)
@@ -103,6 +103,49 @@ class TinyRaftLog extends TinyRaft {
   }
 }
 
+class TinyLog {
+  constructor(config={}) {
+    this.config = config
+    this.seq = null
+    this.log = null
+  }
+
+  async open() {
+    // todo: load from fs
+    this.seq = -1
+    this.log = []
+  }
+
+  async head() {
+    if (this.seq < 0) { return null }
+    return this.log[this.seq]
+  }
+
+  async close() {
+    this.seq = this.log = null
+  }
+
+  async append(seq, data) {
+    if ((this.seq + 1) !== seq) { return this.seq }
+    this.log.push(data)
+    this.seq = seq
+    return seq
+  }
+
+  async remove(seq) {
+    if (seq > this.seq) { return 0 }
+    this.log = this.log.slice(0, seq)
+    const removed = 1 + (this.seq - seq)
+    this.seq = seq - 1
+    return removed
+  }
+}
+
+function log(opts={}) {
+  return new TinyLog(opts)
+}
+
 module.exports = {
   open,
+  log,
 }

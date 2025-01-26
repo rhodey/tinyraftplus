@@ -2,28 +2,73 @@ const test = require('tape')
 const lib = require('../index.js')
 const { open, comms, sleep, start, stop, leaders, followers } = require('./util.js')
 
-test('test log n=5', async (t) => {
-  t.plan(4)
-  const coms = comms()
-  const nodes = open(coms, 5)
-  start(nodes)
-  await sleep(100)
+test('test open and append 3', async (t) => {
+  t.plan(11)
+  const log = lib.log()
 
-  let arr = leaders(nodes)
-  t.equal(arr.length, 1, '1 leader')
-  const count = arr[0]?.followers?.length - 1
+  await log.open()
+  t.equal(log.seq, -1, 'seq = -1')
+  let head = await log.head()
+  t.equal(head, null, 'head = null')
 
-  arr = followers(nodes)
-  t.equal(arr.length, 4, '4 followers')
-  t.equal(count, 4, '4 followers again')
+  let data = { a: 1 }
+  let seq = await log.append(0, data)
+  t.equal(seq, 0, 'seq = 0')
+  t.equal(log.seq, 0, 'seq = 0')
+  head = await log.head()
+  t.deepEqual(data, head, 'head = data')
 
-  const node = arr[0]
-  const data = { op: 'hello', args: 'world' }
+  data = { b: 2 }
+  seq = await log.append(1, data)
+  t.equal(seq, 1, 'seq = 1')
+  t.equal(log.seq, 1, 'seq = 1')
+  head = await log.head()
+  t.deepEqual(data, head, 'head = data')
 
-  await node.append(data)
-  t.ok(true, 'append ok')
+  data = { c: 3 }
+  seq = await log.append(2, data)
+  t.equal(seq, 2, 'seq = 2')
+  t.equal(log.seq, 2, 'seq = 2')
+  head = await log.head()
+  t.deepEqual(data, head, 'head = data')
 
-  t.teardown(() => stop(nodes))
+  t.teardown(() => log.close())
 })
 
+test('test append out of order', async (t) => {
+  t.plan(2)
+  const log = lib.log()
 
+  await log.open()
+  await log.append(0, {})
+  await log.append(1, {})
+
+  let seq = await log.append(2, {})
+  t.equal(seq, 2, 'seq = 2')
+
+  seq = await log.append(4, {})
+  t.equal(seq, 2, 'seq = 2')
+
+  t.teardown(() => log.close())
+})
+
+test('test append and remove', async (t) => {
+  t.plan(3)
+  const log = lib.log()
+
+  await log.open()
+  await log.append(0, {})
+  const data = { a: 1}
+  await log.append(1, data)
+  await log.append(2, {})
+  await log.append(3, {})
+
+  const removed = await log.remove(2)
+  t.equal(removed, 2, 'removed = 2')
+  t.equal(log.seq, 1, 'seq = 1')
+
+  const head = await log.head()
+  t.deepEqual(data, head, 'head = data')
+
+  t.teardown(() => log.close())
+})
