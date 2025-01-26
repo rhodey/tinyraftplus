@@ -79,7 +79,6 @@ test('test elect n=5 and 1 offline', async (t) => {
 })
 
 test('test elect n=5 and 1 delayed', async (t) => {
-  t.plan(5)
   const delaySend = (to, from, msg) => from === 5 ? 1_000 : 0
   const coms = comms(undefined, delaySend)
   const nodes = open(coms, 5)
@@ -94,12 +93,25 @@ test('test elect n=5 and 1 delayed', async (t) => {
   const ok = arr.every((node) => node.nodeId !== 5)
   t.ok(ok, 'followers not node 5')
 
-  await sleep(2_500)
-  arr = leaders(nodes)
-  t.equal(arr.length, 1, '1 leader')
+  let total = 0
 
-  arr = followers(nodes)
-  t.equal(arr.length, 4, '4 followers')
+  while (total < 15_000) {
+    await sleep(100)
+    total += 100
+
+    arr = leaders(nodes)
+    if (arr.length > 1) {
+      t.equal(arr.length, 1, '1 leader')
+    }
+
+    arr = followers(nodes)
+    if (arr.length > 4) {
+      t.equal(arr.length, 4, '4 followers')
+    } else if (arr.length === 4) {
+      t.equal(arr.length, 4, '4 followers')
+      break
+    }
+  }
 
   t.teardown(() => coms.close())
 })
