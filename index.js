@@ -66,6 +66,7 @@ class TinyRaftNode extends TinyRaft {
 
   onReceive(from, msg) {
     if (this._stopped) { return }
+    /*
     super.emit('receive', [from, msg])
     if (this.leader === from) { this.markAlive() }
     if (msg.type === 'fwd') {
@@ -75,6 +76,7 @@ class TinyRaftNode extends TinyRaft {
       // todo: apply and ack
       return
     }
+    */
     super.onReceive(from, msg)
   }
 
