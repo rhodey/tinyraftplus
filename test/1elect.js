@@ -8,7 +8,7 @@ test('test elect n=3', async (t) => {
   t.plan(4)
   const coms = comms()
   const nodes = open(coms, 3)
-  start(nodes)
+  await start(nodes)
   await sleep(100)
 
   const ok = nodes.every((node) => [1, 2, 3].includes(node.nodeId))
@@ -30,7 +30,7 @@ test('test elect n=3 and 1 offline', async (t) => {
   const allowSend = (to, from, msg) => from !== 3
   const coms = comms(allowSend)
   const nodes = open(coms, 3)
-  start(nodes)
+  await start(nodes)
   await sleep(100)
 
   let arr = leaders(nodes)
@@ -50,7 +50,7 @@ test('test elect n=5', async (t) => {
   t.plan(3)
   const coms = comms()
   const nodes = open(coms, 5)
-  start(nodes)
+  await start(nodes)
   await sleep(100)
 
   let arr = leaders(nodes)
@@ -69,7 +69,7 @@ test('test elect n=5 and 1 offline', async (t) => {
   const allowSend = (to, from, msg) => from !== 5
   const coms = comms(allowSend)
   const nodes = open(coms, 5)
-  start(nodes)
+  await start(nodes)
   await sleep(100)
 
   let arr = leaders(nodes)
@@ -90,7 +90,7 @@ test('test elect n=5 and 1 delayed', async (t) => {
   const delaySend = (to, from, msg) => from === 5 ? 1_000 : 0
   const coms = comms(undefined, delaySend)
   const nodes = open(coms, 5)
-  start(nodes)
+  await start(nodes)
 
   await sleep(100)
   let arr = leaders(nodes)
@@ -146,7 +146,7 @@ test('test elect n=5 and 2 offline', async (t) => {
   const allowSend = (to, from, msg) => from !== 4 && from !== 5
   const coms = comms(allowSend)
   const nodes = open(coms, 5)
-  start(nodes)
+  await start(nodes)
   await sleep(100)
 
   let arr = leaders(nodes)
@@ -170,7 +170,7 @@ test('test elect n=5 and 2 delayed', async (t) => {
   const delaySend = (to, from, msg) => (from === 4 || from === 5) ? 1_000 : 0
   const coms = comms(undefined, delaySend)
   const nodes = open(coms, 5)
-  start(nodes)
+  await start(nodes)
 
   await sleep(100)
   let arr = leaders(nodes)

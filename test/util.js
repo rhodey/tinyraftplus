@@ -34,9 +34,9 @@ function comms(allowSend=sendAll, delaySend=delayNone) {
 
 const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 
-const start = (nodes) => nodes.forEach((node) => node.start())
+const start = (nodes) => Promise.all(nodes.map((node) => node.start()))
 
-const stop = (nodes) => nodes.forEach((node) => node.stop())
+const stop = (nodes) => Promise.all(nodes.map((node) => node.stop()))
 
 const leaders = (nodes) => nodes.filter((node) => node.state === 'leader')
 
