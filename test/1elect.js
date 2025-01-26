@@ -94,6 +94,7 @@ test('test elect n=5 and 1 delayed', async (t) => {
   t.ok(ok, 'followers not node 5')
 
   let total = 0
+  let error = false
 
   while (total < 15_000) {
     await sleep(100)
@@ -102,17 +103,24 @@ test('test elect n=5 and 1 delayed', async (t) => {
     arr = leaders(nodes)
     if (arr.length > 1) {
       t.equal(arr.length, 1, '1 leader')
+      error = true
+      break
     }
 
     arr = followers(nodes)
-    if (arr.length > 4) {
-      t.equal(arr.length, 4, '4 followers')
-    } else if (arr.length === 4) {
+    if (arr.length === 4) {
       t.equal(arr.length, 4, '4 followers')
       break
     }
   }
 
+  arr = leaders(nodes)
+  if (arr.length !== 1) {
+    t.equal(arr.length, 1, '1 leader')
+    error = true
+  }
+
+  t.ok(!error, 'no error')
   t.teardown(() => coms.close())
 })
 
@@ -157,6 +165,7 @@ test('test elect n=5 and 2 delayed', async (t) => {
   t.ok(ok, 'followers not node 5')
 
   let total = 0
+  let error = false
 
   while (total < 15_000) {
     await sleep(100)
@@ -165,16 +174,23 @@ test('test elect n=5 and 2 delayed', async (t) => {
     arr = leaders(nodes)
     if (arr.length > 1) {
       t.equal(arr.length, 1, '1 leader')
+      error = true
+      break
     }
 
     arr = followers(nodes)
-    if (arr.length > 4) {
-      t.equal(arr.length, 4, '4 followers')
-    } else if (arr.length === 4) {
+    if (arr.length === 4) {
       t.equal(arr.length, 4, '4 followers')
       break
     }
   }
 
+  arr = leaders(nodes)
+  if (arr.length !== 1) {
+    t.equal(arr.length, 1, '1 leader')
+    error = true
+  }
+
+  t.ok(!error, 'no error')
   t.teardown(() => coms.close())
 })

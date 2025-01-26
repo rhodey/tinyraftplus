@@ -27,6 +27,7 @@ test('test n=5 update n=7', async (t) => {
   nodes.forEach((node) => node.setNodes(ids))
 
   let total = 0
+  let error = false
 
   while (total < 15_000) {
     await sleep(100)
@@ -35,16 +36,72 @@ test('test n=5 update n=7', async (t) => {
     arr = leaders(nodes)
     if (arr.length > 1) {
       t.equal(arr.length, 1, '1 leader')
+      error = true
+      break
     }
 
     arr = followers(nodes)
-    if (arr.length > 6) {
-      t.equal(arr.length, 6, '6 followers')
-    } else if (arr.length === 6) {
+    if (arr.length === 6) {
       t.equal(arr.length, 6, '6 followers')
       break
     }
   }
 
+  arr = leaders(nodes)
+  if (arr.length !== 1) {
+    t.equal(arr.length, 1, '1 leader')
+    error = true
+  }
+
+  t.teardown(() => coms.close())
+})
+
+test('test n=7 update n=5', async (t) => {
+  const coms = comms()
+  let nodes = open(coms, 7)
+  start(nodes)
+  await sleep(100)
+
+  let arr = leaders(nodes)
+  t.equal(arr.length, 1, '1 leader')
+  arr = followers(nodes)
+  t.equal(arr.length, 6, '6 followers')
+
+  nodes = nodes.filter((node) => node.nodeId !== 6)
+  nodes = nodes.filter((node) => node.nodeId !== 7)
+  // todo: old nodes think they are leader
+
+  const ids = nodes.map((node) => node.nodeId)
+  nodes.forEach((node) => node.setNodes(ids))
+
+  let total = 0
+  let error = false
+
+  while (total < 15_000) {
+    await sleep(100)
+    total += 100
+
+    arr = leaders(nodes)
+    if (arr.length > 1) {
+      t.equal(arr.length, 1, '1 leader')
+      error = true
+      break
+    }
+
+    const count = arr[0]?.followers?.length
+
+    if (count === 4) {
+      t.equal(count, 4, '4 followers')
+      break
+    }
+  }
+
+  arr = leaders(nodes)
+  if (arr.length !== 1) {
+    t.equal(arr.length, 1, '1 leader')
+    error = true
+  }
+
+  t.ok(!error, 'no error')
   t.teardown(() => coms.close())
 })
