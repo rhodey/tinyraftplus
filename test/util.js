@@ -1,11 +1,11 @@
 const lib = require('../index.js')
 
-function open(comms, n=1) {
+function open(comms, n=1, opts={}) {
   const nodes = []
   for (let i = 1; i <= n; i++) { nodes.push(i) }
   return nodes.map((id) => {
     const send = (to, msg) => comms.send(to, id, msg)
-    const node = lib.open(id, nodes, send)
+    const node = lib.open(id, nodes, send, opts)
     comms.register(node)
     return node
   })

@@ -103,3 +103,54 @@ test('test elect n=5 and 1 delayed', async (t) => {
 
   t.teardown(() => coms.close())
 })
+
+test('test elect n=5 and 2 offline', async (t) => {
+  t.plan(6)
+  const allowSend = (to, from, msg) => from !== 4 && from !== 5
+  const coms = comms(allowSend)
+  const nodes = open(coms, 5)
+  start(nodes)
+  await sleep(100)
+
+  let arr = leaders(nodes)
+  t.equal(arr.length, 1, '1 leader')
+  t.ok(arr[0].nodeId !== 4, 'leader not node 4')
+  t.ok(arr[0].nodeId !== 5, 'leader not node 5')
+
+  arr = followers(nodes)
+  t.equal(arr.length, 2, '2 followers')
+  let ok = arr.every((node) => node.nodeId !== 4)
+  t.ok(ok, 'followers not node 4')
+  ok = arr.every((node) => node.nodeId !== 5)
+  t.ok(ok, 'followers not node 5')
+
+  t.teardown(() => coms.close())
+})
+
+test('test elect n=5 and 2 delayed', async (t) => {
+  t.plan(6)
+  const delaySend = (to, from, msg) => (from === 4 || from === 5) ? 1_000 : 0
+  const coms = comms(undefined, delaySend)
+  const nodes = open(coms, 5)
+  start(nodes)
+
+  await sleep(100)
+  let arr = leaders(nodes)
+  t.equal(arr.length, 1, '1 leader')
+
+  arr = followers(nodes)
+  t.equal(arr.length, 2, '2 followers')
+  let ok = arr.every((node) => node.nodeId !== 4)
+  t.ok(ok, 'followers not node 4')
+  ok = arr.every((node) => node.nodeId !== 5)
+  t.ok(ok, 'followers not node 5')
+
+  await sleep(10_000)
+  arr = leaders(nodes)
+  t.equal(arr.length, 1, '1 leader')
+
+  arr = followers(nodes)
+  t.equal(arr.length, 4, '4 followers')
+
+  t.teardown(() => coms.close())
+})
