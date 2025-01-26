@@ -121,7 +121,7 @@ class TinyRaftNode extends TinyRaft {
     const leader = await _awaitLeader()
     if (this.nodeId === leader) {
       const need = this.minFollowers
-      const have = this.followers.length - 1 // todo: confirm
+      const have = this.followers.length - 1
       if (have < need) { throw new Error(`append need ${need} followers have ${have}`) }
 
       const next = this.log.seq + 1

@@ -96,6 +96,7 @@ test('test elect n=5 and 1 delayed', async (t) => {
   let arr = leaders(nodes)
   t.equal(arr.length, 1, '1 leader')
   const count = arr[0]?.followers?.length - 1
+  t.ok(arr[0].nodeId !== 5, 'leader not node 5')
 
   arr = followers(nodes)
   t.equal(arr.length, 3, '3 followers')
@@ -176,6 +177,8 @@ test('test elect n=5 and 2 delayed', async (t) => {
   let arr = leaders(nodes)
   t.equal(arr.length, 1, '1 leader')
   const count = arr[0]?.followers?.length - 1
+  t.ok(arr[0].nodeId !== 4, 'leader not node 4')
+  t.ok(arr[0].nodeId !== 5, 'leader not node 5')
 
   arr = followers(nodes)
   t.equal(arr.length, 2, '2 followers')
@@ -201,6 +204,8 @@ test('test elect n=5 and 2 delayed', async (t) => {
 
     const count = arr[0]?.followers?.length - 1
     arr = followers(nodes)
+    const idk = nodes.find((node) => node.nodeId === 5)
+    console.log(123, arr.length, count, idk.state)
 
     if (arr.length === 4 && count === 4) {
       t.equal(arr.length, 4, '4 followers')
