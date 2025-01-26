@@ -117,8 +117,10 @@ test('test elect n=5 and 1 delayed', async (t) => {
       break
     }
 
+    const count = arr[0]?.followers?.length - 1
     arr = followers(nodes)
-    if (arr.length === 4) {
+
+    if (arr.length === 4 && count === 4) {
       t.equal(arr.length, 4, '4 followers')
       break
     }
@@ -197,8 +199,10 @@ test('test elect n=5 and 2 delayed', async (t) => {
       break
     }
 
+    const count = arr[0]?.followers?.length - 1
     arr = followers(nodes)
-    if (arr.length === 4) {
+
+    if (arr.length === 4 && count === 4) {
       t.equal(arr.length, 4, '4 followers')
       break
     }

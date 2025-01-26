@@ -42,8 +42,10 @@ test('test n=5 update n=7', async (t) => {
       break
     }
 
+    const count = arr[0]?.followers?.length - 1
     arr = followers(nodes)
-    if (arr.length === 6) {
+
+    if (arr.length === 6 && count === 6) {
       t.equal(arr.length, 6, '6 followers')
       break
     }
@@ -97,11 +99,10 @@ test('test n=7 update n=5', async (t) => {
       break
     }
 
-    let count = arr[0]?.followers?.length
-    count = count ? count : 0
-    count -= 1 // followers array includes self
+    const count = arr[0]?.followers?.length - 1
+    arr = followers(nodes)
 
-    if (count === 4) {
+    if (arr.length === 4 && count === 4) {
       t.equal(count, 4, '4 followers')
       break
     }
