@@ -2,7 +2,7 @@ const test = require('tape')
 const { TinyRaftLog } = require('../index.js')
 
 test('test append 3', async (t) => {
-  t.plan(11)
+  t.plan(14)
   const log = new TinyRaftLog()
 
   await log.start()
@@ -13,18 +13,21 @@ test('test append 3', async (t) => {
   let ok = await log.append(data)
   t.equal(ok.seq, '0', 'seq = 0')
   t.equal(log.seq, '0', 'seq = 0')
+  t.deepEqual(ok.data, data, 'ok.data = data')
   t.deepEqual(log.head, data, 'head = data')
 
   data = { b: 2 }
   ok = await log.append(data)
   t.equal(ok.seq, '1', 'seq = 1')
   t.equal(log.seq, '1', 'seq = 1')
+  t.deepEqual(ok.data, data, 'ok.data = data')
   t.deepEqual(log.head, data, 'head = data')
 
   data = { c: 3 }
   ok = await log.append(data)
   t.equal(ok.seq, '2', 'seq = 2')
   t.equal(log.seq, '2', 'seq = 2')
+  t.deepEqual(ok.data, data, 'ok.data = data')
   t.deepEqual(log.head, data, 'head = data')
 
   t.teardown(() => log.stop())
@@ -51,7 +54,7 @@ test('test append out of order', async (t) => {
 })
 
 test('test append batch', async (t) => {
-  t.plan(9)
+  t.plan(12)
   const log = new TinyRaftLog()
   await log.start()
 
@@ -59,25 +62,28 @@ test('test append batch', async (t) => {
   let ok = await log.append(data)
   t.equal(ok.seq, '0', 'seq = 0')
   t.equal(log.seq, '0', 'seq = 0')
+  t.deepEqual(ok.data, data, 'ok.data = data')
   t.deepEqual(log.head, data, 'head = data')
 
   const arr = [{ b: 2 }, { c: 3 }]
   ok = await log.appendBatch(arr)
   t.equal(ok.seq, '1', 'seq = 1')
   t.equal(log.seq, '2', 'seq = 2')
+  t.deepEqual(ok.data, arr, 'ok.data = data')
   t.deepEqual(log.head, arr[1], 'head = data')
 
   data = { c: 4 }
   ok = await log.append(data)
   t.equal(ok.seq, '3', 'seq = 3')
   t.equal(log.seq, '3', 'seq = 3')
+  t.deepEqual(ok.data, data, 'ok.data = data')
   t.deepEqual(log.head, data, 'head = data')
 
   t.teardown(() => log.stop())
 })
 
 test('test append and remove', async (t) => {
-  t.plan(6)
+  t.plan(7)
   const log = new TinyRaftLog()
   await log.start()
 
@@ -96,6 +102,7 @@ test('test append and remove', async (t) => {
   const ok = await log.append(data)
   t.equal(ok.seq, '2', 'seq = 2')
   t.equal(log.seq, '2', 'seq = 2')
+  t.deepEqual(ok.data, data, 'ok.data = data')
   t.deepEqual(log.head, data, 'head = data')
 
   t.teardown(() => log.stop())
