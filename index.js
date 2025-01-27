@@ -2,8 +2,6 @@ const crypto = require('crypto')
 const TinyRaft = require('tinyraft')
 const Decimal = require('decimal.js')
 
-const noop = () => {}
-
 const LEADER = 'leader'
 const FOLLOWER = 'follower'
 
@@ -20,6 +18,10 @@ const defaults = {
   leaderAckTimeout: 5_000,
   logTimeout: 1_500,
 }
+
+const noop = () => {}
+
+const isObj = (data) => data && typeof data === 'object' && !Array.isArray(data)
 
 // round timers to nearest 100ms = use less timers
 function timeout(ms, error) {
@@ -101,14 +103,15 @@ class TinyRaftPlus extends TinyRaft {
       case FORWARD:
         if (!this.followers.includes(from)) { return }
         if (this.term !== msg.term) { return }
-        return this._appendSelfAndFollowers(msg.data)
+        return this._appendToSelfAndFollowers(msg.data)
           .then((seq) => this.send(from, { ...ack, seq }))
 
       case APPEND:
         if (this.leader !== from) { return }
         if (this.term !== msg.term) { return }
-        return this.log.append(msg.data, msg.seq)
-            .then(() => this.send(from, ack))
+        const { data, seq } = msg
+        const work = Array.isArray(data) ? this.log.appendBatch(data, seq) : this.log.append(data, seq)
+        return work.then(() => this.send(from, ack))
     }
 
     super.onReceive(from, msg)
@@ -166,17 +169,26 @@ class TinyRaftPlus extends TinyRaft {
     return work
   }
 
-  async _appendSelfAndFollowers(data) {
+  async _appendToSelfAndFollowers(data) {
     const need = this.minFollowers
     const have = this.followers.length - 1
     if (have < need) { throw new Error(`append to self needs ${need} followers have ${have}`) }
-    return this.log.append(data).then((seq) => this._appendToFollowers(data, seq))
+    const work = Array.isArray(data) ? this.log.appendBatch(data) : this.log.append(data)
+    return work.then((seq) => this._appendToFollowers(data, seq))
   }
 
   async append(data) {
-    if (!data || (typeof data !== 'object')) { throw new Error('data must be object') }
+    if (!isObj(data)) { throw new Error('data must be object') }
     if (this._stopped) { throw new Error('raft node is stopped') }
-    return this.leader !== this.nodeId ? this._fwdToLeader(data) : this._appendSelfAndFollowers(data)
+    return this.leader !== this.nodeId ? this._fwdToLeader(data) : this._appendToSelfAndFollowers(data)
+  }
+
+  async appendBatch(arr) {
+    if (!Array.isArray(arr)) { throw new Error('arr must be array') }
+    const ok = arr.every(isObj)
+    if (!ok) { throw new Error('arr must be array of objects') }
+    if (this._stopped) { throw new Error('raft node is stopped') }
+    return this.leader !== this.nodeId ? this._fwdToLeader(arr) : this._appendToSelfAndFollowers(arr)
   }
 }
 
@@ -212,14 +224,15 @@ class TinyRaftLog {
   async append(data, seq=null) {
     const next = new Decimal(this.seq).add(1).toString()
     seq = seq !== null ? seq : next
+    if (!isObj(data)) { throw new Error('data must be object') }
     if (typeof seq !== 'string') { throw new Error('seq must be string') }
     if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
     if (next !== seq) { throw new Error(`log append next ${next} !== seq ${seq}`) }
     if (!this._open) { throw new Error('log is not open') }
     this.log.push(data)
     this.head = this.log[next]
-    this.seq = next
-    return this.seq
+    this.seq = seq
+    return seq
   }
 
   async appendBatch(arr, seq=null) {
@@ -233,7 +246,7 @@ class TinyRaftLog {
     this.log = this.log.concat(arr)
     this.seq = new Decimal(this.seq).add(arr.length).toString()
     this.head = this.log[this.seq]
-    return this.seq
+    return seq
   }
 
   async remove(seq) {

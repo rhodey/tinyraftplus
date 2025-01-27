@@ -63,8 +63,8 @@ test('test append batch', async (t) => {
 
   const arr = [{ b: 2 }, { c: 3 }]
   seq = await log.appendBatch(arr)
-  t.equal(seq, '2', 'seq = 1')
-  t.equal(log.seq, '2', 'seq = 1')
+  t.equal(seq, '1', 'seq = 1')
+  t.equal(log.seq, '2', 'seq = 2')
   t.deepEqual(log.head, arr[1], 'head = data')
 
   data = { c: 4 }
