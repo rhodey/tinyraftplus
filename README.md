@@ -7,9 +7,8 @@ npm run test
 ```
 
 ## Todo
-+ hashing
-+ restore via repl
 + node groups
++ restore via repl
 + rpc retry ends on change nodes
 + gcp restore = new network id
 
