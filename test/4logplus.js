@@ -5,16 +5,21 @@ const { open, comms, sleep, start, stop, leaders, followers } = require('./util.
 // todo: support and test repl restore
 
 const testSeq = (t, a, b, node) => {
-  t.equal(a, b, `seq = ${b}`)
-  t.equal(node.log.seq, b, `seq = ${b}`)
+  const name = `node ${node.nodeId} ${node.state}`
+  t.equal(a, b, `${name} seq = ${b}`)
+  t.equal(node.log.seq, b, `${name} seq = ${b}`)
 }
+
+const testSeqMulti = (t, a, b, nodes) => nodes.forEach((node) => testSeq(t, a, b, node))
 
 const testHead = (t, data, node) => {
-  t.deepEqual(node.log.head, data, 'data = head')
+  const name = `node ${node.nodeId} ${node.state}`
+  t.deepEqual(node.log.head, data, `${name} head = data`)
 }
 
+const testHeadMulti = (t, data, nodes) => nodes.forEach((node) => testHead(t, data, node))
+
 test('test elect 3 then append 6', async (t) => {
-  t.plan(4 + (6*2) + 6)
   const coms = comms()
   const logs = () => new TinyRaftLog()
   const opts = { minFollowers: 2 }
@@ -37,35 +42,35 @@ test('test elect 3 then append 6', async (t) => {
   // leader
   let data = { a: 1 }
   let seq = await leader.append(data)
-  testSeq(t, seq, '0', leader)
-  testHead(t, data, leader)
+  testSeqMulti(t, seq, '0', nodes)
+  testHeadMulti(t, data, nodes)
 
   data = { a: 2 }
   seq = await leader.append(data)
-  testSeq(t, seq, '1', leader)
-  testHead(t, data, leader)
+  testSeqMulti(t, seq, '1', nodes)
+  testHeadMulti(t, data, nodes)
 
   // follower 1
   data = { a: 3 }
   seq = await flw[0].append(data)
-  testSeq(t, seq, '2', flw[0])
-  testHead(t, data, flw[0])
+  testSeqMulti(t, seq, '2', nodes)
+  testHeadMulti(t, data, nodes)
 
   data = { a: 4 }
   seq = await flw[0].append(data)
-  testSeq(t, seq, '3', flw[0])
-  testHead(t, data, flw[0])
+  testSeqMulti(t, seq, '3', nodes)
+  testHeadMulti(t, data, nodes)
 
   // follower 2
   data = { a: 5 }
   seq = await flw[1].append(data)
-  testSeq(t, seq, '4', flw[1])
-  testHead(t, data, flw[1])
+  testSeqMulti(t, seq, '4', nodes)
+  testHeadMulti(t, data, nodes)
 
   data = { a: 6 }
   seq = await flw[1].append(data)
-  testSeq(t, seq, '5', flw[1])
-  testHead(t, data, flw[1])
+  testSeqMulti(t, seq, '5', nodes)
+  testHeadMulti(t, data, nodes)
 
   t.teardown(() => stop(nodes))
 })
