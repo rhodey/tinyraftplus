@@ -21,8 +21,7 @@ const defaults = {
   logTimeout: 1_500,
 }
 
-// round timers forward to nearest 100ms
-// source: https://stackoverflow.com/a/38277310
+// round timers to nearest 100ms = use less timers
 function timeout(ms, error) {
   let timer = null
   const timedout = new Promise((res, rej) => {
@@ -58,7 +57,7 @@ function awaitChange(node, fn) {
   })
 }
 
-class TinyRaftNode extends TinyRaft {
+class TinyRaftPlus extends TinyRaft {
   constructor(nodeId, nodes, send, log, opts={}) {
     opts = { ...opts, nodeId, nodes, send }
     opts = { ...defaults, ...opts }
@@ -99,14 +98,14 @@ class TinyRaftNode extends TinyRaft {
     const ack = { type: ACK, cid: msg.cid }
     switch (msg.type) {
       case FORWARD:
-        // todo: apply
-        super.send(from, ack)
-        return
+        if (!this.followers.includes(from)) { return }
+        return this._appendSelf(msg.data, true)
+          .then((seq) => this.send(from, { ...ack, seq }))
 
       case APPEND:
-        // todo: apply
-        super.send(from, ack)
-        return
+        if (this.leader !== from) { return }
+        return this.log.append(msg.seq, msg.data)
+            .then(() => this.send(from, ack))
     }
 
     super.onReceive(from, msg)
@@ -141,23 +140,23 @@ class TinyRaftNode extends TinyRaft {
         const cid = crypto.randomUUID()
         const msg = { type: FORWARD, cid, data }
         const ack = this._awaitAck(this.leader, cid)
-        super.send(this.leader, msg)
-        return ack
+        this.send(this.leader, msg)
+        return ack.then((msg) => msg.seq)
       }).then(res).catch(rej)
     })
     work.catch(noop).finally(() => clearTimeout(timer))
     return work
   }
 
-  _appendToFollowers(data) {
+  _appendToFollowers(seq, data) {
     const [timer, timedout] = timeout(this.followerAckTimeout)
     const work = new Promise((res, rej) => {
       timedout.catch((err) => rej(new Error('append to followers timeout')))
       const cid = crypto.randomUUID()
-      const msg = { type: APPEND, cid, data }
+      const msg = { type: APPEND, cid, seq, data }
       const acks = this.followers.filter((id) => this.nodeId !== id).map((id) => {
         const ack = this._awaitAck(id, cid)
-        super.send(id, msg)
+        this.send(id, msg)
         return ack
       })
       awaitResolve(acks, this.minFollowers).then(res).catch(rej)
@@ -166,21 +165,24 @@ class TinyRaftNode extends TinyRaft {
     return work
   }
 
-  async _appendSelf(data) {
+  async _appendSelf(data, quick=false) {
     const need = this.minFollowers
     const have = this.followers.length - 1
     if (have < need) { throw new Error(`append self needs ${need} followers have ${have}`) }
     const next = new Decimal(this.log.seq).add(1).toString()
-    this.log.append(next, data).then((now) => {
+    // todo: wait for prev
+    return this.log.append(next, data).then((now) => {
+      // todo: maybe dont take next and dont check
       if (next !== now) { throw new Error(`append self expected seq ${next} have ${now}`) }
-      return this._appendToFollowers(data)
+      if (quick) { return now }
+      return this._appendToFollowers(now, data).then(() => now)
     })
   }
 
   async append(data) {
     if (!data || (typeof data !== 'object')) { throw new Error('data must be object') }
     if (this._stopped) { throw new Error('raft node is stopped') }
-    return this.leader === this.nodeId ? this._appendSelf(data) : this._fwdToLeader(data)
+    return this.leader !== this.nodeId ? this._fwdToLeader(data) : this._appendSelf(data)
   }
 }
 
@@ -242,6 +244,6 @@ class TinyRaftLog {
 }
 
 module.exports = {
-  TinyRaftNode,
+  TinyRaftPlus,
   TinyRaftLog
 }

@@ -1,5 +1,4 @@
 const test = require('tape')
-const lib = require('../index.js')
 const { open, comms, sleep, start, stop, leaders, followers } = require('./util.js')
 
 // const { nodeId, nodes, state, leader, followers, term } = node
