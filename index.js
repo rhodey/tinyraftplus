@@ -100,11 +100,13 @@ class TinyRaftPlus extends TinyRaft {
     switch (msg.type) {
       case FORWARD:
         if (!this.followers.includes(from)) { return }
+        if (this.term !== msg.term) { return }
         return this._appendSelfAndFollowers(msg.data)
           .then((seq) => this.send(from, { ...ack, seq }))
 
       case APPEND:
         if (this.leader !== from) { return }
+        if (this.term !== msg.term) { return }
         return this.log.append(msg.data, msg.seq)
             .then(() => this.send(from, ack))
     }
@@ -137,7 +139,7 @@ class TinyRaftPlus extends TinyRaft {
       timedout.catch((err) => rej(new Error('forward to leader timeout')))
       this._awaitFollowing().then(() => {
         const cid = crypto.randomUUID()
-        const msg = { type: FORWARD, cid, data }
+        const msg = { type: FORWARD, cid, data, term: this.term }
         const ack = this._awaitAck(this.leader, cid)
         this.send(this.leader, msg)
         return ack.then((msg) => msg.seq)
@@ -152,7 +154,7 @@ class TinyRaftPlus extends TinyRaft {
     const work = new Promise((res, rej) => {
       timedout.catch((err) => rej(new Error('append to followers timeout')))
       const cid = crypto.randomUUID()
-      const msg = { type: APPEND, cid, data, seq }
+      const msg = { type: APPEND, cid, data, seq, term: this.term }
       const acks = this.followers.filter((id) => this.nodeId !== id).map((id) => {
         const ack = this._awaitAck(id, cid)
         this.send(id, msg)
