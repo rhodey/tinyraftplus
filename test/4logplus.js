@@ -2,8 +2,6 @@ const test = require('tape')
 const { TinyRaftPlus, TinyRaftLog } = require('../index.js')
 const { open, comms, sleep, start, stop, leaders, followers } = require('./util.js')
 
-// todo: support and test repl restore
-
 const testSeq = (t, a, b, c, node) => {
   const name = `node ${node.nodeId} ${node.state}`
   t.equal(a, b, `${name} seq = ${b}`)
