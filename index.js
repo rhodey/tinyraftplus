@@ -144,7 +144,7 @@ class TinyRaftNode extends TinyRaft {
   }
 }
 
-// todo: timeouts
+// todo: sqlite with timeouts
 class TinyRaftLog {
   constructor(config={}) {
     this._config = config
@@ -159,7 +159,6 @@ class TinyRaftLog {
   }
 
   async start() {
-    // todo: load from fs
     if (this._open) { return }
     this.seq = '-1'
     this.log = []
