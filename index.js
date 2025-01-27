@@ -129,7 +129,7 @@ class TinyRaftNode extends TinyRaft {
       const have = this.followers.length - 1
       if (have < need) { throw new Error(`append needs ${need} followers have ${have}`) }
 
-      const next = this.log.seq + 1
+      const next = new Decimal(this.log.seq).add(1).toString()
       return this.log.append(next, data).then((now) => {
         if (next !== now) { throw new Error(`append expected seq ${next} have ${now}`) }
         return this._fwdToFollowers(data)
