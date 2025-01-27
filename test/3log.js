@@ -7,29 +7,25 @@ test('test start and append 3', async (t) => {
 
   await log.start()
   t.equal(log.seq, '-1', 'seq = -1')
-  let head = log.head
-  t.equal(head, null, 'head = null')
+  t.equal(log.head, null, 'head = null')
 
   let data = { a: 1 }
-  let seq = await log.append('0', data)
+  let seq = await log.append(data)
   t.equal(seq, '0', 'seq = 0')
   t.equal(log.seq, '0', 'seq = 0')
-  head = log.head
-  t.deepEqual(head, data, 'head = data')
+  t.deepEqual(log.head, data, 'head = data')
 
   data = { b: 2 }
-  seq = await log.append('1', data)
+  seq = await log.append(data)
   t.equal(seq, '1', 'seq = 1')
   t.equal(log.seq, '1', 'seq = 1')
-  head = log.head
-  t.deepEqual(head, data, 'head = data')
+  t.deepEqual(log.head, data, 'head = data')
 
   data = { c: 3 }
-  seq = await log.append('2', data)
+  seq = await log.append(data)
   t.equal(seq, '2', 'seq = 2')
   t.equal(log.seq, '2', 'seq = 2')
-  head = log.head
-  t.deepEqual(head, data, 'head = data')
+  t.deepEqual(log.head, data, 'head = data')
 
   t.teardown(() => log.stop())
 })
@@ -39,14 +35,18 @@ test('test append out of order', async (t) => {
   const log = new TinyRaftLog()
 
   await log.start()
-  await log.append('0', {})
-  await log.append('1', {})
+  await log.append({})
+  await log.append({})
 
-  let seq = await log.append('2', {})
+  const seq = await log.append({}, '2')
   t.equal(seq, '2', 'seq = 2')
 
-  seq = await log.append('4', {})
-  t.equal(seq, '2', 'seq = 2')
+  try {
+    await log.append({}, '4')
+    t.fail('error thrown')
+  } catch (err) {
+    t.ok(err, 'error thrown')
+  }
 
   t.teardown(() => log.stop())
 })
@@ -56,18 +56,16 @@ test('test append and remove', async (t) => {
   const log = new TinyRaftLog()
 
   await log.start()
-  await log.append('0', {})
+  await log.append({})
   const data = { a: 1}
-  await log.append('1', data)
-  await log.append('2', {})
-  await log.append('3', {})
+  await log.append(data)
+  await log.append({})
+  await log.append({})
 
   const removed = await log.remove('2')
   t.equal(removed, '2', 'removed = 2')
   t.equal(log.seq, '1', 'seq = 1')
-
-  const head = log.head
-  t.deepEqual(head, data, 'head = data')
+  t.deepEqual(log.head, data, 'head = data')
 
   t.teardown(() => log.stop())
 })

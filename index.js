@@ -17,7 +17,7 @@ const defaults = {
   leadershipTimeout: 5_000, // todo: ?? should be < electionTimeout
   initialTerm: 0, leaderPriority: 0,
   followerAckTimeout: 2_500,
-  leaderAckTimeout: 2_500,
+  leaderAckTimeout: 5_000,
   logTimeout: 1_500,
 }
 
@@ -105,7 +105,7 @@ class TinyRaftPlus extends TinyRaft {
 
       case APPEND:
         if (this.leader !== from) { return }
-        return this.log.append(msg.seq, msg.data)
+        return this.log.append(msg.data, msg.seq)
             .then(() => this.send(from, ack))
     }
 
@@ -116,9 +116,7 @@ class TinyRaftPlus extends TinyRaft {
     return new Promise((res, rej) => {
       const listen = (arr) => {
         const [fromm, msg] = arr
-        if (ACK !== msg.type) { return }
-        if (from !== fromm) { return }
-        if (cid !== msg.cid) { return }
+        if (ACK !== msg.type || from !== fromm || cid !== msg.cid) { return }
         this.removeListener('receive', listen)
         res(msg)
       }
@@ -149,18 +147,18 @@ class TinyRaftPlus extends TinyRaft {
     return work
   }
 
-  _appendToFollowers(seq, data) {
+  _appendToFollowers(data, seq) {
     const [timer, timedout] = timeout(this.followerAckTimeout)
     const work = new Promise((res, rej) => {
       timedout.catch((err) => rej(new Error('append to followers timeout')))
       const cid = crypto.randomUUID()
-      const msg = { type: APPEND, cid, seq, data }
+      const msg = { type: APPEND, cid, data, seq }
       const acks = this.followers.filter((id) => this.nodeId !== id).map((id) => {
         const ack = this._awaitAck(id, cid)
         this.send(id, msg)
         return ack
       })
-      awaitResolve(acks, this.minFollowers).then(res).catch(rej)
+      awaitResolve(acks, this.minFollowers).then(() => res(seq)).catch(rej)
     })
     work.catch(noop).finally(() => clearTimeout(timer))
     return work
@@ -169,14 +167,8 @@ class TinyRaftPlus extends TinyRaft {
   async _appendSelfAndFollowers(data) {
     const need = this.minFollowers
     const have = this.followers.length - 1
-    if (have < need) { throw new Error(`append self needs ${need} followers have ${have}`) }
-    const next = new Decimal(this.log.seq).add(1).toString()
-    // todo: wait for prev
-    return this.log.append(next, data).then((now) => {
-      // todo: maybe dont take next and dont check
-      if (next !== now) { throw new Error(`append self expected seq ${next} have ${now}`) }
-      return this._appendToFollowers(now, data).then(() => now)
-    })
+    if (have < need) { throw new Error(`append to self needs ${need} followers have ${have}`) }
+    return this.log.append(data).then((seq) => this._appendToFollowers(data, seq))
   }
 
   async append(data) {
@@ -215,16 +207,16 @@ class TinyRaftLog {
     this._open = false
   }
 
-  async append(seq, data) {
+  async append(data, seq=null) {
+    const next = new Decimal(this.seq).add(1).toString()
+    seq = seq !== null ? seq : next
     if (typeof seq !== 'string') { throw new Error('seq must be string') }
     if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
     if (!this._open) { throw new Error('log is not open') }
-    const next = new Decimal(this.seq).add(1)
-    seq = new Decimal(seq)
-    if (!next.eq(seq)) { return this.seq }
+    if (next !== seq) { throw new Error(`log append next ${next} !== seq ${seq}`) }
     this.log.push(data)
     this.head = data
-    this.seq = seq.toString()
+    this.seq = seq
     return this.seq
   }
 
@@ -233,6 +225,7 @@ class TinyRaftLog {
     if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
     if (!this._open) { throw new Error('log is not open') }
     seq = new Decimal(seq)
+    if (seq.lessThan(0)) { throw new Error('seq must be >= 0') }
     this.seq = new Decimal(this.seq)
     if (seq.greaterThan(this.seq)) { return '0' }
     this.log = this.log.slice(0, seq.toNumber())
