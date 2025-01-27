@@ -1,5 +1,6 @@
 const crypto = require('crypto')
 const TinyRaft = require('tinyraft')
+const Decimal = require('decimal.js')
 
 const noop = () => {}
 
@@ -160,7 +161,7 @@ class TinyRaftLog {
   async start() {
     // todo: load from fs
     if (this._open) { return }
-    this.seq = -1
+    this.seq = '-1'
     this.log = []
     this.head = null
     this._open = true
@@ -173,22 +174,30 @@ class TinyRaftLog {
   }
 
   async append(seq, data) {
+    if (typeof seq !== 'string') { throw new Error('seq must be string') }
+    if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
     if (!this._open) { throw new Error('log is not open') }
-    if ((this.seq + 1) !== seq) { return this.seq }
+    const next = new Decimal(this.seq).add(1)
+    seq = new Decimal(seq)
+    if (!next.eq(seq)) { return this.seq }
     this.log.push(data)
     this.head = data
-    this.seq = seq
-    return seq
+    this.seq = seq.toString()
+    return this.seq
   }
 
   async remove(seq) {
+    if (typeof seq !== 'string') { throw new Error('seq must be string') }
+    if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
     if (!this._open) { throw new Error('log is not open') }
-    if (seq > this.seq) { return 0 }
-    this.log = this.log.slice(0, seq)
-    const removed = 1 + (this.seq - seq)
-    this.seq = seq - 1
-    this.head = this.log[this.seq]
-    return removed
+    seq = new Decimal(seq)
+    this.seq = new Decimal(this.seq)
+    if (seq.greaterThan(this.seq)) { return '0' }
+    this.log = this.log.slice(0, seq.toNumber())
+    const removed = this.seq.sub(seq).add(1)
+    this.seq = seq.sub(1).toString()
+    this.head = this.log[parseInt(this.seq)]
+    return removed.toString()
   }
 }
 
