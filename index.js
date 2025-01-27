@@ -3,6 +3,9 @@ const TinyRaft = require('tinyraft')
 
 const noop = () => {}
 
+const LEADER = 'leader'
+const FOLLOWER = 'follower'
+
 const defaults = {
   heartbeatTimeout: 500,
   electionTimeout: 2_500,
@@ -83,8 +86,8 @@ class TinyRaftNode extends TinyRaft {
 
   // todo: timeout
   async _awaitLeader() {
-    const leading = (state) => state.state === 'leader'
-    const following = (state) => state.state === 'follower' && state.leader !== null
+    const leading = (state) => state.state === 'LEADER'
+    const following = (state) => state.state === 'FOLLOWER' && state.leader !== null
     if (leading(this) || following(this)) { return state.leader }
     const fn = (st) => leading(st) || following(st)
     return awaitChange(this, fn).then(() => state.leader)
@@ -147,6 +150,7 @@ class TinyRaftLog {
     this._open = false
     this.seq = null
     this.log = null
+    this.head = null
   }
 
   open() {
@@ -158,25 +162,21 @@ class TinyRaftLog {
     if (this._open) { return }
     this.seq = -1
     this.log = []
+    this.head = null
     this._open = true
   }
 
   async stop() {
     if (!this._open) { return }
-    this.seq = this.log = null
+    this.seq = this.log = this.head = null
     this._open = false
-  }
-
-  async head() {
-    if (!this._open) { throw new Error('log is not open') }
-    if (this.seq < 0) { return null }
-    return this.log[this.seq]
   }
 
   async append(seq, data) {
     if (!this._open) { throw new Error('log is not open') }
     if ((this.seq + 1) !== seq) { return this.seq }
     this.log.push(data)
+    this.head = data
     this.seq = seq
     return seq
   }
@@ -187,6 +187,7 @@ class TinyRaftLog {
     this.log = this.log.slice(0, seq)
     const removed = 1 + (this.seq - seq)
     this.seq = seq - 1
+    this.head = this.log[this.seq]
     return removed
   }
 }
