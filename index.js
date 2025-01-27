@@ -192,6 +192,27 @@ class TinyRaftPlus extends TinyRaft {
   }
 }
 
+const sha256 = (obj) => crypto.createHash('sha256').update(JSON.stringify(obj)).digest('hex')
+
+const enforceChain = (log, data) => {
+  if (!data.prev) {
+    data.prev = sha256(log.head)
+    return
+  }
+  const theirs = data.prev
+  const ours = sha256(log.head)
+  if (theirs !== ours) { throw new Error(`hash of head ${log.seq} does not match append data.prev`) }
+}
+
+const enforceChainArr = (log, arr) => {
+  enforceChain(log, arr[0])
+  for (let i = 1; i < arr.length; i++) {
+    const head = arr[i - 1]
+    const seq = log.seq + i
+    enforceChain({ head, seq }, arr[i])
+  }
+}
+
 // todo: sqlite with timeouts
 class TinyRaftLog {
   constructor(opts={}) {
@@ -229,6 +250,7 @@ class TinyRaftLog {
     if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
     if (next !== seq) { throw new Error(`log append next ${next} !== seq ${seq}`) }
     if (!this._open) { throw new Error('log is not open') }
+    enforceChain(this, data)
     this.log.push(data)
     this.head = this.log[next]
     this.seq = seq
@@ -239,10 +261,12 @@ class TinyRaftLog {
     const next = new Decimal(this.seq).add(1).toString()
     seq = seq !== null ? seq : next
     if (!Array.isArray(arr)) { throw new Error('arr must be array') }
+    if (arr.length <= 0) { return this.seq }
     if (typeof seq !== 'string') { throw new Error('seq must be string') }
     if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
     if (next !== seq) { throw new Error(`log append next ${next} !== seq ${seq}`) }
     if (!this._open) { throw new Error('log is not open') }
+    enforceChainArr(this, arr)
     this.log = this.log.concat(arr)
     this.seq = new Decimal(this.seq).add(arr.length).toString()
     this.head = this.log[this.seq]
