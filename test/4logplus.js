@@ -2,6 +2,8 @@ const test = require('tape')
 const { TinyRaftPlus, TinyRaftLog } = require('../index.js')
 const { open, comms, sleep, start, stop, leaders, followers } = require('./util.js')
 
+// todo: support and test repl restore
+
 test('test elect n=3 then append 6', async (t) => {
   t.plan(16)
   const coms = comms()

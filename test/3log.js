@@ -52,12 +52,12 @@ test('test append out of order', async (t) => {
 })
 
 test('test append and remove', async (t) => {
-  t.plan(3)
+  t.plan(6)
   const log = new TinyRaftLog()
 
   await log.start()
   await log.append({})
-  const data = { a: 1}
+  let data = { a: 1 }
   await log.append(data)
   await log.append({})
   await log.append({})
@@ -65,6 +65,12 @@ test('test append and remove', async (t) => {
   const removed = await log.remove('2')
   t.equal(removed, '2', 'removed = 2')
   t.equal(log.seq, '1', 'seq = 1')
+  t.deepEqual(log.head, data, 'head = data')
+
+  data = { b: 2 }
+  const seq = await log.append(data)
+  t.equal(seq, '2', 'seq = 2')
+  t.equal(log.seq, '2', 'seq = 2')
   t.deepEqual(log.head, data, 'head = data')
 
   t.teardown(() => log.stop())
