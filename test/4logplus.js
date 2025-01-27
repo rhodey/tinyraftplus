@@ -2,10 +2,11 @@ const test = require('tape')
 const { TinyRaftPlus, TinyRaftLog } = require('../index.js')
 const { open, comms, sleep, start, stop, leaders, followers } = require('./util.js')
 
-test('test elect n=3 then append 5', async (t) => {
+test('test elect n=3 then append 6', async (t) => {
   t.plan(16)
   const coms = comms()
   const logs = () => new TinyRaftLog()
+  const opts = { minFollowers: 2 }
   const nodes = open(coms, 3, null, {}, logs)
   await start(nodes)
   await sleep(100)

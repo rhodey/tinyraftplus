@@ -62,7 +62,7 @@ class TinyRaftPlus extends TinyRaft {
     opts = { ...opts, nodeId, nodes, send }
     opts = { ...defaults, ...opts }
     super(opts)
-    const minFollowers = Math.ceil((nodes.length - 1) / 2) // todo: confirm
+    const minFollowers = Math.ceil((nodes.length - 1) / 2)
     this.minFollowers = opts.minFollowers ? opts.minFollowers : minFollowers
     this.followerAckTimeout = opts.followerAckTimeout
     this.leaderAckTimeout = opts.leaderAckTimeout
@@ -76,7 +76,7 @@ class TinyRaftPlus extends TinyRaft {
 
   async start() {
     if (this._stopped) { throw new Error('raft node is stopped') }
-    if (this.open()) { return super.start() } // tinyraft works like this
+    if (this.open()) { return super.start() } // tinyraft uses start more than once
     return this.log.start().then(() => super.start())
   }
 
@@ -100,7 +100,7 @@ class TinyRaftPlus extends TinyRaft {
     switch (msg.type) {
       case FORWARD:
         if (!this.followers.includes(from)) { return }
-        return this._appendSelf(msg.data)
+        return this._appendSelfAndFollowers(msg.data)
           .then((seq) => this.send(from, { ...ack, seq }))
 
       case APPEND:
@@ -166,7 +166,7 @@ class TinyRaftPlus extends TinyRaft {
     return work
   }
 
-  async _appendSelf(data) {
+  async _appendSelfAndFollowers(data) {
     const need = this.minFollowers
     const have = this.followers.length - 1
     if (have < need) { throw new Error(`append self needs ${need} followers have ${have}`) }
@@ -182,7 +182,7 @@ class TinyRaftPlus extends TinyRaft {
   async append(data) {
     if (!data || (typeof data !== 'object')) { throw new Error('data must be object') }
     if (this._stopped) { throw new Error('raft node is stopped') }
-    return this.leader !== this.nodeId ? this._fwdToLeader(data) : this._appendSelf(data)
+    return this.leader !== this.nodeId ? this._fwdToLeader(data) : this._appendSelfAndFollowers(data)
   }
 }
 
