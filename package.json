@@ -1,14 +1,14 @@
 {
-  "name": "tinyraftlog",
+  "name": "tinyraftplus",
   "version": "1.0.0",
   "description": "Raft-like log replication",
   "license": "MIT",
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/rhodey/tinyraftlog.git"
+    "url": "git://github.com/rhodey/tinyraftplus.git"
   },
-  "homepage": "https://github.com/rhodey/tinyraftlog",
+  "homepage": "https://github.com/rhodey/tinyraftplus",
   "scripts": {
     "test": "tape 'test/*.js'"
   },
