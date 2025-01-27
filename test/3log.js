@@ -1,7 +1,7 @@
 const test = require('tape')
 const { TinyRaftLog } = require('../index.js')
 
-test('test start and append 3', async (t) => {
+test('test append 3', async (t) => {
   t.plan(11)
   const log = new TinyRaftLog()
 
@@ -33,11 +33,10 @@ test('test start and append 3', async (t) => {
 test('test append out of order', async (t) => {
   t.plan(2)
   const log = new TinyRaftLog()
-
   await log.start()
-  await log.append({})
-  await log.append({})
 
+  await log.append({})
+  await log.append({})
   const seq = await log.append({}, '2')
   t.equal(seq, '2', 'seq = 2')
 
@@ -51,11 +50,37 @@ test('test append out of order', async (t) => {
   t.teardown(() => log.stop())
 })
 
+test('test append batch', async (t) => {
+  t.plan(9)
+  const log = new TinyRaftLog()
+  await log.start()
+
+  let data = { a: 1 }
+  let seq = await log.append(data)
+  t.equal(seq, '0', 'seq = 0')
+  t.equal(log.seq, '0', 'seq = 0')
+  t.deepEqual(log.head, data, 'head = data')
+
+  const arr = [{ b: 2 }, { c: 3 }]
+  seq = await log.appendBatch(arr)
+  t.equal(seq, '2', 'seq = 1')
+  t.equal(log.seq, '2', 'seq = 1')
+  t.deepEqual(log.head, arr[1], 'head = data')
+
+  data = { c: 4 }
+  seq = await log.append(data)
+  t.equal(seq, '3', 'seq = 3')
+  t.equal(log.seq, '3', 'seq = 3')
+  t.deepEqual(log.head, data, 'head = data')
+
+  t.teardown(() => log.stop())
+})
+
 test('test append and remove', async (t) => {
   t.plan(6)
   const log = new TinyRaftLog()
-
   await log.start()
+
   await log.append({})
   let data = { a: 1 }
   await log.append(data)

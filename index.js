@@ -212,11 +212,25 @@ class TinyRaftLog {
     seq = seq !== null ? seq : next
     if (typeof seq !== 'string') { throw new Error('seq must be string') }
     if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
-    if (!this._open) { throw new Error('log is not open') }
     if (next !== seq) { throw new Error(`log append next ${next} !== seq ${seq}`) }
+    if (!this._open) { throw new Error('log is not open') }
     this.log.push(data)
-    this.head = data
-    this.seq = seq
+    this.head = this.log[next]
+    this.seq = next
+    return this.seq
+  }
+
+  async appendBatch(arr, seq=null) {
+    const next = new Decimal(this.seq).add(1).toString()
+    seq = seq !== null ? seq : next
+    if (!Array.isArray(arr)) { throw new Error('arr must be array') }
+    if (typeof seq !== 'string') { throw new Error('seq must be string') }
+    if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
+    if (next !== seq) { throw new Error(`log append next ${next} !== seq ${seq}`) }
+    if (!this._open) { throw new Error('log is not open') }
+    this.log = this.log.concat(arr)
+    this.seq = new Decimal(this.seq).add(arr.length).toString()
+    this.head = this.log[this.seq]
     return this.seq
   }
 
