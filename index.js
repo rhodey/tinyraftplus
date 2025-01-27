@@ -12,6 +12,21 @@ const defaults = {
   electionTimeout: 2_500,
   leadershipTimeout: 5_000,
   initialTerm: 0, leaderPriority: 0,
+  appendTimeout: 5_000,
+}
+
+// round timers forward to nearest 100ms
+// source: https://stackoverflow.com/a/38277310
+function timeout(ms, error) {
+  let timer = null
+  const timedout = new Promise((res, rej) => {
+    const now = Date.now()
+    let next = now + ms
+    next = next - (next % 100)
+    next = (100 + next) - now
+    timer = setTimeout(rej, next, error)
+  })
+  return [timer, timedout]
 }
 
 function awaitResolve(promises, count) {
@@ -42,7 +57,8 @@ class TinyRaftNode extends TinyRaft {
     opts = { ...opts, nodeId, nodes, send }
     opts = { ...defaults, ...opts }
     super(opts)
-    this.minFollowers = Math.ceil((nodes.length - 1) / 2)
+    this.minFollowers = Math.ceil((nodes.length - 1) / 2) // todo: confirm
+    this.appendTimeout = opts.appendTimeout
     this._stopped = false
     this.log = log
   }
@@ -85,7 +101,6 @@ class TinyRaftNode extends TinyRaft {
     super.onReceive(from, msg)
   }
 
-  // todo: timeout
   async _awaitLeader() {
     const leading = (state) => state.state === 'LEADER'
     const following = (state) => state.state === 'FOLLOWER' && state.leader !== null
@@ -94,7 +109,6 @@ class TinyRaftNode extends TinyRaft {
     return awaitChange(this, fn).then(() => state.leader)
   }
 
-  // todo: timeout
   _awaitAck(from, cid) {
     return new Promise((res, rej) => {
       const listen = (arr) => {
@@ -108,7 +122,6 @@ class TinyRaftNode extends TinyRaft {
     })
   }
 
-  // todo: timeout
   _fwdToFollowers(data) {
     const cid = crypto.randomUUID()
     const msg = { type: 'next', cid, data }
@@ -122,25 +135,36 @@ class TinyRaftNode extends TinyRaft {
 
   async append(data) {
     if (this._stopped) { throw new Error('raft node is stopped') }
+    const [timer, timedout] = timeout(this.appendTimeout)
+    const work = new Promise(async (res, rej) => {
+      timedout.catch((err) => rej(new Error('append timeout')))
+      try {
 
-    const leader = await _awaitLeader()
-    if (this.nodeId === leader) {
-      const need = this.minFollowers
-      const have = this.followers.length - 1
-      if (have < need) { throw new Error(`append needs ${need} followers have ${have}`) }
+        const leader = await this._awaitLeader()
+        if (this.nodeId === leader) {
+          const need = this.minFollowers
+          const have = this.followers.length - 1
+          if (have < need) { throw new Error(`append needs ${need} followers have ${have}`) }
 
-      const next = new Decimal(this.log.seq).add(1).toString()
-      return this.log.append(next, data).then((now) => {
-        if (next !== now) { throw new Error(`append expected seq ${next} have ${now}`) }
-        return this._fwdToFollowers(data)
-      })
-    }
+          const next = new Decimal(this.log.seq).add(1).toString()
+          this.log.append(next, data).then((now) => {
+            if (next !== now) { throw new Error(`append expected seq ${next} have ${now}`) }
+            return this._fwdToFollowers(data)
+          }).then(() => res())
+        }
 
-    const cid = crypto.randomUUID()
-    const msg = { type: 'fwd', cid, data }
-    const ack = this._awaitAck(leader, cid)
-    super.send(leader, msg)
-    return ack
+        const cid = crypto.randomUUID()
+        const msg = { type: 'fwd', cid, data }
+        const ack = this._awaitAck(leader, cid)
+        super.send(leader, msg)
+        res(ack)
+
+      } catch (err) {
+        rej(err)
+      }
+    })
+    work.catch(noop).finally(() => clearTimeout(timer))
+    return work
   }
 }
 
