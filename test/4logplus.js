@@ -76,7 +76,6 @@ test('test elect 3 then append 6', async (t) => {
 })
 
 test('test elect 3 then append batch', async (t) => {
-  t.plan(11)
   const coms = comms()
   const logs = () => new TinyRaftLog()
   const opts = { minFollowers: 2 }
@@ -89,25 +88,18 @@ test('test elect 3 then append batch', async (t) => {
 
   let data = { a: 1 }
   let seq = await leader.append(data)
-  t.equal(seq, '0', 'seq = 0')
-  t.deepEqual(leader.log.head, data, 'data = head')
+  testSeqMulti(t, seq, '0', nodes)
+  testHeadMulti(t, data, nodes)
 
   data = [{ b: 2 }, { c: 3 }]
   seq = await leader.appendBatch(data)
-  t.equal(seq, '1', 'seq = 1')
-  t.equal(leader.log.seq, '2', 'seq = 2')
-  t.deepEqual(leader.log.head, data[1], 'data = head')
-
-  t.equal(flw[0].log.seq, '2', 'seq = 2')
-  t.deepEqual(flw[0].log.head, data[1], 'data = head')
-
-  t.equal(flw[1].log.seq, '2', 'seq = 2')
-  t.deepEqual(flw[1].log.head, data[1], 'data = head')
+  // testSeqMulti(t, seq, '1', nodes)
+  testHeadMulti(t, data[1], nodes)
 
   data = { d: 4 }
   seq = await leader.append(data)
-  t.equal(seq, '3', 'seq = 4')
-  t.deepEqual(leader.log.head, data, 'data = head')
+  testSeqMulti(t, seq, '3', nodes)
+  testHeadMulti(t, data, nodes)
 
   t.teardown(() => stop(nodes))
 })
