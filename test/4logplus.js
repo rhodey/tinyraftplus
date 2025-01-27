@@ -25,7 +25,7 @@ test('test elect 3 then append 6', async (t) => {
   await start(nodes)
   await sleep(100)
 
-  const ok = nodes.every((node) => [1, 2, 3].includes(node.nodeId))
+  let ok = nodes.every((node) => [1, 2, 3].includes(node.nodeId))
   t.ok(ok, 'ids correct')
 
   let leader = leaders(nodes)
@@ -37,35 +37,35 @@ test('test elect 3 then append 6', async (t) => {
 
   // leader
   let data = { a: 1 }
-  let seq = await leader.append(data)
-  testSeqMulti(t, seq, '0', '0', nodes)
+  ok = await leader.append(data)
+  testSeqMulti(t, ok.seq, '0', '0', nodes)
   testHeadMulti(t, data, nodes)
 
   data = { a: 2 }
-  seq = await leader.append(data)
-  testSeqMulti(t, seq, '1', '1', nodes)
+  ok = await leader.append(data)
+  testSeqMulti(t, ok.seq, '1', '1', nodes)
   testHeadMulti(t, data, nodes)
 
   // follower 1
   data = { a: 3 }
-  seq = await flw[0].append(data)
-  testSeqMulti(t, seq, '2', '2', nodes)
+  ok = await flw[0].append(data)
+  testSeqMulti(t, ok.seq, '2', '2', nodes)
   testHeadMulti(t, data, nodes)
 
   data = { a: 4 }
-  seq = await flw[0].append(data)
-  testSeqMulti(t, seq, '3', '3', nodes)
+  ok = await flw[0].append(data)
+  testSeqMulti(t, ok.seq, '3', '3', nodes)
   testHeadMulti(t, data, nodes)
 
   // follower 2
   data = { a: 5 }
-  seq = await flw[1].append(data)
-  testSeqMulti(t, seq, '4', '4', nodes)
+  ok = await flw[1].append(data)
+  testSeqMulti(t, ok.seq, '4', '4', nodes)
   testHeadMulti(t, data, nodes)
 
   data = { a: 6 }
-  seq = await flw[1].append(data)
-  testSeqMulti(t, seq, '5', '5', nodes)
+  ok = await flw[1].append(data)
+  testSeqMulti(t, ok.seq, '5', '5', nodes)
   testHeadMulti(t, data, nodes)
 
   t.teardown(() => stop(nodes))
@@ -83,41 +83,41 @@ test('test elect 3 then append batch', async (t) => {
   const flw = followers(nodes)
 
   let data = { a: 1 }
-  let seq = await leader.append(data)
-  testSeqMulti(t, seq, '0', '0', nodes)
+  let ok = await leader.append(data)
+  testSeqMulti(t, ok.seq, '0', '0', nodes)
   testHeadMulti(t, data, nodes)
 
   // leader batch
   data = [{ b: 2 }, { c: 3 }]
-  seq = await leader.appendBatch(data)
-  testSeqMulti(t, seq, '1', '2', nodes)
+  ok = await leader.appendBatch(data)
+  testSeqMulti(t, ok.seq, '1', '2', nodes)
   testHeadMulti(t, data[1], nodes)
 
   data = { d: 4 }
-  seq = await leader.append(data)
-  testSeqMulti(t, seq, '3', '3', nodes)
+  ok = await leader.append(data)
+  testSeqMulti(t, ok.seq, '3', '3', nodes)
   testHeadMulti(t, data, nodes)
 
   // follower 1 batch
   data = [{ a: 1 }, { b: 2 }]
-  seq = await flw[0].appendBatch(data)
-  testSeqMulti(t, seq, '4', '5', nodes)
+  ok = await flw[0].appendBatch(data)
+  testSeqMulti(t, ok.seq, '4', '5', nodes)
   testHeadMulti(t, data[1], nodes)
 
   data = { c: 3 }
-  seq = await flw[0].append(data)
-  testSeqMulti(t, seq, '6', '6', nodes)
+  ok = await flw[0].append(data)
+  testSeqMulti(t, ok.seq, '6', '6', nodes)
   testHeadMulti(t, data, nodes)
 
   // follower 2 batch
   data = [{ a: 1 }, { b: 2 }]
-  seq = await flw[1].appendBatch(data)
-  testSeqMulti(t, seq, '7', '8', nodes)
+  ok = await flw[1].appendBatch(data)
+  testSeqMulti(t, ok.seq, '7', '8', nodes)
   testHeadMulti(t, data[1], nodes)
 
   data = { c: 3 }
-  seq = await flw[1].append(data)
-  testSeqMulti(t, seq, '9', '9', nodes)
+  ok = await flw[1].append(data)
+  testSeqMulti(t, ok.seq, '9', '9', nodes)
   testHeadMulti(t, data, nodes)
 
   t.teardown(() => stop(nodes))
