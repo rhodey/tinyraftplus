@@ -10,20 +10,20 @@ test('test append 3', async (t) => {
   t.equal(log.head, null, 'head = null')
 
   let data = { a: 1 }
-  let seq = await log.append(data)
-  t.equal(seq, '0', 'seq = 0')
+  let ok = await log.append(data)
+  t.equal(ok.seq, '0', 'seq = 0')
   t.equal(log.seq, '0', 'seq = 0')
   t.deepEqual(log.head, data, 'head = data')
 
   data = { b: 2 }
-  seq = await log.append(data)
-  t.equal(seq, '1', 'seq = 1')
+  ok = await log.append(data)
+  t.equal(ok.seq, '1', 'seq = 1')
   t.equal(log.seq, '1', 'seq = 1')
   t.deepEqual(log.head, data, 'head = data')
 
   data = { c: 3 }
-  seq = await log.append(data)
-  t.equal(seq, '2', 'seq = 2')
+  ok = await log.append(data)
+  t.equal(ok.seq, '2', 'seq = 2')
   t.equal(log.seq, '2', 'seq = 2')
   t.deepEqual(log.head, data, 'head = data')
 
@@ -37,8 +37,8 @@ test('test append out of order', async (t) => {
 
   await log.append({})
   await log.append({})
-  const seq = await log.append({}, '2')
-  t.equal(seq, '2', 'seq = 2')
+  const ok = await log.append({}, '2')
+  t.equal(ok.seq, '2', 'seq = 2')
 
   try {
     await log.append({}, '4')
@@ -56,20 +56,20 @@ test('test append batch', async (t) => {
   await log.start()
 
   let data = { a: 1 }
-  let seq = await log.append(data)
-  t.equal(seq, '0', 'seq = 0')
+  let ok = await log.append(data)
+  t.equal(ok.seq, '0', 'seq = 0')
   t.equal(log.seq, '0', 'seq = 0')
   t.deepEqual(log.head, data, 'head = data')
 
   const arr = [{ b: 2 }, { c: 3 }]
-  seq = await log.appendBatch(arr)
-  t.equal(seq, '1', 'seq = 1')
+  ok = await log.appendBatch(arr)
+  t.equal(ok.seq, '1', 'seq = 1')
   t.equal(log.seq, '2', 'seq = 2')
   t.deepEqual(log.head, arr[1], 'head = data')
 
   data = { c: 4 }
-  seq = await log.append(data)
-  t.equal(seq, '3', 'seq = 3')
+  ok = await log.append(data)
+  t.equal(ok.seq, '3', 'seq = 3')
   t.equal(log.seq, '3', 'seq = 3')
   t.deepEqual(log.head, data, 'head = data')
 
@@ -93,8 +93,8 @@ test('test append and remove', async (t) => {
   t.deepEqual(log.head, data, 'head = data')
 
   data = { b: 2 }
-  const seq = await log.append(data)
-  t.equal(seq, '2', 'seq = 2')
+  const ok = await log.append(data)
+  t.equal(ok.seq, '2', 'seq = 2')
   t.equal(log.seq, '2', 'seq = 2')
   t.deepEqual(log.head, data, 'head = data')
 
