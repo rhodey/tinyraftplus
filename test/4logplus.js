@@ -38,7 +38,6 @@ test('test elect n=3 then append 5', async (t) => {
   seq = await arr[0].append(data)
   t.equal(seq, '2', 'seq = 2')
   t.deepEqual(arr[0].log.head, data, 'data = head')
-  return
 
   data = { a: 4 }
   seq = await arr[0].append(data)

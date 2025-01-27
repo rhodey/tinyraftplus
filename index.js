@@ -62,7 +62,8 @@ class TinyRaftPlus extends TinyRaft {
     opts = { ...opts, nodeId, nodes, send }
     opts = { ...defaults, ...opts }
     super(opts)
-    this.minFollowers = Math.ceil((nodes.length - 1) / 2) // todo: confirm
+    const minFollowers = Math.ceil((nodes.length - 1) / 2) // todo: confirm
+    this.minFollowers = opts.minFollowers ? opts.minFollowers : minFollowers
     this.followerAckTimeout = opts.followerAckTimeout
     this.leaderAckTimeout = opts.leaderAckTimeout
     this._stopped = false
@@ -99,7 +100,7 @@ class TinyRaftPlus extends TinyRaft {
     switch (msg.type) {
       case FORWARD:
         if (!this.followers.includes(from)) { return }
-        return this._appendSelf(msg.data, true)
+        return this._appendSelf(msg.data)
           .then((seq) => this.send(from, { ...ack, seq }))
 
       case APPEND:
@@ -165,7 +166,7 @@ class TinyRaftPlus extends TinyRaft {
     return work
   }
 
-  async _appendSelf(data, quick=false) {
+  async _appendSelf(data) {
     const need = this.minFollowers
     const have = this.followers.length - 1
     if (have < need) { throw new Error(`append self needs ${need} followers have ${have}`) }
@@ -174,7 +175,6 @@ class TinyRaftPlus extends TinyRaft {
     return this.log.append(next, data).then((now) => {
       // todo: maybe dont take next and dont check
       if (next !== now) { throw new Error(`append self expected seq ${next} have ${now}`) }
-      if (quick) { return now }
       return this._appendToFollowers(now, data).then(() => now)
     })
   }
