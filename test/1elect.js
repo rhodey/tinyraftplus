@@ -3,7 +3,7 @@ const { open, comms, sleep, start, stop, leaders, followers } = require('./util.
 
 // const { nodeId, nodes, state, leader, followers, term } = node
 
-test('test elect n=3', async (t) => {
+test('test elect 3', async (t) => {
   t.plan(4)
   const coms = comms()
   const nodes = open(coms, 3)
@@ -24,7 +24,7 @@ test('test elect n=3', async (t) => {
   t.teardown(() => stop(nodes))
 })
 
-test('test elect n=3 and 1 offline', async (t) => {
+test('test elect 3 and 1 offline', async (t) => {
   t.plan(5)
   const allowSend = (to, from, msg) => from !== 3
   const coms = comms(allowSend)
@@ -45,7 +45,7 @@ test('test elect n=3 and 1 offline', async (t) => {
   t.teardown(() => stop(nodes))
 })
 
-test('test elect n=5', async (t) => {
+test('test elect 5', async (t) => {
   t.plan(3)
   const coms = comms()
   const nodes = open(coms, 5)
@@ -63,7 +63,7 @@ test('test elect n=5', async (t) => {
   t.teardown(() => stop(nodes))
 })
 
-test('test elect n=5 and 1 offline', async (t) => {
+test('test elect 5 and 1 offline', async (t) => {
   t.plan(5)
   const allowSend = (to, from, msg) => from !== 5
   const coms = comms(allowSend)
@@ -85,7 +85,7 @@ test('test elect n=5 and 1 offline', async (t) => {
   t.teardown(() => stop(nodes))
 })
 
-test('test elect n=5 and 1 delayed', async (t) => {
+test('test elect 5 and 1 delayed', async (t) => {
   const delaySend = (to, from, msg) => from === 5 ? 1_000 : 0
   const coms = comms(undefined, delaySend)
   const nodes = open(coms, 5)
@@ -141,7 +141,7 @@ test('test elect n=5 and 1 delayed', async (t) => {
   t.teardown(() => stop(nodes))
 })
 
-test('test elect n=5 and 2 offline', async (t) => {
+test('test elect 5 and 2 offline', async (t) => {
   t.plan(7)
   const allowSend = (to, from, msg) => from !== 4 && from !== 5
   const coms = comms(allowSend)
@@ -166,7 +166,7 @@ test('test elect n=5 and 2 offline', async (t) => {
   t.teardown(() => stop(nodes))
 })
 
-test('test elect n=5 and 2 delayed', async (t) => {
+test('test elect 5 and 2 delayed', async (t) => {
   const delaySend = (to, from, msg) => (from === 4 || from === 5) ? 1_000 : 0
   const coms = comms(undefined, delaySend)
   const nodes = open(coms, 5)
