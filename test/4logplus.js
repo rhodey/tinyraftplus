@@ -20,7 +20,7 @@ const testHeadMulti = (t, data, nodes) => nodes.forEach((node) => testHead(t, da
 test('test elect 3 then append 6', async (t) => {
   const coms = comms()
   const logs = () => new TinyRaftLog()
-  const opts = { minFollowers: 2 }
+  const opts = { minFollowers: 2 } // force full repl
   const nodes = open(coms, 3, null, {}, logs)
   await start(nodes)
   await sleep(100)
@@ -74,7 +74,7 @@ test('test elect 3 then append 6', async (t) => {
 test('test elect 3 then append batch', async (t) => {
   const coms = comms()
   const logs = () => new TinyRaftLog()
-  const opts = { minFollowers: 2 }
+  const opts = { minFollowers: 2 } // force full repl
   const nodes = open(coms, 3, null, {}, logs)
   await start(nodes)
   await sleep(100)
