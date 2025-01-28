@@ -29,7 +29,7 @@ for (let i = 0; i < 3; i++) {
   nodes.push(i)
 }
 
-nodes = await nodes.map((id) => start(id, nodes, send))
+nodes = await Promise.all(nodes.map((id) => start(id, nodes, send)))
 await sleep(100)
 
 let ok = await nodes[0].append({ a: 1 })
