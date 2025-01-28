@@ -79,7 +79,7 @@ head { c: 3 }
 + [tinyraftplus](https://github.com/rhodey/tinyraftplus/blob/master/index.js#L17) configs
 + [sqlite based log](https://github.com/rhodey/tinyraftplus/blob/master/index.js#L227)
 
-## Test
+## Tests
 ```
 npm run test
 ```
