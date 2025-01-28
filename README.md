@@ -11,6 +11,9 @@ Nodes may be assigned groups to support for example majority replication in Clou
 ### Hash chaining
 Hash of previous log entry included in next
 
+### String sequence numbers
+Uses [decimal.js](https://www.npmjs.com/package/decimal.js) to work with sequence numbers so will never overflow
+
 ## Usage
 ```js
 const { TinyRaftPlus, TinyRaftLog } = require('tinyraftplus')
