@@ -64,7 +64,7 @@ async function main() {
 main().catch(console.log)
 ```
 
-### Output
+## Output
 ```
 append 0 { a: 1 }
 append 1 { b: 2 }
