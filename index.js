@@ -2,12 +2,10 @@ const crypto = require('crypto')
 const TinyRaft = require('tinyraft')
 const Decimal = require('decimal.js')
 
-const LEADER = 'leader'
-const FOLLOWER = 'follower'
-
 const ACK = 'ack'
 const APPEND = 'append'
 const FORWARD = 'forward'
+const FOLLOWER = 'follower'
 
 /*
 todo: node groups
