@@ -9,6 +9,13 @@ const ACK = 'ack'
 const APPEND = 'append'
 const FORWARD = 'forward'
 
+/*
+todo: node groups
+todo: restore via repl
+todo: rpc retry ends on change nodes
+todo: gcp restore = new network id
+*/
+
 const defaults = {
   heartbeatTimeout: 500,
   electionTimeout: 2_500,
