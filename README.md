@@ -3,7 +3,7 @@ This is [tinyraft](https://www.npmjs.com/package/tinyraft) with extras
 
 ## Features
 ### Log replication
-An append only log with append(), appendBatch(), and remove()
+An log with append(), appendBatch(), and remove()
 
 ### Hash chaining
 Hash of previous log entry included in next
