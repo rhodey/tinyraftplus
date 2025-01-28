@@ -38,8 +38,9 @@ async function main() {
   await sleep(100)
 
   const noHash = (data) => {
-    delete data.prev
-    return data
+    const copy = { ...data }
+    delete copy.prev
+    return copy
   }
 
   let ok = await nodes[0].append({ a: 1 })
@@ -51,9 +52,9 @@ async function main() {
   ok = await nodes[2].append({ c: 3 })
   console.log('append', ok.seq, noHash(ok.data))
 
-  console.log('head', nodes[0].log.head)
-  console.log('head', nodes[1].log.head)
-  console.log('head', nodes[2].log.head)
+  console.log('head', noHash(nodes[0].log.head))
+  console.log('head', noHash(nodes[1].log.head))
+  console.log('head', noHash(nodes[2].log.head))
 
   await Promise.all(nodes.map((node) => node.stop()))
 }
