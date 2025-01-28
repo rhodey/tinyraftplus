@@ -1,19 +1,4 @@
-# tinyraftplus
-This is [tinyraft](https://www.npmjs.com/package/tinyraft) with extras
-
-## Features
-### Log replication
-A log with append(), appendBatch(), and remove()
-
-### Replication groups
-Nodes may be assigned groups to support for example majority replication in CloudA and CloudB
-
-### Hash chaining
-Hash of previous log entry included in next
-
-## Usage
-```js
-const { TinyRaftPlus, TinyRaftLog } = require('tinyraftplus')
+const { TinyRaftPlus, TinyRaftLog } = require('./index.js')
 
 const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 
@@ -59,12 +44,3 @@ async function main() {
 }
 
 main().catch(console.log)
-```
-
-## Test
-```
-npm run test
-```
-
-## License
-MIT
