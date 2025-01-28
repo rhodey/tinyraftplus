@@ -88,6 +88,11 @@ class TinyRaftPlus extends TinyRaft {
     return this.log.stop()
   }
 
+  setNodes(nodes) {
+    super.setNodes(nodes)
+    this.minFollowers = Math.ceil((nodes.length - 1) / 2)
+  }
+
   markAlive() {
     if (this._stopped) { return }
     super.markAlive()
