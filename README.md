@@ -13,7 +13,7 @@ Hash of previous log entry included in next
 
 ## Usage
 ```js
-const { TinyRaftPlus, TinyRaftLog } = require('../index.js')
+const { TinyRaftPlus, TinyRaftLog } = require('tinyraftplus')
 
 const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 
