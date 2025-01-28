@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "minimist": "^1.2.0",
-    "luxon": "^3.2.1",
     "decimal.js": "^10.4.3",
+    "luxon": "^3.2.1",
     "split": "^1.0.1",
     "tinyraft": "^1.0.1",
     "ws": "^8.18.0"
