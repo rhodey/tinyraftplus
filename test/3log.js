@@ -33,26 +33,6 @@ test('test append 3', async (t) => {
   t.teardown(() => log.stop())
 })
 
-test('test append out of order', async (t) => {
-  t.plan(2)
-  const log = new TinyRaftLog()
-  await log.start()
-
-  await log.append({})
-  await log.append({})
-  const ok = await log.append({}, '2')
-  t.equal(ok.seq, '2', 'seq = 2')
-
-  try {
-    await log.append({}, '4')
-    t.fail('error thrown')
-  } catch (err) {
-    t.ok(err, 'error thrown')
-  }
-
-  t.teardown(() => log.stop())
-})
-
 test('test append batch', async (t) => {
   t.plan(12)
   const log = new TinyRaftLog()
@@ -104,6 +84,58 @@ test('test append and remove', async (t) => {
   t.equal(log.seq, '2', 'seq = 2')
   t.deepEqual(ok.data, data, 'ok.data = data')
   t.deepEqual(log.head, data, 'head = data')
+
+  t.teardown(() => log.stop())
+})
+
+test('test append out of order', async (t) => {
+  t.plan(3)
+  const log = new TinyRaftLog()
+  await log.start()
+
+  await log.append({})
+  await log.append({})
+  const ok = await log.append({}, '2')
+  t.equal(ok.seq, '2', 'seq = 2')
+
+  try {
+    await log.append({}, '4')
+    t.fail('error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('!== seq'), 'error thrown')
+  }
+
+  try {
+    await log.appendBatch([{ a: 1}, { b: 2 }], '4')
+    t.fail('batch error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('!== seq'), 'batch error thrown')
+  }
+
+  t.teardown(() => log.stop())
+})
+
+test('test append bad hash', async (t) => {
+  t.plan(2)
+  const log = new TinyRaftLog()
+  await log.start()
+
+  await log.append({ a: 1 })
+  await log.append({ b: 2 })
+
+  try {
+    await log.append({ c: 3, prev: 'abc123' })
+    t.fail('error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('hash'), 'error thrown')
+  }
+
+  try {
+    await log.appendBatch([{ c: 3, prev: 'abc123' }])
+    t.fail('batch error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('hash'), 'batch error thrown')
+  }
 
   t.teardown(() => log.stop())
 })
