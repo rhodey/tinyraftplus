@@ -61,6 +61,16 @@ async function main() {
 main().catch(console.log)
 ```
 
+### Output
+```
+append 0 { a: 1 }
+append 1 { b: 2 }
+append 2 { c: 3 }
+head { c: 3 }
+head { c: 3 }
+head { c: 3 }
+```
+
 ## Test
 ```
 npm run test
