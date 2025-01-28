@@ -64,11 +64,6 @@ async function main() {
 main().catch(console.log)
 ```
 
-## Configuration
-+ [tinyraft](https://www.npmjs.com/package/tinyraft) configs
-+ [tinyraftplus](https://github.com/rhodey/tinyraftplus/blob/master/index.js#L17) configs
-+ [sqlite based log](https://github.com/rhodey/tinyraftplus/blob/master/index.js#L227)
-
 ## Output
 ```
 append 0 { a: 1 }
@@ -78,6 +73,11 @@ head { c: 3 }
 head { c: 3 }
 head { c: 3 }
 ```
+
+## Configuration
++ [tinyraft](https://www.npmjs.com/package/tinyraft) configs
++ [tinyraftplus](https://github.com/rhodey/tinyraftplus/blob/master/index.js#L17) configs
++ [sqlite based log](https://github.com/rhodey/tinyraftplus/blob/master/index.js#L227)
 
 ## Test
 ```
