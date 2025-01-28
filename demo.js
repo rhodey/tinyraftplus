@@ -23,9 +23,9 @@ async function main() {
   await sleep(100)
 
   const noHash = (data) => {
-    const copy = { ...data }
-    delete copy.prev
-    return copy
+    data = { ...data }
+    delete data.prev
+    return data
   }
 
   let ok = await nodes[0].append({ a: 1 })
