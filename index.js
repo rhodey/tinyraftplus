@@ -204,6 +204,7 @@ const sortObj = (obj) => {
 
 const sha256 = (obj) => crypto.createHash('sha256').update(JSON.stringify(sortObj(obj))).digest('hex')
 
+// todo: enforce seq is prev + 1
 const enforceChain = (log, data) => {
   if (!data.prev) {
     data.prev = sha256(log.head)
