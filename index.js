@@ -218,7 +218,7 @@ const enforceChainArr = (log, arr) => {
   enforceChain(log, arr[0])
   for (let i = 1; i < arr.length; i++) {
     const head = arr[i - 1]
-    const seq = log.seq + i
+    const seq = (BigInt(log.seq) + BigInt(i)).toString()
     enforceChain({ head, seq }, arr[i])
   }
 }
@@ -278,13 +278,13 @@ class TinyRaftLog {
     if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
     if (next !== seq) { throw new Error(`log append batch next ${next} !== seq ${seq}`) }
     if (!this._open) { throw new Error('log is not open') }
-    enforceChainArr(this, data)
     next = BigInt(next)
     data = data.map((elem, i) => {
       seq = (next + BigInt(i)).toString()
-      elem.seq = seq
-      return sortObj(elem)
+      elem.seq = elem.seq ? elem.seq : seq
+      return elem
     })
+    enforceChainArr(this, data)
     this.log = this.log.concat(data)
     this.seq = seq
     this.head = this.log[seq]
