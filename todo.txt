@@ -37,4 +37,24 @@ write empty to lock
 flush
 
 continue
+
+
+
+write offset - 1 to lock
+flush
+append log
+write offset to offset
+flush
+maybe flush dir
+write empty to lock
+flush
+
+boot
+read offset - 1 from lock
+truncate log to offset
+write offset -1 to offset
+flush
+flush dir
+write empty to lock
+flush
 */
