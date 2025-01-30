@@ -194,7 +194,15 @@ class TinyRaftPlus extends TinyRaft {
   }
 }
 
-const sha256 = (obj) => crypto.createHash('sha256').update(JSON.stringify(obj)).digest('hex')
+const sortObj = (obj) => {
+  if (obj === null) { return null }
+  return Object.keys(obj).sort().reduce((acc, key) => {
+    acc[key] = obj[key]
+    return acc
+  }, {})
+}
+
+const sha256 = (obj) => crypto.createHash('sha256').update(JSON.stringify(sortObj(obj))).digest('hex')
 
 const enforceChain = (log, data) => {
   if (!data.prev) {
@@ -253,14 +261,16 @@ class TinyRaftLog {
     if (next !== seq) { throw new Error(`log append next ${next} !== seq ${seq}`) }
     if (!this._open) { throw new Error('log is not open') }
     enforceChain(this, data)
+    data.seq = seq
+    data = sortObj(data)
     this.log.push(data)
-    this.head = this.log[next]
     this.seq = seq
+    this.head = this.log[seq]
     return { data, seq }
   }
 
   async appendBatch(data, seq=null) {
-    const next = (BigInt(this.seq) + 1n).toString()
+    let next = (BigInt(this.seq) + 1n).toString()
     seq = seq !== null ? seq : next
     if (!Array.isArray(data)) { throw new Error('data must be array') }
     if (data.length <= 0) { throw new Error('data must be array with length >= 1') }
@@ -269,10 +279,16 @@ class TinyRaftLog {
     if (next !== seq) { throw new Error(`log append batch next ${next} !== seq ${seq}`) }
     if (!this._open) { throw new Error('log is not open') }
     enforceChainArr(this, data)
+    next = BigInt(next)
+    data = data.map((elem, i) => {
+      seq = (next + BigInt(i)).toString()
+      elem.seq = seq
+      return sortObj(elem)
+    })
     this.log = this.log.concat(data)
-    this.seq = (BigInt(this.seq) + BigInt(data.length)).toString()
-    this.head = this.log[this.seq]
-    return { data, seq }
+    this.seq = seq
+    this.head = this.log[seq]
+    return { data, seq: next.toString() }
   }
 
   async remove(seq) {
