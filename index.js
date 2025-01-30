@@ -284,6 +284,7 @@ class TinyRaftLog {
       seq = (next + BigInt(i)).toString()
       elem.seq = elem.seq ? elem.seq : seq
       return elem
+      // return sortObj(elem) // todo: why this breaks ?
     })
     enforceChainArr(this, data)
     this.log = this.log.concat(data)
