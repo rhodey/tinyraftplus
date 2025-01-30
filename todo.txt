@@ -1,0 +1,40 @@
+/*
+todo: node groups
+todo: restore via repl
+todo: rpc retry ends on change nodes
+todo: gcp restore = new network id
+todo: protocol message for hash error
+todo: read with majority agree
+
+ecc: 3-5 year server: 0.001% = 1/100_000
+ecc: 2 clouds x 5 servers x 3 procs
+seq: full ack
+seq: node down = ok read only
+
+pgraft = paranoia good raft
+
+100_000 apps
+1_000 updates per app
+1024B per update
+== 102,400,000,000
+
+append cmd
+write seq,aid,aid,etc to lock
+append main log
+append agg logs
+flush
+maybe flush dir
+write empty to lock
+flush
+
+boot
+read seq,aid from lock
+truncate seq main log
+truncate seq agg logs
+flush
+flush dir
+write empty to lock
+flush
+
+continue
+*/

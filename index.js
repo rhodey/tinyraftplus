@@ -1,18 +1,10 @@
 const crypto = require('crypto')
 const TinyRaft = require('tinyraft')
-const Decimal = require('decimal.js')
 
 const ACK = 'ack'
 const APPEND = 'append'
 const FORWARD = 'forward'
 const FOLLOWER = 'follower'
-
-/*
-todo: node groups
-todo: restore via repl
-todo: rpc retry ends on change nodes
-todo: gcp restore = new network id
-*/
 
 const defaults = {
   heartbeatTimeout: 500,
@@ -253,7 +245,7 @@ class TinyRaftLog {
   }
 
   async append(data, seq=null) {
-    const next = new Decimal(this.seq).add(1).toString()
+    const next = (BigInt(this.seq) + 1n).toString()
     seq = seq !== null ? seq : next
     if (!isObj(data)) { throw new Error('data must be object') }
     if (typeof seq !== 'string') { throw new Error('seq must be string') }
@@ -268,17 +260,17 @@ class TinyRaftLog {
   }
 
   async appendBatch(data, seq=null) {
-    const next = new Decimal(this.seq).add(1).toString()
+    const next = (BigInt(this.seq) + 1n).toString()
     seq = seq !== null ? seq : next
     if (!Array.isArray(data)) { throw new Error('data must be array') }
     if (data.length <= 0) { throw new Error('data must be array with length >= 1') }
     if (typeof seq !== 'string') { throw new Error('seq must be string') }
     if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
-    if (next !== seq) { throw new Error(`log append next ${next} !== seq ${seq}`) }
+    if (next !== seq) { throw new Error(`log append batch next ${next} !== seq ${seq}`) }
     if (!this._open) { throw new Error('log is not open') }
     enforceChainArr(this, data)
     this.log = this.log.concat(data)
-    this.seq = new Decimal(this.seq).add(data.length).toString()
+    this.seq = (BigInt(this.seq) + BigInt(data.length)).toString()
     this.head = this.log[this.seq]
     return { data, seq }
   }
@@ -287,14 +279,14 @@ class TinyRaftLog {
     if (typeof seq !== 'string') { throw new Error('seq must be string') }
     if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
     if (!this._open) { throw new Error('log is not open') }
-    seq = new Decimal(seq)
-    if (seq.lessThan(0)) { throw new Error('seq must be >= 0') }
-    this.seq = new Decimal(this.seq)
-    if (seq.greaterThan(this.seq)) { return '0' }
-    this.log = this.log.slice(0, seq.toNumber())
-    const removed = this.seq.sub(seq).add(1)
-    this.seq = seq.sub(1).toString()
-    this.head = this.log[parseInt(this.seq)]
+    seq = BigInt(seq)
+    if (seq < 0n) { throw new Error('seq must be >= 0') }
+    this.seq = BigInt(this.seq)
+    if (seq > this.seq) { return '0' }
+    this.log = this.log.slice(0, parseInt(seq.toString()))
+    const removed = (this.seq - seq) + 1n
+    this.seq = (seq - 1n).toString()
+    this.head = this.log[this.seq]
     return removed.toString()
   }
 }
