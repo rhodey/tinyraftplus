@@ -1,9 +1,9 @@
 const test = require('tape')
 const { FsLog } = require('../lib/fslog.js')
 
-test('test append 3', async (t) => {
-  t.plan(14)
-  const log = new FsLog('/tmp/', 'test')
+test('test append, stop, start, append', async (t) => {
+  t.plan(20)
+  let log = new FsLog('/tmp/', 'test')
 
   await log.del()
   await log.start()
@@ -28,6 +28,19 @@ test('test append 3', async (t) => {
   ok = await log.append(data)
   t.equal(ok.seq, '2', 'seq = 2')
   t.equal(log.seq, '2', 'seq = 2')
+  t.deepEqual(ok.data, data, 'ok.data = data')
+  t.deepEqual(log.head, data, 'head = data')
+  await log.stop()
+
+  log = new FsLog('/tmp/', 'test')
+  await log.start()
+  t.equal(log.seq, '2', 'seq = 2 again')
+  t.deepEqual(log.head, data, 'head = data again')
+
+  data = { d: 5 }
+  ok = await log.append(data)
+  t.equal(ok.seq, '3', 'seq = 3')
+  t.equal(log.seq, '3', 'seq = 3')
   t.deepEqual(ok.data, data, 'ok.data = data')
   t.deepEqual(log.head, data, 'head = data')
 
