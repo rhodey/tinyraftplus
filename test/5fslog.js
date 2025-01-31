@@ -46,3 +46,35 @@ test('test append, stop, start, append', async (t) => {
 
   t.teardown(() => log.stop())
 })
+
+test('test append one, stop, start, append', async (t) => {
+  t.plan(12)
+  let log = new FsLog('/tmp/', 'test')
+
+  await log.del()
+  await log.start()
+  t.equal(log.seq, '-1', 'seq = -1')
+  t.equal(log.head, null, 'head = null')
+
+  let data = { a: 1 }
+  let ok = await log.append(data)
+  t.equal(ok.seq, '0', 'seq = 0')
+  t.equal(log.seq, '0', 'seq = 0')
+  t.deepEqual(ok.data, data, 'ok.data = data')
+  t.deepEqual(log.head, data, 'head = data')
+  await log.stop()
+
+  log = new FsLog('/tmp/', 'test')
+  await log.start()
+  t.equal(log.seq, '0', 'seq = 0 again')
+  t.deepEqual(log.head, data, 'head = data again')
+
+  data = { b: 2 }
+  ok = await log.append(data)
+  t.equal(ok.seq, '1', 'seq = 1')
+  t.equal(log.seq, '1', 'seq = 1')
+  t.deepEqual(ok.data, data, 'ok.data = data')
+  t.deepEqual(log.head, data, 'head = data')
+
+  t.teardown(() => log.stop())
+})
