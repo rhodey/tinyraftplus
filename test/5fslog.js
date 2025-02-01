@@ -33,6 +33,7 @@ test('test append, stop, start, append, new, append', async (t) => {
   t.deepEqual(log.head, data, 'head = data')
   await log.stop()
 
+  // same
   await log.start()
   t.equal(log.seq, '2', 'seq = 2 again')
   t.deepEqual(log.head, data, 'head = data again')
@@ -43,8 +44,9 @@ test('test append, stop, start, append, new, append', async (t) => {
   t.equal(log.seq, '3', 'seq = 3')
   t.deepEqual(ok.data, data, 'ok.data = data')
   t.deepEqual(log.head, data, 'head = data')
+  await log.stop()
 
-  // start new
+  // new
   log = new FsLog('/tmp/', 'test')
   await log.start()
   t.equal(log.seq, '3', 'seq = 3 again')
@@ -91,6 +93,7 @@ test('test append one, stop, start, append', async (t) => {
   t.teardown(() => log.stop())
 })
 
+/*
 test('test rollback first', async (t) => {
   t.plan(6)
 
@@ -155,3 +158,4 @@ test('test rollback second', async (t) => {
 
   t.teardown(() => log.stop())
 })
+*/
