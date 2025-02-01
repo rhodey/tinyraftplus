@@ -1,6 +1,7 @@
 const test = require('tape')
 const { FsLog } = require('../lib/fslog.js')
 
+// todo: test start, stop, start
 test('test append, stop, start, append', async (t) => {
   t.plan(20)
   let log = new FsLog('/tmp/', 'test')
