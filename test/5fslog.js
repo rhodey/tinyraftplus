@@ -105,11 +105,8 @@ test('test rollback first', async (t) => {
   t.equal(log.seq, '-1', 'seq = -1')
   t.equal(log.head, null, 'head = null')
 
-  let data = null
-  let ok = null
-
   try {
-    data = { a: 1 }
+    const data = { a: 1 }
     await log.append(data)
     t.fail('no error thrown')
   } catch (err) {
@@ -118,9 +115,43 @@ test('test rollback first', async (t) => {
 
   await log.stop()
   await log.start()
-  t.pass('ok restart')
+  t.pass('restart ok')
   t.equal(log.seq, '-1', 'seq = -1 again')
   t.equal(log.head, null, 'head = null again')
+
+  t.teardown(() => log.stop())
+})
+
+test('test rollback second', async (t) => {
+  t.plan(8)
+
+  const rollbackCb = (seq) => {
+    if (seq === '1') { throw new Error('test roll') }
+  }
+
+  const log = new FsLog('/tmp/', 'test', { rollbackCb })
+  await log.del()
+  await log.start()
+
+  const data = { a: 1 }
+  const ok = await log.append(data)
+  t.equal(ok.seq, '0', 'seq = 0')
+  t.equal(log.seq, '0', 'seq = 0')
+  t.deepEqual(ok.data, data, 'ok.data = data')
+  t.deepEqual(log.head, data, 'head = data')
+
+  try {
+    await log.append({ b: 2 })
+    t.fail('no error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('test roll'), 'error thrown')
+  }
+
+  await log.stop()
+  await log.start()
+  t.pass('restart ok')
+  t.equal(log.seq, '0', 'seq = 0 again')
+  t.equal(log.head, data, 'head = data again')
 
   t.teardown(() => log.stop())
 })
