@@ -100,14 +100,14 @@ test('test append out of order', async (t) => {
 
   try {
     await log.append({}, '4')
-    t.fail('error thrown')
+    t.fail('no error thrown')
   } catch (err) {
     t.ok(err.message.includes('!== seq'), 'error thrown')
   }
 
   try {
     await log.appendBatch([{ a: 1}, { b: 2 }], '4')
-    t.fail('batch error thrown')
+    t.fail('no batch error thrown')
   } catch (err) {
     t.ok(err.message.includes('!== seq'), 'batch error thrown')
   }
@@ -125,14 +125,14 @@ test('test append bad hash', async (t) => {
 
   try {
     await log.append({ c: 3, prev: 'abc123' })
-    t.fail('error thrown')
+    t.fail('no error thrown')
   } catch (err) {
     t.ok(err.message.includes('hash'), 'error thrown')
   }
 
   try {
     await log.appendBatch([{ c: 3, prev: 'abc123' }])
-    t.fail('batch error thrown')
+    t.fail('no batch error thrown')
   } catch (err) {
     t.ok(err.message.includes('hash'), 'batch error thrown')
   }
