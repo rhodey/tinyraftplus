@@ -157,3 +157,44 @@ test('test rollback second', async (t) => {
 
   t.teardown(() => log.stop())
 })
+
+test('test rollback third', async (t) => {
+  t.plan(12)
+
+  const rollbackCb = (seq) => {
+    if (seq === '2') { throw new Error('test roll') }
+  }
+
+  const log = new FsLog('/tmp/', 'test', { rollbackCb })
+  await log.del()
+  await log.start()
+
+  let data = { a: 1 }
+  let ok = await log.append(data)
+  t.equal(ok.seq, '0', 'seq = 0')
+  t.equal(log.seq, '0', 'seq = 0')
+  t.deepEqual(ok.data, data, 'ok.data = data')
+  t.deepEqual(log.head, data, 'head = data')
+
+  data = { b: 2 }
+  ok = await log.append(data)
+  t.equal(ok.seq, '1', 'seq = 1')
+  t.equal(log.seq, '1', 'seq = 1')
+  t.deepEqual(ok.data, data, 'ok.data = data')
+  t.deepEqual(log.head, data, 'head = data')
+
+  try {
+    await log.append({ c: 3 })
+    t.fail('no error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('test roll'), 'error thrown')
+  }
+
+  await log.stop()
+  await log.start()
+  t.pass('restart ok')
+  t.equal(log.seq, '1', 'seq = 1 again')
+  t.deepEqual(log.head, data, 'head = data again')
+
+  t.teardown(() => log.stop())
+})
