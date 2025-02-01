@@ -1,9 +1,8 @@
 const test = require('tape')
 const { FsLog } = require('../lib/fslog.js')
 
-// todo: test start, stop, start
-test('test append, stop, start, append', async (t) => {
-  t.plan(20)
+test('test append, stop, start, append, new, append', async (t) => {
+  t.plan(26)
   let log = new FsLog('/tmp/', 'test')
 
   await log.del()
@@ -11,6 +10,7 @@ test('test append, stop, start, append', async (t) => {
   t.equal(log.seq, '-1', 'seq = -1')
   t.equal(log.head, null, 'head = null')
 
+  // start, stop same
   let data = { a: 1 }
   let ok = await log.append(data)
   t.equal(ok.seq, '0', 'seq = 0')
@@ -33,15 +33,27 @@ test('test append, stop, start, append', async (t) => {
   t.deepEqual(log.head, data, 'head = data')
   await log.stop()
 
-  log = new FsLog('/tmp/', 'test')
   await log.start()
   t.equal(log.seq, '2', 'seq = 2 again')
   t.deepEqual(log.head, data, 'head = data again')
 
-  data = { d: 5 }
+  data = { d: 4 }
   ok = await log.append(data)
   t.equal(ok.seq, '3', 'seq = 3')
   t.equal(log.seq, '3', 'seq = 3')
+  t.deepEqual(ok.data, data, 'ok.data = data')
+  t.deepEqual(log.head, data, 'head = data')
+
+  // start new
+  log = new FsLog('/tmp/', 'test')
+  await log.start()
+  t.equal(log.seq, '3', 'seq = 3 again')
+  t.deepEqual(log.head, data, 'head = data again')
+
+  data = { e: 5 }
+  ok = await log.append(data)
+  t.equal(ok.seq, '4', 'seq = 4')
+  t.equal(log.seq, '4', 'seq = 4')
   t.deepEqual(ok.data, data, 'ok.data = data')
   t.deepEqual(log.head, data, 'head = data')
 
@@ -65,7 +77,6 @@ test('test append one, stop, start, append', async (t) => {
   t.deepEqual(log.head, data, 'head = data')
   await log.stop()
 
-  log = new FsLog('/tmp/', 'test')
   await log.start()
   t.equal(log.seq, '0', 'seq = 0 again')
   t.deepEqual(log.head, data, 'head = data again')
