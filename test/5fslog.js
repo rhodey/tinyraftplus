@@ -13,7 +13,7 @@ const toObj = (buf) => {
 }
 
 test('test append, stop, start, append, new, append', async (t) => {
-  t.plan(20)
+  t.plan(26)
   let log = new FsLog('/tmp/', 'test')
 
   await log.del()
@@ -55,7 +55,6 @@ test('test append, stop, start, append, new, append', async (t) => {
   t.equal(log.seq, '3', 'seq = 3')
   t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
-  /*
   await log.stop()
 
   // new
@@ -70,12 +69,10 @@ test('test append, stop, start, append, new, append', async (t) => {
   t.equal(log.seq, '4', 'seq = 4')
   t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
-  */
 
   t.teardown(() => log.stop())
 })
 
-/*
 test('test append one, stop, start, append', async (t) => {
   t.plan(12)
   const log = new FsLog('/tmp/', 'test')
@@ -106,7 +103,6 @@ test('test append one, stop, start, append', async (t) => {
 
   t.teardown(() => log.stop())
 })
-*/
 
 /*
 test('test rollback first', async (t) => {
