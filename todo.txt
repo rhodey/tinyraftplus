@@ -58,3 +58,7 @@ flush dir
 write empty to lock
 flush
 */
+
+
+crc,seq,len,enc(seq,prev,buf)
+crc,seq,off
