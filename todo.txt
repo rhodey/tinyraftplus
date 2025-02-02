@@ -59,6 +59,8 @@ write empty to lock
 flush
 */
 
+seq,off,seq,off,
+buf,buf,
 
-crc,seq,len,enc(seq,prev,buf)
 crc,seq,off
+crc,seq,len,enc(seq,prev,buf)
