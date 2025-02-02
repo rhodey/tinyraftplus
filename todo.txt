@@ -59,7 +59,7 @@ write empty to lock
 flush
 */
 
-seq,off,seq,off,
+seq,off,len,seq,off,len,
 buf,buf,
 
 crc,seq,off
