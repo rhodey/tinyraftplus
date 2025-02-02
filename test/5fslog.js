@@ -104,7 +104,6 @@ test('test append one, stop, start, append', async (t) => {
   t.teardown(() => log.stop())
 })
 
-/*
 test('test rollback first', async (t) => {
   t.plan(6)
 
@@ -121,7 +120,7 @@ test('test rollback first', async (t) => {
 
   try {
     const data = { a: 1 }
-    await log.append(data)
+    await log.append(toBuf(data))
     t.fail('no error thrown')
   } catch (err) {
     t.ok(err.message.includes('test roll'), 'error thrown')
@@ -135,9 +134,7 @@ test('test rollback first', async (t) => {
 
   t.teardown(() => log.stop())
 })
-*/
 
-/*
 test('test rollback second', async (t) => {
   t.plan(8)
 
@@ -150,14 +147,14 @@ test('test rollback second', async (t) => {
   await log.start()
 
   const data = { a: 1 }
-  const ok = await log.append(data)
+  const ok = await log.append(toBuf(data))
   t.equal(ok.seq, '0', 'seq = 0')
   t.equal(log.seq, '0', 'seq = 0')
-  t.deepEqual(ok.data, data, 'ok.data = data')
-  t.deepEqual(log.head, data, 'head = data')
+  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
+  t.deepEqual(toObj(log.head), data, 'head = data')
 
   try {
-    await log.append({ b: 2 })
+    await log.append(toBuf({ b: 2 }))
     t.fail('no error thrown')
   } catch (err) {
     t.ok(err.message.includes('test roll'), 'error thrown')
@@ -167,11 +164,12 @@ test('test rollback second', async (t) => {
   await log.start()
   t.pass('restart ok')
   t.equal(log.seq, '0', 'seq = 0 again')
-  t.deepEqual(log.head, data, 'head = data again')
+  t.deepEqual(toObj(log.head), data, 'head = data again')
 
   t.teardown(() => log.stop())
 })
 
+/*
 test('test rollback third', async (t) => {
   t.plan(12)
 
