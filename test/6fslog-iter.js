@@ -13,19 +13,20 @@ const toObj = (buf) => {
 }
 
 test('test append three then iter', async (t) => {
-  t.plan(2)
+  t.plan(5)
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
 
-  await log.append(toBuf({ a: 1 }))
-  await log.append(toBuf({ b: 2 }))
-  await log.append(toBuf({ c: 3 }))
+  const data = [{ a: 1 }, { b: 2 }, { c: 3}]
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
 
   let seq = 0
   for await (let next of log.iter(seq.toString())) {
     next = toObj(next)
-    console.log(seq, next)
+    t.deepEqual(next, data[seq], 'data correct')
     seq++
   }
 
@@ -35,21 +36,120 @@ test('test append three then iter', async (t) => {
 })
 
 test('test append one then iter', async (t) => {
-  t.plan(2)
+  t.plan(3)
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
 
-  await log.append(toBuf({ c: 3 }))
+  const data = [{ a: 1 }]
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
 
   let seq = 0
   for await (let next of log.iter(seq.toString())) {
     next = toObj(next)
-    console.log(seq, next)
+    t.deepEqual(next, data[seq], 'data correct')
     seq++
   }
 
   t.pass('no errors')
   t.equal(seq, 1, 'read 1 buf')
+  t.teardown(() => log.stop())
+})
+
+test('test append three then iter step size 1', async (t) => {
+  t.plan(5)
+  const log = new FsLog('/tmp/', 'test')
+  await log.del()
+  await log.start()
+
+  const data = [{ a: 1 }, { b: 2 }, { c: 3}]
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
+
+  let seq = 0
+  const opts = { iterStepSize: 1 }
+  for await (let next of log.iter(seq.toString(), opts)) {
+    next = toObj(next)
+    t.deepEqual(next, data[seq], 'data correct')
+    seq++
+  }
+
+  t.pass('no errors')
+  t.equal(seq, 3, 'read three bufs')
+  t.teardown(() => log.stop())
+})
+
+test('test append three then iter step size 2', async (t) => {
+  t.plan(5)
+  const log = new FsLog('/tmp/', 'test')
+  await log.del()
+  await log.start()
+
+  const data = [{ a: 1 }, { b: 2 }, { c: 3}]
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
+
+  let seq = 0
+  const opts = { iterStepSize: 2 }
+  for await (let next of log.iter(seq.toString(), opts)) {
+    next = toObj(next)
+    t.deepEqual(next, data[seq], 'data correct')
+    seq++
+  }
+
+  t.pass('no errors')
+  t.equal(seq, 3, 'read three bufs')
+  t.teardown(() => log.stop())
+})
+
+test('test append three then iter step size 3', async (t) => {
+  t.plan(5)
+  const log = new FsLog('/tmp/', 'test')
+  await log.del()
+  await log.start()
+
+  const data = [{ a: 1 }, { b: 2 }, { c: 3}]
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
+
+  let seq = 0
+  const opts = { iterStepSize: 3 }
+  for await (let next of log.iter(seq.toString(), opts)) {
+    next = toObj(next)
+    t.deepEqual(next, data[seq], 'data correct')
+    seq++
+  }
+
+  t.pass('no errors')
+  t.equal(seq, 3, 'read three bufs')
+  t.teardown(() => log.stop())
+})
+
+test('test append three then iter step size 4', async (t) => {
+  t.plan(5)
+  const log = new FsLog('/tmp/', 'test')
+  await log.del()
+  await log.start()
+
+  const data = [{ a: 1 }, { b: 2 }, { c: 3}]
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
+
+  let seq = 0
+  const opts = { iterStepSize: 4 }
+  for await (let next of log.iter(seq.toString(), opts)) {
+    next = toObj(next)
+    t.deepEqual(next, data[seq], 'data correct')
+    seq++
+  }
+
+  t.pass('no errors')
+  t.equal(seq, 3, 'read three bufs')
   t.teardown(() => log.stop())
 })
