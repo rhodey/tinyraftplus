@@ -207,3 +207,22 @@ test('test iter stops based off seq at time of create', async (t) => {
   t.equal(seq, 3, 'read three bufs')
   t.teardown(() => log.stop())
 })
+
+test('test iter returns nothing if seq > log.seq', async (t) => {
+  t.plan(1)
+  const log = new FsLog('/tmp/', 'test')
+  await log.del()
+  await log.start()
+
+  const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
+
+  let seq = 3
+  const iter = log.iter(seq.toString())
+  for await (let next of iter) { seq++ }
+
+  t.equal(seq, 3, 'read no bufs')
+  t.teardown(() => log.stop())
+})
