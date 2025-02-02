@@ -13,7 +13,7 @@ const toObj = (buf) => {
 }
 
 test('test append, stop, start, append, new, append', async (t) => {
-  t.plan(14)
+  t.plan(20)
   let log = new FsLog('/tmp/', 'test')
 
   await log.del()
@@ -42,7 +42,6 @@ test('test append, stop, start, append, new, append', async (t) => {
   t.equal(log.seq, '2', 'seq = 2')
   t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
-  /*
   await log.stop()
 
   // start, stop same
