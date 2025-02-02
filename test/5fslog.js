@@ -135,7 +135,9 @@ test('test rollback first', async (t) => {
 
   t.teardown(() => log.stop())
 })
+*/
 
+/*
 test('test rollback second', async (t) => {
   t.plan(8)
 
