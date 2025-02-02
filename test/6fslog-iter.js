@@ -153,3 +153,32 @@ test('test append three then iter step size 4', async (t) => {
   t.equal(seq, 3, 'read three bufs')
   t.teardown(() => log.stop())
 })
+
+test('test append three then iter with stop and step size 1', async (t) => {
+  t.plan(4)
+  const log = new FsLog('/tmp/', 'test')
+  await log.del()
+  await log.start()
+
+  const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
+
+  let seq = 0
+  const opts = { iterStepSize: 1 }
+  try {
+    for await (let next of log.iter(seq.toString(), opts)) {
+      next = toObj(next)
+      t.deepEqual(next, data[seq], 'data correct')
+      seq++
+      if (seq === 1) { await log.stop() }
+    }
+  } catch (err) {
+    t.ok(err.message.includes('iter is not open'), 'error thrown')
+  }
+
+  t.pass('no errors')
+  t.equal(seq, 1, 'read three bufs')
+  t.teardown(() => log.stop())
+})
