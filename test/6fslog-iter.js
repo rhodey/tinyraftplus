@@ -182,3 +182,28 @@ test('test append three then iter with stop and step size 1', async (t) => {
   t.equal(seq, 1, 'read three bufs')
   t.teardown(() => log.stop())
 })
+
+test('test iter stops based off seq at time of create', async (t) => {
+  t.plan(5)
+  const log = new FsLog('/tmp/', 'test')
+  await log.del()
+  await log.start()
+
+  const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
+
+  let seq = 0
+  const iter = log.iter(seq.toString())
+  await log.append(toBuf({ d: 4 }))
+  for await (let next of iter) {
+    next = toObj(next)
+    t.deepEqual(next, data[seq], 'data correct')
+    seq++
+  }
+
+  t.pass('no errors')
+  t.equal(seq, 3, 'read three bufs')
+  t.teardown(() => log.stop())
+})
