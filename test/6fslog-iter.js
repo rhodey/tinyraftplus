@@ -226,3 +226,109 @@ test('test iter returns nothing if seq > log.seq', async (t) => {
   t.equal(seq, 3, 'read no bufs')
   t.teardown(() => log.stop())
 })
+
+test('test iter stopped if last > trunc', async (t) => {
+  t.plan(3)
+  const log = new FsLog('/tmp/', 'test')
+  await log.del()
+  await log.start()
+
+  const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
+
+  let seq = 0
+  const iter = log.iter(seq.toString())
+  await log.truncate('-1')
+
+  try {
+    for await (let next of iter) { seq++ }
+    t.fail('no error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('iter is not open'), 'iter stopped')
+  }
+
+  t.equal(seq, 0, 'read no bufs')
+  t.equal(log.iterators.length, 0, 'iter removed')
+  t.teardown(() => log.stop())
+})
+
+test('test iter stopped if last > trunc again', async (t) => {
+  t.plan(3)
+  const log = new FsLog('/tmp/', 'test')
+  await log.del()
+  await log.start()
+
+  const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
+
+  let seq = 0
+  const iter = log.iter(seq.toString())
+  await log.truncate('0')
+
+  try {
+    for await (let next of iter) { seq++ }
+    t.fail('no error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('iter is not open'), 'iter stopped')
+  }
+
+  t.equal(seq, 0, 'read no bufs')
+  t.equal(log.iterators.length, 0, 'iter removed')
+  t.teardown(() => log.stop())
+})
+
+test('test iter not stopped if last < trunc', async (t) => {
+  t.plan(2)
+  const log = new FsLog('/tmp/', 'test')
+  await log.del()
+  await log.start()
+
+  const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
+
+  let seq = 0
+  const iter = log.iter(seq.toString())
+
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
+
+  await log.truncate('3')
+  for await (let next of iter) { seq++ }
+
+  t.equal(seq, 3, 'read 3 bufs')
+  t.equal(log.iterators.length, 1, 'iter not removed')
+  t.teardown(() => log.stop())
+})
+
+test('test iter not stopped if last = trunc', async (t) => {
+  t.plan(2)
+  const log = new FsLog('/tmp/', 'test')
+  await log.del()
+  await log.start()
+
+  const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
+
+  let seq = 0
+  const iter = log.iter(seq.toString())
+
+  for (const obj of data) {
+    await log.append(toBuf(obj))
+  }
+
+  await log.truncate('2')
+  for await (let next of iter) { seq++ }
+
+  t.equal(seq, 3, 'read 3 bufs')
+  t.equal(log.iterators.length, 1, 'iter not removed')
+  t.teardown(() => log.stop())
+})
