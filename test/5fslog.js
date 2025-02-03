@@ -210,15 +210,19 @@ test('test rollback third', async (t) => {
   t.teardown(() => log.stop())
 })
 
-test('test append, truncate, append, truncate, append', async (t) => {
-  t.plan(10)
+test('test truncate, append, truncate, append, truncate, append', async (t) => {
+  t.plan(12)
   let log = new FsLog('/tmp/', 'test')
 
   await log.del()
   await log.start()
 
+  await log.truncate('-1')
+  t.equal(log.seq, '-1', 'seq = -1')
+  t.equal(log.head, null, 'head = null')
+
   const data = []
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 10; i++) {
     data.push(toBuf({ i }))
   }
 
@@ -242,11 +246,68 @@ test('test append, truncate, append, truncate, append', async (t) => {
   t.equal(log.seq, '0', 'seq = 0')
   t.deepEqual(toObj(log.head), toObj(data[3]), 'head = data')
 
-  i = 3
+  i = 4
   await log.append(data[++i])
   t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
   await log.append(data[++i])
   t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
+
+  t.teardown(() => log.stop())
+})
+
+test('test log seq -1 and roll forward truncate -1', async (t) => {
+  t.plan(4)
+
+  const rollForwardCb = (seq) => {
+    if (seq === '-1') { throw new Error('test roll') }
+  }
+
+  const log = new FsLog('/tmp/', 'test', { rollForwardCb })
+  await log.del()
+  await log.start()
+
+  await log.truncate('-1')
+  t.pass('no error')
+
+  await log.stop()
+  await log.start()
+  t.pass('restart ok')
+  t.equal(log.seq, '-1', 'seq = -1 again')
+  t.equal(log.head, null, 'head = null')
+
+  t.teardown(() => log.stop())
+})
+
+test('test log seq 0 and roll forward truncate -1', async (t) => {
+  t.plan(4)
+
+  const rollForwardCb = (seq) => {
+    if (seq === '-1') { throw new Error('test roll') }
+  }
+
+  const log = new FsLog('/tmp/', 'test', { rollForwardCb })
+  await log.del()
+  await log.start()
+
+  const data = []
+  for (let i = 0; i < 10; i++) {
+    data.push(toBuf({ i }))
+  }
+
+  await log.append(data[0])
+
+  try {
+    await log.truncate('-1')
+    t.fail('no error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('test roll'), 'error thrown')
+  }
+
+  await log.stop()
+  await log.start()
+  t.pass('restart ok')
+  t.equal(log.seq, '-1', 'seq = -1')
+  t.deepEqual(log.head, null, 'head = data')
 
   t.teardown(() => log.stop())
 })
