@@ -232,7 +232,7 @@ test('test append, truncate, append, truncate, append', async (t) => {
   t.equal(log.seq, '-1', 'seq = -1')
   t.equal(log.head, null, 'head = null')
 
-  i = -1
+  i = 2
   await log.append(data[++i])
   t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
   await log.append(data[++i])
@@ -240,9 +240,9 @@ test('test append, truncate, append, truncate, append', async (t) => {
 
   await log.truncate('0')
   t.equal(log.seq, '0', 'seq = 0')
-  t.deepEqual(toObj(log.head), toObj(data[0]), 'head = data')
+  t.deepEqual(toObj(log.head), toObj(data[3]), 'head = data')
 
-  i = 2
+  i = 3
   await log.append(data[++i])
   t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
   await log.append(data[++i])
