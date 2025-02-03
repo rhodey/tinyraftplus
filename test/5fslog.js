@@ -209,3 +209,44 @@ test('test rollback third', async (t) => {
 
   t.teardown(() => log.stop())
 })
+
+test('test append, truncate, append, truncate, append', async (t) => {
+  t.plan(10)
+  let log = new FsLog('/tmp/', 'test')
+
+  await log.del()
+  await log.start()
+
+  const data = []
+  for (let i = 0; i < 6; i++) {
+    data.push(toBuf({ i }))
+  }
+
+  let i = -1
+  await log.append(data[++i])
+  t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
+  await log.append(data[++i])
+  t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
+
+  await log.truncate('-1')
+  t.equal(log.seq, '-1', 'seq = -1')
+  t.equal(log.head, null, 'head = null')
+
+  i = -1
+  await log.append(data[++i])
+  t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
+  await log.append(data[++i])
+  t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
+
+  await log.truncate('0')
+  t.equal(log.seq, '0', 'seq = 0')
+  t.deepEqual(toObj(log.head), toObj(data[0]), 'head = data')
+
+  i = 2
+  await log.append(data[++i])
+  t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
+  await log.append(data[++i])
+  t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
+
+  t.teardown(() => log.stop())
+})
