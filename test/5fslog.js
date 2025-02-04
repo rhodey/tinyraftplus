@@ -352,3 +352,70 @@ test('test append batch', async (t) => {
 
   t.teardown(() => log.stop())
 })
+
+test('test rollback batch first', async (t) => {
+  t.plan(6)
+
+  const rollbackCb = (seq) => {
+    if (seq === '0') { throw new Error('test roll') }
+  }
+
+  const log = new FsLog('/tmp/', 'test', { rollbackCb })
+  await log.del()
+  await log.start()
+
+  t.equal(log.seq, '-1', 'seq = -1')
+  t.equal(log.head, null, 'head = null')
+
+  try {
+    const data = [{ a: 1 }]
+    await log.appendBatch(data.map(toBuf))
+    t.fail('no error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('test roll'), 'error thrown')
+  }
+
+  await log.stop()
+  await log.start()
+  t.pass('restart ok')
+  t.equal(log.seq, '-1', 'seq = -1 again')
+  t.equal(log.head, null, 'head = null again')
+
+  t.teardown(() => log.stop())
+})
+
+test('test rollback batch second', async (t) => {
+  t.plan(9)
+
+  const rollbackCb = (seq) => {
+    if (seq === '1') { throw new Error('test roll') }
+  }
+
+  const log = new FsLog('/tmp/', 'test', { rollbackCb })
+  await log.del()
+  await log.start()
+
+  const data = [{ a: 1 }]
+  const ok = await log.appendBatch(data.map(toBuf))
+  t.equal(ok.first, '0', 'first = 0')
+  t.equal(ok.last, '0', 'last = 0')
+  t.equal(log.seq, '0', 'log seq = 0')
+  t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
+  t.deepEqual(toObj(log.head), data[0], 'head = data')
+
+  try {
+    const more = [{ bb: 2 }]
+    await log.appendBatch(more.map(toBuf))
+    t.fail('no error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('test roll'), 'error thrown')
+  }
+
+  await log.stop()
+  await log.start()
+  t.pass('restart ok')
+  t.equal(log.seq, '0', 'seq = 0 again')
+  t.deepEqual(toObj(log.head), data[0], 'head = data')
+
+  t.teardown(() => log.stop())
+})
