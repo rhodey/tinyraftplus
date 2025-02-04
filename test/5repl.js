@@ -6,6 +6,8 @@ const leaders = (nodes) => nodes.filter((node) => node.state === 'leader')
 
 const followers = (nodes) => nodes.filter((node) => node.state === 'follower')
 
+const reset = (nodes) => Promise.all(nodes.map((node) => node.log.del()))
+
 const testSeq = (t, a, b, c, node) => {
   const name = `node ${node.nodeId} ${node.state}`
   t.equal(a, b, `${name} seq = ${b}`)
@@ -21,11 +23,13 @@ const testHead = (t, data, node) => {
 
 const testHeadMulti = (t, data, nodes) => nodes.forEach((node) => testHead(t, data, node))
 
-test('test elect 3 then append 6', async (t) => {
+test('test elect n=3 then append 6', async (t) => {
+  t.teardown(() => stop(nodes))
   const coms = comms()
-  const logs = () => new TinyRaftLog()
+  const logs = (id) => new FsLog('/tmp/', `node-${id}`)
   const opts = { minFollowers: 2 } // force full repl
   const nodes = open(coms, 3, null, {}, logs)
+  await reset(nodes)
   await start(nodes)
   await sleep(100)
 
@@ -71,15 +75,15 @@ test('test elect 3 then append 6', async (t) => {
   ok = await flw[1].append(data)
   testSeqMulti(t, ok.seq, '5', '5', nodes)
   testHeadMulti(t, data, nodes)
-
-  t.teardown(() => stop(nodes))
 })
 
-test('test elect 3 then append batch', async (t) => {
+test('test elect n=3 then append batch', async (t) => {
+  t.teardown(() => stop(nodes))
   const coms = comms()
-  const logs = () => new TinyRaftLog()
+  const logs = (id) => new FsLog('/tmp/', `node-${id}`)
   const opts = { minFollowers: 2 } // force full repl
   const nodes = open(coms, 3, null, {}, logs)
+  await reset(nodes)
   await start(nodes)
   await sleep(100)
 
@@ -123,6 +127,4 @@ test('test elect 3 then append batch', async (t) => {
   ok = await flw[1].append(data)
   testSeqMulti(t, ok.seq, '9', '9', nodes)
   testHeadMulti(t, data, nodes)
-
-  t.teardown(() => stop(nodes))
 })
