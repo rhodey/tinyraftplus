@@ -1,7 +1,11 @@
 const test = require('tape')
-const { open, comms, sleep, start, stop, leaders, followers } = require('./util.js')
+const { sleep, open, comms, start, stop } = require('./util.js')
 
 // const { nodeId, nodes, state, leader, followers, term } = node
+
+const leaders = (nodes) => nodes.filter((node) => node.state === 'leader')
+
+const followers = (nodes) => nodes.filter((node) => node.state === 'follower')
 
 test('test elect n=3', async (t) => {
   t.plan(4)

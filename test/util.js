@@ -1,12 +1,14 @@
-const { TinyRaftPlus, TinyRaftLog } = require('../index.js')
+const { TinyRaftPlus, FsLog } = require('../index.js')
+
+const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 
 function open(comms, a=1, b=null, opts={}, logFn=null) {
   b = b ? b : 1
-  logFn = logFn ? logFn : () => new TinyRaftLog()
+  logFn = logFn ? logFn : (id) => new FsLog('/tmp/', `node-${id}`)
   const nodes = []
   for (let i = b; i <= a; i++) { nodes.push(i) }
   return nodes.map((id) => {
-    const log = logFn()
+    const log = logFn(id)
     const send = (to, msg) => comms.send(to, id, msg)
     const node = new TinyRaftPlus(id, nodes, send, log, opts)
     comms.register(node)
@@ -15,6 +17,7 @@ function open(comms, a=1, b=null, opts={}, logFn=null) {
 }
 
 const sendAll = (to, from, msg) => true
+
 const delayNone = (to, from, msg) => 0
 
 function comms(allowSend=sendAll, delaySend=delayNone) {
@@ -33,16 +36,10 @@ function comms(allowSend=sendAll, delaySend=delayNone) {
   return { register, send }
 }
 
-const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
-
 const start = (nodes) => Promise.all(nodes.map((node) => node.start()))
 
 const stop = (nodes) => Promise.all(nodes.map((node) => node.stop()))
 
-const leaders = (nodes) => nodes.filter((node) => node.state === 'leader')
-
-const followers = (nodes) => nodes.filter((node) => node.state === 'follower')
-
 module.exports = {
-  open, comms, sleep, start, stop, leaders, followers
+  sleep, open, comms, start, stop,
 }

@@ -1,5 +1,6 @@
 const crypto = require('crypto')
 const TinyRaft = require('tinyraft')
+const { FsLog } = require('./lib/fslog.js')
 
 const ACK = 'ack'
 const APPEND = 'append'
@@ -18,9 +19,6 @@ const defaults = {
 
 const noop = () => {}
 
-const isObj = (data) => data && typeof data === 'object' && !Array.isArray(data)
-
-// round timers to nearest 100ms = use less timers
 function timeout(ms, error) {
   let timer = null
   const timedout = new Promise((res, rej) => {
@@ -33,12 +31,12 @@ function timeout(ms, error) {
   return [timer, timedout]
 }
 
-function awaitResolve(promises, count) {
+function awaitResolve(promises, minimum) {
   return new Promise((res, rej) => {
     let c = 0
     promises.forEach((promise) => {
       promise.then(() => {
-        if (++c < count) { return }
+        if (++c < minimum) { return }
         res()
       }).catch(noop)
     })
@@ -74,7 +72,8 @@ class TinyRaftPlus extends TinyRaft {
   }
 
   async start() {
-    if (this._stopped) { throw new Error('raft node is stopped') }
+    const { nodeId: name } = this
+    if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
     if (this.open()) { return super.start() } // tinyraft uses start more than once
     return this.log.start().then(() => super.start())
   }
@@ -87,6 +86,7 @@ class TinyRaftPlus extends TinyRaft {
 
   setNodes(nodes) {
     super.setNodes(nodes)
+    // todo: keep opts setting
     this.minFollowers = Math.ceil((nodes.length - 1) / 2)
   }
 
@@ -132,16 +132,18 @@ class TinyRaftPlus extends TinyRaft {
   }
 
   async _awaitFollowing() {
-    const following = (state) => state.state === FOLLOWER && state.leader !== null
-    if (following(this)) { return }
-    const fn = (state) => following(state)
+    const fn = (state) => state.state === FOLLOWER && state.leader !== null
+    if (fn(this)) { return }
+    // const fn = (state) => following(state) // todo: rm
+    // return awaitChange(this, fn)
     return awaitChange(this, fn)
   }
 
   _fwdToLeader(data) {
+    const { nodeId: name } = this
     const [timer, timedout] = timeout(this.leaderAckTimeout)
     const work = new Promise((res, rej) => {
-      timedout.catch((err) => rej(new Error('forward to leader timeout')))
+      timedout.catch((err) => rej(new Error(`${name} forward to leader timeout`)))
       this._awaitFollowing().then(() => {
         const cid = crypto.randomUUID()
         const msg = { type: FORWARD, cid, data, term: this.term }
@@ -155,9 +157,10 @@ class TinyRaftPlus extends TinyRaft {
   }
 
   _appendToFollowers(data, seq) {
+    const { nodeId: name } = this
     const [timer, timedout] = timeout(this.followerAckTimeout)
     const work = new Promise((res, rej) => {
-      timedout.catch((err) => rej(new Error('append to followers timeout')))
+      timedout.catch((err) => rej(new Error(`${name} append to followers timeout`)))
       const cid = crypto.randomUUID()
       const msg = { type: APPEND, cid, data, seq, term: this.term }
       const acks = this.followers.filter((id) => this.nodeId !== id).map((id) => {
@@ -172,143 +175,28 @@ class TinyRaftPlus extends TinyRaft {
   }
 
   async _appendToSelfAndFollowers(data) {
+    const { nodeId: name } = this
     const need = this.minFollowers
     const have = this.followers.length - 1
-    if (have < need) { throw new Error(`append to self needs ${need} followers have ${have}`) }
+    if (have < need) { throw new Error(`${name} append to self needs ${need} followers have ${have}`) }
     const work = Array.isArray(data) ? this.log.appendBatch(data) : this.log.append(data)
     return work.then((ok) => this._appendToFollowers(ok.data, ok.seq))
   }
 
   async append(data) {
-    if (!isObj(data)) { throw new Error('data must be object') }
-    if (this._stopped) { throw new Error('raft node is stopped') }
+    const { nodeId: name } = this
+    if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
     return this.leader !== this.nodeId ? this._fwdToLeader(data) : this._appendToSelfAndFollowers(data)
   }
 
   async appendBatch(data) {
-    if (!Array.isArray(data)) { throw new Error('data must be array') }
-    const ok = data.every(isObj)
-    if (!ok) { throw new Error('data must be array of objects') }
-    if (this._stopped) { throw new Error('raft node is stopped') }
+    const { nodeId: name } = this
+    if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
     return this.leader !== this.nodeId ? this._fwdToLeader(data) : this._appendToSelfAndFollowers(data)
-  }
-}
-
-const sortObj = (obj) => {
-  if (obj === null) { return null }
-  return Object.keys(obj).sort().reduce((acc, key) => {
-    acc[key] = obj[key]
-    return acc
-  }, {})
-}
-
-const sha256 = (obj) => crypto.createHash('sha256').update(JSON.stringify(sortObj(obj))).digest('hex')
-
-// todo: enforce seq is prev + 1
-const enforceChain = (log, data) => {
-  if (!data.prev) {
-    data.prev = sha256(log.head)
-    return
-  }
-  const theirs = data.prev
-  const ours = sha256(log.head)
-  if (theirs !== ours) { throw new Error(`hash of head ${log.seq} does not match append data.prev`) }
-}
-
-const enforceChainArr = (log, arr) => {
-  enforceChain(log, arr[0])
-  for (let i = 1; i < arr.length; i++) {
-    const head = arr[i - 1]
-    const seq = (BigInt(log.seq) + BigInt(i)).toString()
-    enforceChain({ head, seq }, arr[i])
-  }
-}
-
-class TinyRaftLog {
-  constructor(opts={}) {
-    opts = { ...defaults, ...opts }
-    this.logTimeout = opts.logTimeout
-    this._open = false
-    this.seq = null
-    this.log = null
-    this.head = null
-  }
-
-  open() {
-    return this._open
-  }
-
-  async start() {
-    if (this._open) { return }
-    this.seq = '-1'
-    this.log = []
-    this.head = null
-    this._open = true
-  }
-
-  async stop() {
-    if (!this._open) { return }
-    this.seq = this.log = this.head = null
-    this._open = false
-  }
-
-  async append(data, seq=null) {
-    const next = (BigInt(this.seq) + 1n).toString()
-    seq = seq !== null ? seq : next
-    if (!isObj(data)) { throw new Error('data must be object') }
-    if (typeof seq !== 'string') { throw new Error('seq must be string') }
-    if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
-    if (next !== seq) { throw new Error(`log append next ${next} !== seq ${seq}`) }
-    if (!this._open) { throw new Error('log is not open') }
-    enforceChain(this, data)
-    data.seq = seq
-    data = sortObj(data)
-    this.log.push(data)
-    this.seq = seq
-    this.head = this.log[seq]
-    return { data, seq }
-  }
-
-  async appendBatch(data, seq=null) {
-    let next = (BigInt(this.seq) + 1n).toString()
-    seq = seq !== null ? seq : next
-    if (!Array.isArray(data)) { throw new Error('data must be array') }
-    if (data.length <= 0) { throw new Error('data must be array with length >= 1') }
-    if (typeof seq !== 'string') { throw new Error('seq must be string') }
-    if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
-    if (next !== seq) { throw new Error(`log append batch next ${next} !== seq ${seq}`) }
-    if (!this._open) { throw new Error('log is not open') }
-    next = BigInt(next)
-    data = data.map((elem, i) => {
-      seq = (next + BigInt(i)).toString()
-      elem.seq = elem.seq ? elem.seq : seq
-      return elem
-      // return sortObj(elem) // todo: why this breaks ?
-    })
-    enforceChainArr(this, data)
-    this.log = this.log.concat(data)
-    this.seq = seq
-    this.head = this.log[seq]
-    return { data, seq: next.toString() }
-  }
-
-  async remove(seq) {
-    if (typeof seq !== 'string') { throw new Error('seq must be string') }
-    if (isNaN(parseInt(seq))) { throw new Error('seq must be string number') }
-    if (!this._open) { throw new Error('log is not open') }
-    seq = BigInt(seq)
-    if (seq < 0n) { throw new Error('seq must be >= 0') }
-    this.seq = BigInt(this.seq)
-    if (seq > this.seq) { return '0' }
-    this.log = this.log.slice(0, parseInt(seq.toString()))
-    const removed = (this.seq - seq) + 1n
-    this.seq = (seq - 1n).toString()
-    this.head = this.log[this.seq]
-    return removed.toString()
   }
 }
 
 module.exports = {
   TinyRaftPlus,
-  TinyRaftLog
+  FsLog,
 }
