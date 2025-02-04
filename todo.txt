@@ -1,66 +1,28 @@
 /*
+todo: drop mem log
+todo: node use fslog
+todo: node tests
+
 todo: node groups
 todo: restore via repl
-todo: rpc retry ends on change nodes
+todo: check that retry ends on change nodes
+
 todo: gcp restore = new network id
-todo: protocol message for hash error
-todo: read with majority agree
+todo: protocol message for hash errors
+/*
 
-ecc: 3-5 year server: 0.001% = 1/100_000
-ecc: 2 clouds x 5 servers x 3 procs
-seq: full ack
-seq: node down = ok read only
-
-pgraft = paranoia good raft
+todo: ?? read with majority agree
 
 100_000 apps
 1_000 updates per app
 1024B per update
 == 102,400,000,000
 
-append cmd
-write seq,aid,aid,etc to lock
-append main log
-append agg logs
-flush
-maybe flush dir
-write empty to lock
-flush
+seq,off,len,
+buf,
 
-boot
-read seq,aid from lock
-truncate seq main log
-truncate seq agg logs
-flush
-flush dir
-write empty to lock
-flush
+crc,seq,off,len,
+crc,buf,
 
-continue
-
-
-
-write offset - 1 to lock
-flush
-append log
-write offset to offset
-flush
-maybe flush dir
-write empty to lock
-flush
-
-boot
-read offset - 1 from lock
-truncate log to offset
-write offset -1 to offset
-flush
-flush dir
-write empty to lock
-flush
-*/
-
-seq,off,len,seq,off,len,
-buf,buf,
-
-crc,seq,off
-crc,seq,len,enc(seq,prev,buf)
+crc,seq,off,len,
+crc,enc(prev,seq,buf),
