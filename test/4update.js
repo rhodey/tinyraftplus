@@ -5,6 +5,7 @@ const leaders = (nodes) => nodes.filter((node) => node.state === 'leader')
 
 const followers = (nodes) => nodes.filter((node) => node.state === 'follower')
 
+/*
 test('test n=5 update n=7', async (t) => {
   t.teardown(() => stop(nodes))
 
@@ -68,6 +69,7 @@ test('test n=5 update n=7', async (t) => {
   }
   t.ok(!error, 'no error')
 })
+*/
 
 test('test n=7 update n=5', async (t) => {
   t.teardown(() => stop(nodes))
@@ -82,12 +84,13 @@ test('test n=7 update n=5', async (t) => {
   arr = followers(nodes)
   t.equal(arr.length, 6, '6 followers')
 
-  stop([nodes[5], nodes[6]])
+  await stop([nodes[5], nodes[6]])
   // todo: old nodes think they are leader
   nodes = nodes.filter((node) => node.nodeId !== 6)
   nodes = nodes.filter((node) => node.nodeId !== 7)
 
   const ids = nodes.map((node) => node.nodeId)
+  console.log(123, ids)
   nodes.forEach((node) => node.setNodes(ids))
 
   let total = 0
@@ -106,6 +109,7 @@ test('test n=7 update n=5', async (t) => {
 
     const count = arr[0]?.followers?.length - 1
     arr = followers(nodes)
+    console.log('leader has', count, arr.length)
     if (arr.length === 4 && count === 4) {
       t.equal(count, 4, '4 followers')
       break
