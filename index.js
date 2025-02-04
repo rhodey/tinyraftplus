@@ -134,8 +134,6 @@ class TinyRaftPlus extends TinyRaft {
   async _awaitFollowing() {
     const fn = (state) => state.state === FOLLOWER && state.leader !== null
     if (fn(this)) { return }
-    // const fn = (state) => following(state) // todo: rm
-    // return awaitChange(this, fn)
     return awaitChange(this, fn)
   }
 
