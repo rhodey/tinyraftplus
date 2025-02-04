@@ -2,6 +2,8 @@ const test = require('tape')
 const { open, comms, sleep, start, stop, leaders, followers } = require('./util.js')
 
 test('test n=5 update n=7', async (t) => {
+  t.teardown(() => stop(nodes))
+
   const coms = comms()
   let nodes = open(coms, 5)
   await start(nodes)
@@ -12,12 +14,13 @@ test('test n=5 update n=7', async (t) => {
 
   let arr = leaders(nodes)
   t.equal(arr.length, 1, '1 leader')
+
   const count = arr[0]?.followers?.length - 1
   arr = followers(nodes)
   t.equal(arr.length, 4, '4 followers')
   t.equal(count, 4, '4 followers again')
 
-  let more = open(coms, 7, 6)
+  const more = open(coms, 7, 6)
   t.equal(more.length, 2, 'open 2 more')
   t.equal(more[0].nodeId, 6, 'id = 6')
   t.equal(more[1].nodeId, 7, 'id = 7')
@@ -43,7 +46,6 @@ test('test n=5 update n=7', async (t) => {
 
     const count = arr[0]?.followers?.length - 1
     arr = followers(nodes)
-
     if (arr.length === 6 && count === 6) {
       t.equal(arr.length, 6, '6 followers')
       break
@@ -60,12 +62,12 @@ test('test n=5 update n=7', async (t) => {
     t.equal(arr.length, 1, '1 leader end')
     error = true
   }
-
   t.ok(!error, 'no error')
-  t.teardown(() => stop(nodes))
 })
 
 test('test n=7 update n=5', async (t) => {
+  t.teardown(() => stop(nodes))
+
   const coms = comms()
   let nodes = open(coms, 7)
   await start(nodes)
@@ -100,7 +102,6 @@ test('test n=7 update n=5', async (t) => {
 
     const count = arr[0]?.followers?.length - 1
     arr = followers(nodes)
-
     if (arr.length === 4 && count === 4) {
       t.equal(count, 4, '4 followers')
       break
@@ -117,7 +118,5 @@ test('test n=7 update n=5', async (t) => {
     t.equal(arr.length, 1, '1 leader end')
     error = true
   }
-
   t.ok(!error, 'no error')
-  t.teardown(() => stop(nodes))
 })
