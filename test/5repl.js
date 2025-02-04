@@ -47,10 +47,7 @@ test('test elect n=3 then append 6', async (t) => {
   let ok = nodes.every((node) => [1, 2, 3].includes(node.nodeId))
   t.ok(ok, 'ids correct')
 
-  let leader = leaders(nodes)
-  t.equal(leader.length, 1, '1 leader')
-  leader = leader[0]
-
+  const leader = leaders(nodes)[0]
   const flw = followers(nodes)
   t.equal(flw.length, 2, '2 followers')
 
@@ -88,7 +85,6 @@ test('test elect n=3 then append 6', async (t) => {
   testHeadMulti(t, data, nodes)
 })
 
-/*
 test('test elect n=3 then append batch', async (t) => {
   t.teardown(() => stop(nodes))
   const coms = comms()
@@ -103,41 +99,40 @@ test('test elect n=3 then append batch', async (t) => {
   const flw = followers(nodes)
 
   let data = { a: 1 }
-  let ok = await leader.append(data)
+  let ok = await leader.append(toBuf(data))
   testSeqMulti(t, ok.seq, '0', '0', nodes)
   testHeadMulti(t, data, nodes)
 
   // leader batch
   data = [{ b: 2 }, { c: 3 }]
-  ok = await leader.appendBatch(data)
+  ok = await leader.appendBatch(data.map(toBuf))
   testSeqMulti(t, ok.seq, '1', '2', nodes)
   testHeadMulti(t, data[1], nodes)
 
   data = { d: 4 }
-  ok = await leader.append(data)
+  ok = await leader.append(toBuf(data))
   testSeqMulti(t, ok.seq, '3', '3', nodes)
   testHeadMulti(t, data, nodes)
 
   // follower 1 batch
   data = [{ a: 1 }, { b: 2 }]
-  ok = await flw[0].appendBatch(data)
+  ok = await flw[0].appendBatch(data.map(toBuf))
   testSeqMulti(t, ok.seq, '4', '5', nodes)
   testHeadMulti(t, data[1], nodes)
 
   data = { c: 3 }
-  ok = await flw[0].append(data)
+  ok = await flw[0].append(toBuf(data))
   testSeqMulti(t, ok.seq, '6', '6', nodes)
   testHeadMulti(t, data, nodes)
 
   // follower 2 batch
   data = [{ a: 1 }, { b: 2 }]
-  ok = await flw[1].appendBatch(data)
+  ok = await flw[1].appendBatch(data.map(toBuf))
   testSeqMulti(t, ok.seq, '7', '8', nodes)
   testHeadMulti(t, data[1], nodes)
 
   data = { c: 3 }
-  ok = await flw[1].append(data)
+  ok = await flw[1].append(toBuf(data))
   testSeqMulti(t, ok.seq, '9', '9', nodes)
   testHeadMulti(t, data, nodes)
 })
-*/
