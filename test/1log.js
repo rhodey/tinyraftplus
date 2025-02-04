@@ -305,7 +305,7 @@ test('test log seq 0 and roll forward truncate -1', async (t) => {
 })
 
 test('test append batch', async (t) => {
-  t.plan(19)
+  t.plan(18)
   t.teardown(() => log.stop())
 
   const log = new FsLog('/tmp/', 'test')
@@ -323,8 +323,7 @@ test('test append batch', async (t) => {
 
   data = [{ bb: 2 }, { ccc: 3 }]
   ok = await log.appendBatch(data.map(toBuf))
-  t.equal(ok.first, '1', 'first = 1')
-  t.equal(ok.last, '2', 'last = 2')
+  t.equal(ok.seq, '1', 'seq = 1')
   t.equal(log.seq, '2', 'seq = 2')
   t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
@@ -345,7 +344,7 @@ test('test append batch', async (t) => {
 })
 
 test('test append batch start, stop, new', async (t) => {
-  t.plan(26)
+  t.plan(24)
   t.teardown(() => log.stop())
 
   let log = new FsLog('/tmp/', 'test')
@@ -363,8 +362,7 @@ test('test append batch start, stop, new', async (t) => {
 
   data = [{ bb: 2 }, { ccc: 3 }]
   ok = await log.appendBatch(data.map(toBuf))
-  t.equal(ok.first, '1', 'first = 1')
-  t.equal(ok.last, '2', 'last = 2')
+  t.equal(ok.seq, '1', 'seq = 1')
   t.equal(log.seq, '2', 'seq = 2')
   t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
@@ -386,8 +384,7 @@ test('test append batch start, stop, new', async (t) => {
   t.deepEqual(toObj(log.head), data, 'head = data')
   data = [{ aaa: 5 }, { bbbb: 6 }]
   ok = await log.appendBatch(data.map(toBuf))
-  t.equal(ok.first, '4', 'first = 4')
-  t.equal(ok.last, '5', 'last = 5')
+  t.equal(ok.seq, '4', 'seq = 4')
   t.equal(log.seq, '5', 'seq = 5')
   t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
@@ -430,7 +427,7 @@ test('test rollback batch first', async (t) => {
 })
 
 test('test rollback batch second', async (t) => {
-  t.plan(9)
+  t.plan(8)
   t.teardown(() => log.stop())
 
   const rollbackCb = (seq) => {
@@ -443,8 +440,7 @@ test('test rollback batch second', async (t) => {
 
   const data = [{ a: 1 }]
   const ok = await log.appendBatch(data.map(toBuf))
-  t.equal(ok.first, '0', 'first = 0')
-  t.equal(ok.last, '0', 'last = 0')
+  t.equal(ok.seq, '0', 'seq = 0')
   t.equal(log.seq, '0', 'seq = 0')
   t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data[0], 'head = data')
@@ -465,7 +461,7 @@ test('test rollback batch second', async (t) => {
 })
 
 test('test rollback batch third', async (t) => {
-  t.plan(13)
+  t.plan(12)
   t.teardown(() => log.stop())
 
   const rollbackCb = (seq) => {
@@ -485,8 +481,7 @@ test('test rollback batch third', async (t) => {
 
   data = [{ bb: 2 }, { ccc: 3 }]
   ok = await log.appendBatch(data.map(toBuf))
-  t.equal(ok.first, '1', 'first = 1')
-  t.equal(ok.last, '2', 'last = 2')
+  t.equal(ok.seq, '1', 'seq = 1')
   t.equal(log.seq, '2', 'seq = 2')
   t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
