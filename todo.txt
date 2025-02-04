@@ -10,6 +10,7 @@ todo: crc logs
 todo: check that retry ends on change nodes
 todo: gcp restore = new network id
 todo: protocol message for hash errors
+todo: ?? seq as bigint
 /*
 
 todo: ?? read with majority agree
