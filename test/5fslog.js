@@ -63,7 +63,7 @@ test('test append, stop, start, append, new, append', async (t) => {
   t.equal(log.seq, '3', 'seq = 3 again')
   t.deepEqual(toObj(log.head), data, 'head = data again')
 
-  data = { e: 5 }
+  data = { ee: 5 }
   ok = await log.append(toBuf(data))
   t.equal(ok.seq, '4', 'seq = 4')
   t.equal(log.seq, '4', 'seq = 4')
