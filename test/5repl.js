@@ -1,6 +1,10 @@
 const test = require('tape')
 const { TinyRaftPlus, TinyRaftLog } = require('../index.js')
-const { open, comms, sleep, start, stop, leaders, followers } = require('./util.js')
+const { sleep, open, comms, start, stop } = require('./util.js')
+
+const leaders = (nodes) => nodes.filter((node) => node.state === 'leader')
+
+const followers = (nodes) => nodes.filter((node) => node.state === 'follower')
 
 const testSeq = (t, a, b, c, node) => {
   const name = `node ${node.nodeId} ${node.state}`
