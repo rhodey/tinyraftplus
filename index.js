@@ -74,13 +74,13 @@ class TinyRaftPlus extends TinyRaft {
   async start() {
     const { nodeId: name } = this
     if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
-    if (this.open()) { return super.start() } // tinyraft uses start more than once
-    return this.log.start().then(() => super.start())
+    super.start()
+    return this.log.start()
   }
 
   stop() {
-    super.stop()
     this._stopped = true
+    super.stop()
     return this.log.stop()
   }
 
