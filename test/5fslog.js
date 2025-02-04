@@ -311,3 +311,30 @@ test('test log seq 0 and roll forward truncate -1', async (t) => {
 
   t.teardown(() => log.stop())
 })
+
+test('test append batch', async (t) => {
+  t.plan(11)
+  let log = new FsLog('/tmp/', 'test')
+
+  await log.del()
+  await log.start()
+  t.equal(log.seq, '-1', 'seq = -1')
+  t.equal(log.head, null, 'head = null')
+
+  let data = { a: 1 }
+  let ok = await log.append(toBuf(data))
+  t.equal(ok.seq, '0', 'seq = 0')
+  t.equal(log.seq, '0', 'seq = 0')
+  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
+  t.deepEqual(toObj(log.head), data, 'head = data')
+
+  data = [{ bb: 2 }, { ccc: 3}]
+  ok = await log.appendBatch(data.map(toBuf))
+  t.equal(ok.first, '1', 'first = 1')
+  t.equal(ok.last, '2', 'last = 2')
+  t.equal(log.seq, '2', 'log seq = 2')
+  t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
+  t.deepEqual(toObj(log.head), data[1], 'head = data')
+
+  t.teardown(() => log.stop())
+})
