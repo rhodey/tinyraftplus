@@ -224,7 +224,6 @@ const enforceChainArr = (log, arr) => {
   }
 }
 
-// todo: sqlite with timeouts
 class TinyRaftLog {
   constructor(opts={}) {
     opts = { ...defaults, ...opts }
