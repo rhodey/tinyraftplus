@@ -478,6 +478,7 @@ test('test rollback batch second', async (t) => {
 
 test('test rollback batch third', async (t) => {
   t.plan(13)
+  t.teardown(() => log.stop())
 
   const rollbackCb = (seq) => {
     if (seq === '3') { throw new Error('test roll') }
@@ -515,6 +516,66 @@ test('test rollback batch third', async (t) => {
   t.pass('restart ok')
   t.equal(log.seq, '2', 'seq = 2 again')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
+})
 
+test('test append batch then truncate -1', async (t) => {
+  t.plan(2)
   t.teardown(() => log.stop())
+  let log = new FsLog('/tmp/', 'test')
+
+  await log.del()
+  await log.start()
+
+  const data = [{ a: 1 }, { bb: 2 }]
+  await log.appendBatch(data.map(toBuf))
+  await log.truncate('-1')
+
+  t.equal(log.seq, '-1', 'seq = -1')
+  t.equal(log.head, null, 'head = null')
+})
+
+test('test append batch then truncate 0', async (t) => {
+  t.plan(4)
+  t.teardown(() => log.stop())
+  let log = new FsLog('/tmp/', 'test')
+
+  await log.del()
+  await log.start()
+
+  let data = [{ a: 1 }, { bb: 2 }]
+  await log.appendBatch(data.map(toBuf))
+  await log.truncate('0')
+
+  t.equal(log.seq, '0', 'seq = 0')
+  t.deepEqual(toObj(log.head), data[0], 'head = data')
+
+  data = [{ ccc: 3 }]
+  await log.appendBatch(data.map(toBuf))
+  t.equal(log.seq, '1', 'seq = 1')
+  t.deepEqual(toObj(log.head), data[0], 'head = data')
+})
+
+test('test append batch then truncate 1', async (t) => {
+  t.plan(6)
+  t.teardown(() => log.stop())
+  let log = new FsLog('/tmp/', 'test')
+
+  await log.del()
+  await log.start()
+
+  let data = [{ a: 1 }, { bb: 2 }]
+  await log.appendBatch(data.map(toBuf))
+  await log.truncate('0')
+
+  t.equal(log.seq, '0', 'seq = 0')
+  t.deepEqual(toObj(log.head), data[0], 'head = data')
+
+  data = [{ ccc: 3 }, { dddd: 4 }]
+  await log.appendBatch(data.map(toBuf))
+  t.equal(log.seq, '2', 'seq = 2')
+  t.deepEqual(toObj(log.head), data[1], 'head = data')
+
+  await log.truncate('1')
+  t.equal(log.seq, '1', 'seq = 1')
+  t.deepEqual(toObj(log.head), data[0], 'head = data')
 })
