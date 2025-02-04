@@ -419,3 +419,46 @@ test('test rollback batch second', async (t) => {
 
   t.teardown(() => log.stop())
 })
+
+test('test rollback batch third', async (t) => {
+  t.plan(13)
+
+  const rollbackCb = (seq) => {
+    if (seq === '3') { throw new Error('test roll') }
+  }
+
+  const log = new FsLog('/tmp/', 'test', { rollbackCb })
+  await log.del()
+  await log.start()
+
+  let data = { a: 1 }
+  let ok = await log.append(toBuf(data))
+  t.equal(ok.seq, '0', 'seq = 0')
+  t.equal(log.seq, '0', 'seq = 0')
+  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
+  t.deepEqual(toObj(log.head), data, 'head = data')
+
+  data = [{ bb: 2 }, { ccc: 3 }]
+  ok = await log.appendBatch(data.map(toBuf))
+  t.equal(ok.first, '1', 'first = 1')
+  t.equal(ok.last, '2', 'last = 2')
+  t.equal(log.seq, '2', 'log seq = 2')
+  t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
+  t.deepEqual(toObj(log.head), data[1], 'head = data')
+
+  try {
+    const more = [{ dddd: 4 }]
+    await log.appendBatch(more.map(toBuf))
+    t.fail('no error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('test roll'), 'error thrown')
+  }
+
+  await log.stop()
+  await log.start()
+  t.pass('restart ok')
+  t.equal(log.seq, '2', 'seq = 2 again')
+  t.deepEqual(toObj(log.head), data[1], 'head = data')
+
+  t.teardown(() => log.stop())
+})
