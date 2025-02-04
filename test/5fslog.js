@@ -29,14 +29,14 @@ test('test append, stop, start, append, new, append', async (t) => {
   t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 
-  data = { b: 2 }
+  data = { bb: 2 }
   ok = await log.append(toBuf(data))
   t.equal(ok.seq, '1', 'seq = 1')
   t.equal(log.seq, '1', 'seq = 1')
   t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 
-  data = { c: 3 }
+  data = { ccc: 3 }
   ok = await log.append(toBuf(data))
   t.equal(ok.seq, '2', 'seq = 2')
   t.equal(log.seq, '2', 'seq = 2')
