@@ -313,7 +313,7 @@ test('test log seq 0 and roll forward truncate -1', async (t) => {
 })
 
 test('test append batch', async (t) => {
-  t.plan(11)
+  t.plan(19)
   let log = new FsLog('/tmp/', 'test')
 
   await log.del()
@@ -328,13 +328,27 @@ test('test append batch', async (t) => {
   t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 
-  data = [{ bb: 2 }, { ccc: 3}]
+  data = [{ bb: 2 }, { ccc: 3 }]
   ok = await log.appendBatch(data.map(toBuf))
   t.equal(ok.first, '1', 'first = 1')
   t.equal(ok.last, '2', 'last = 2')
   t.equal(log.seq, '2', 'log seq = 2')
   t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
+
+  data = { d: 4 }
+  ok = await log.append(toBuf(data))
+  t.equal(ok.seq, '3', 'seq = 3')
+  t.equal(log.seq, '3', 'seq = 3')
+  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
+  t.deepEqual(toObj(log.head), data, 'head = data')
+
+  data = { eeee: 5 }
+  ok = await log.append(toBuf(data))
+  t.equal(ok.seq, '4', 'seq = 4')
+  t.equal(log.seq, '4', 'seq = 4')
+  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
+  t.deepEqual(toObj(log.head), data, 'head = data')
 
   t.teardown(() => log.stop())
 })
