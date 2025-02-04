@@ -14,6 +14,8 @@ const toObj = (buf) => {
 
 test('test append three then iter', async (t) => {
   t.plan(3 + 2)
+  t.teardown(() => log.stop())
+
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
@@ -32,11 +34,12 @@ test('test append three then iter', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 3, 'read three bufs')
-  t.teardown(() => log.stop())
 })
 
 test('test append one then iter', async (t) => {
   t.plan(1 + 2)
+  t.teardown(() => log.stop())
+
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
@@ -55,11 +58,12 @@ test('test append one then iter', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 1, 'read 1 buf')
-  t.teardown(() => log.stop())
 })
 
 test('test append three then iter step size 1', async (t) => {
   t.plan(3 + 2)
+  t.teardown(() => log.stop())
+
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
@@ -79,11 +83,12 @@ test('test append three then iter step size 1', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 3, 'read three bufs')
-  t.teardown(() => log.stop())
 })
 
 test('test append three then iter step size 2', async (t) => {
   t.plan(3 + 2)
+  t.teardown(() => log.stop())
+
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
@@ -103,11 +108,12 @@ test('test append three then iter step size 2', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 3, 'read three bufs')
-  t.teardown(() => log.stop())
 })
 
 test('test append three then iter step size 3', async (t) => {
   t.plan(3 + 2)
+  t.teardown(() => log.stop())
+
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
@@ -127,11 +133,12 @@ test('test append three then iter step size 3', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 3, 'read three bufs')
-  t.teardown(() => log.stop())
 })
 
 test('test append three then iter step size 4', async (t) => {
   t.plan(3 + 2)
+  t.teardown(() => log.stop())
+
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
@@ -151,11 +158,12 @@ test('test append three then iter step size 4', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 3, 'read three bufs')
-  t.teardown(() => log.stop())
 })
 
 test('test append three then iter with stop and step size 1', async (t) => {
   t.plan(4)
+  t.teardown(() => log.stop())
+
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
@@ -180,11 +188,12 @@ test('test append three then iter with stop and step size 1', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 1, 'read 1 buf')
-  t.teardown(() => log.stop())
 })
 
 test('test iter stops based off seq at time of create', async (t) => {
   t.plan(5)
+  t.teardown(() => log.stop())
+
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
@@ -205,11 +214,12 @@ test('test iter stops based off seq at time of create', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 3, 'read three bufs')
-  t.teardown(() => log.stop())
 })
 
 test('test iter returns nothing if seq > log.seq', async (t) => {
   t.plan(1)
+  t.teardown(() => log.stop())
+
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
@@ -224,11 +234,12 @@ test('test iter returns nothing if seq > log.seq', async (t) => {
   for await (let next of iter) { seq++ }
 
   t.equal(seq, 3, 'read no bufs')
-  t.teardown(() => log.stop())
 })
 
 test('test iter stopped if last > trunc', async (t) => {
   t.plan(3)
+  t.teardown(() => log.stop())
+
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
@@ -251,11 +262,12 @@ test('test iter stopped if last > trunc', async (t) => {
 
   t.equal(seq, 0, 'read no bufs')
   t.equal(log.iterators.length, 0, 'iter removed')
-  t.teardown(() => log.stop())
 })
 
 test('test iter stopped if last > trunc again', async (t) => {
   t.plan(3)
+  t.teardown(() => log.stop())
+
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
@@ -278,11 +290,12 @@ test('test iter stopped if last > trunc again', async (t) => {
 
   t.equal(seq, 0, 'read no bufs')
   t.equal(log.iterators.length, 0, 'iter removed')
-  t.teardown(() => log.stop())
 })
 
 test('test iter not stopped if last < trunc', async (t) => {
   t.plan(2)
+  t.teardown(() => log.stop())
+
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
@@ -304,11 +317,12 @@ test('test iter not stopped if last < trunc', async (t) => {
 
   t.equal(count, 3, 'read 3 bufs')
   t.equal(log.iterators.length, 1, 'iter not removed')
-  t.teardown(() => log.stop())
 })
 
 test('test iter not stopped if last = trunc', async (t) => {
   t.plan(2)
+  t.teardown(() => log.stop())
+
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
@@ -330,11 +344,12 @@ test('test iter not stopped if last = trunc', async (t) => {
 
   t.equal(count, 3, 'read 3 bufs')
   t.equal(log.iterators.length, 1, 'iter not removed')
-  t.teardown(() => log.stop())
 })
 
 test('test append then append batch then iter', async (t) => {
   t.plan(5 + 2)
+  t.teardown(() => log.stop())
+
   const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
@@ -355,5 +370,4 @@ test('test append then append batch then iter', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 5, 'read 5 bufs')
-  t.teardown(() => log.stop())
 })

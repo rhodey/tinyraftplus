@@ -15,6 +15,7 @@ const toObj = (buf) => {
 test('test append, stop, start, append, new, append', async (t) => {
   t.plan(26)
   let log = new FsLog('/tmp/', 'test')
+  t.teardown(() => log.stop())
 
   await log.del()
   await log.start()
@@ -69,14 +70,13 @@ test('test append, stop, start, append, new, append', async (t) => {
   t.equal(log.seq, '4', 'seq = 4')
   t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
-
-  t.teardown(() => log.stop())
 })
 
 test('test append one, stop, start, append', async (t) => {
   t.plan(12)
-  const log = new FsLog('/tmp/', 'test')
+  t.teardown(() => log.stop())
 
+  const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
   t.equal(log.seq, '-1', 'seq = -1')
@@ -100,12 +100,11 @@ test('test append one, stop, start, append', async (t) => {
   t.equal(log.seq, '1', 'seq = 1')
   t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
-
-  t.teardown(() => log.stop())
 })
 
 test('test rollback first', async (t) => {
   t.plan(6)
+  t.teardown(() => log.stop())
 
   const rollbackCb = (seq) => {
     if (seq === '0') { throw new Error('test roll') }
@@ -131,12 +130,11 @@ test('test rollback first', async (t) => {
   t.pass('restart ok')
   t.equal(log.seq, '-1', 'seq = -1 again')
   t.equal(log.head, null, 'head = null again')
-
-  t.teardown(() => log.stop())
 })
 
 test('test rollback second', async (t) => {
   t.plan(8)
+  t.teardown(() => log.stop())
 
   const rollbackCb = (seq) => {
     if (seq === '1') { throw new Error('test roll') }
@@ -165,12 +163,11 @@ test('test rollback second', async (t) => {
   t.pass('restart ok')
   t.equal(log.seq, '0', 'seq = 0 again')
   t.deepEqual(toObj(log.head), data, 'head = data again')
-
-  t.teardown(() => log.stop())
 })
 
 test('test rollback third', async (t) => {
   t.plan(12)
+  t.teardown(() => log.stop())
 
   const rollbackCb = (seq) => {
     if (seq === '2') { throw new Error('test roll') }
@@ -206,14 +203,13 @@ test('test rollback third', async (t) => {
   t.pass('restart ok')
   t.equal(log.seq, '1', 'seq = 1 again')
   t.deepEqual(toObj(log.head), data, 'head = data again')
-
-  t.teardown(() => log.stop())
 })
 
 test('test truncate, append, truncate, append, truncate, append', async (t) => {
   t.plan(12)
-  let log = new FsLog('/tmp/', 'test')
+  t.teardown(() => log.stop())
 
+  const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
 
@@ -251,12 +247,11 @@ test('test truncate, append, truncate, append, truncate, append', async (t) => {
   t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
   await log.append(data[++i])
   t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
-
-  t.teardown(() => log.stop())
 })
 
 test('test log seq -1 and roll forward truncate -1', async (t) => {
   t.plan(4)
+  t.teardown(() => log.stop())
 
   const rollForwardCb = (seq) => {
     if (seq === '-1') { throw new Error('test roll') }
@@ -274,12 +269,11 @@ test('test log seq -1 and roll forward truncate -1', async (t) => {
   t.pass('restart ok')
   t.equal(log.seq, '-1', 'seq = -1 again')
   t.equal(log.head, null, 'head = null')
-
-  t.teardown(() => log.stop())
 })
 
 test('test log seq 0 and roll forward truncate -1', async (t) => {
   t.plan(4)
+  t.teardown(() => log.stop())
 
   const rollForwardCb = (seq) => {
     if (seq === '-1') { throw new Error('test roll') }
@@ -308,14 +302,13 @@ test('test log seq 0 and roll forward truncate -1', async (t) => {
   t.pass('restart ok')
   t.equal(log.seq, '-1', 'seq = -1')
   t.deepEqual(log.head, null, 'head = data')
-
-  t.teardown(() => log.stop())
 })
 
 test('test append batch', async (t) => {
   t.plan(19)
-  let log = new FsLog('/tmp/', 'test')
+  t.teardown(() => log.stop())
 
+  const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
   t.equal(log.seq, '-1', 'seq = -1')
@@ -349,14 +342,13 @@ test('test append batch', async (t) => {
   t.equal(log.seq, '4', 'seq = 4')
   t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
-
-  t.teardown(() => log.stop())
 })
 
 test('test append batch start, stop, new', async (t) => {
   t.plan(26)
-  let log = new FsLog('/tmp/', 'test')
+  t.teardown(() => log.stop())
 
+  let log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
   t.equal(log.seq, '-1', 'seq = -1')
@@ -405,12 +397,11 @@ test('test append batch start, stop, new', async (t) => {
   await log.start()
   t.equal(log.seq, '5', 'seq = 5')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
-
-  t.teardown(() => log.stop())
 })
 
 test('test rollback batch first', async (t) => {
   t.plan(6)
+  t.teardown(() => log.stop())
 
   const rollbackCb = (seq) => {
     if (seq === '0') { throw new Error('test roll') }
@@ -436,12 +427,11 @@ test('test rollback batch first', async (t) => {
   t.pass('restart ok')
   t.equal(log.seq, '-1', 'seq = -1 again')
   t.equal(log.head, null, 'head = null again')
-
-  t.teardown(() => log.stop())
 })
 
 test('test rollback batch second', async (t) => {
   t.plan(9)
+  t.teardown(() => log.stop())
 
   const rollbackCb = (seq) => {
     if (seq === '1') { throw new Error('test roll') }
@@ -472,8 +462,6 @@ test('test rollback batch second', async (t) => {
   t.pass('restart ok')
   t.equal(log.seq, '0', 'seq = 0 again')
   t.deepEqual(toObj(log.head), data[0], 'head = data')
-
-  t.teardown(() => log.stop())
 })
 
 test('test rollback batch third', async (t) => {
@@ -521,8 +509,8 @@ test('test rollback batch third', async (t) => {
 test('test append batch then truncate -1', async (t) => {
   t.plan(2)
   t.teardown(() => log.stop())
-  let log = new FsLog('/tmp/', 'test')
 
+  const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
 
@@ -537,8 +525,8 @@ test('test append batch then truncate -1', async (t) => {
 test('test append batch then truncate 0', async (t) => {
   t.plan(4)
   t.teardown(() => log.stop())
-  let log = new FsLog('/tmp/', 'test')
 
+  const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
 
@@ -558,8 +546,8 @@ test('test append batch then truncate 0', async (t) => {
 test('test append batch then truncate 1', async (t) => {
   t.plan(6)
   t.teardown(() => log.stop())
-  let log = new FsLog('/tmp/', 'test')
 
+  const log = new FsLog('/tmp/', 'test')
   await log.del()
   await log.start()
 
