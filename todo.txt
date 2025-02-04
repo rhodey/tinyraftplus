@@ -1,8 +1,4 @@
 /*
-todo: drop mem log
-todo: node use fslog
-todo: node tests
-
 todo: node groups
 todo: restore via repl
 todo: crc logs
