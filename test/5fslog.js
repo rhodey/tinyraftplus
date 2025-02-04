@@ -332,7 +332,7 @@ test('test append batch', async (t) => {
   ok = await log.appendBatch(data.map(toBuf))
   t.equal(ok.first, '1', 'first = 1')
   t.equal(ok.last, '2', 'last = 2')
-  t.equal(log.seq, '2', 'log seq = 2')
+  t.equal(log.seq, '2', 'seq = 2')
   t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
 
@@ -349,6 +349,62 @@ test('test append batch', async (t) => {
   t.equal(log.seq, '4', 'seq = 4')
   t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
+
+  t.teardown(() => log.stop())
+})
+
+test('test append batch start, stop, new', async (t) => {
+  t.plan(26)
+  let log = new FsLog('/tmp/', 'test')
+
+  await log.del()
+  await log.start()
+  t.equal(log.seq, '-1', 'seq = -1')
+  t.equal(log.head, null, 'head = null')
+
+  let data = { a: 1 }
+  let ok = await log.append(toBuf(data))
+  t.equal(ok.seq, '0', 'seq = 0')
+  t.equal(log.seq, '0', 'seq = 0')
+  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
+  t.deepEqual(toObj(log.head), data, 'head = data')
+
+  data = [{ bb: 2 }, { ccc: 3 }]
+  ok = await log.appendBatch(data.map(toBuf))
+  t.equal(ok.first, '1', 'first = 1')
+  t.equal(ok.last, '2', 'last = 2')
+  t.equal(log.seq, '2', 'seq = 2')
+  t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
+  t.deepEqual(toObj(log.head), data[1], 'head = data')
+  await log.stop()
+
+  await log.start()
+  t.equal(log.seq, '2', 'seq = 2')
+  t.deepEqual(toObj(log.head), data[1], 'head = data')
+  data = { d: 4 }
+  ok = await log.append(toBuf(data))
+  t.equal(ok.seq, '3', 'seq = 3')
+  t.equal(log.seq, '3', 'seq = 3')
+  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
+  t.deepEqual(toObj(log.head), data, 'head = data')
+  await log.stop()
+
+  await log.start()
+  t.equal(log.seq, '3', 'seq = 3')
+  t.deepEqual(toObj(log.head), data, 'head = data')
+  data = [{ aaa: 5 }, { bbbb: 6 }]
+  ok = await log.appendBatch(data.map(toBuf))
+  t.equal(ok.first, '4', 'first = 4')
+  t.equal(ok.last, '5', 'last = 5')
+  t.equal(log.seq, '5', 'seq = 5')
+  t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
+  t.deepEqual(toObj(log.head), data[1], 'head = data')
+  await log.stop()
+
+  log = new FsLog('/tmp/', 'test')
+  await log.start()
+  t.equal(log.seq, '5', 'seq = 5')
+  t.deepEqual(toObj(log.head), data[1], 'head = data')
 
   t.teardown(() => log.stop())
 })
@@ -399,7 +455,7 @@ test('test rollback batch second', async (t) => {
   const ok = await log.appendBatch(data.map(toBuf))
   t.equal(ok.first, '0', 'first = 0')
   t.equal(ok.last, '0', 'last = 0')
-  t.equal(log.seq, '0', 'log seq = 0')
+  t.equal(log.seq, '0', 'seq = 0')
   t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data[0], 'head = data')
 
@@ -442,7 +498,7 @@ test('test rollback batch third', async (t) => {
   ok = await log.appendBatch(data.map(toBuf))
   t.equal(ok.first, '1', 'first = 1')
   t.equal(ok.last, '2', 'last = 2')
-  t.equal(log.seq, '2', 'log seq = 2')
+  t.equal(log.seq, '2', 'seq = 2')
   t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
 
