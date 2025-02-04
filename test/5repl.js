@@ -8,6 +8,17 @@ const followers = (nodes) => nodes.filter((node) => node.state === 'follower')
 
 const reset = (nodes) => Promise.all(nodes.map((node) => node.log.del()))
 
+const toBuf = (obj) => {
+  if (obj === null) { return null }
+  obj = JSON.stringify(obj)
+  return Buffer.from(obj, 'utf8')
+}
+
+const toObj = (buf) => {
+  if (buf === null) { return null }
+  return JSON.parse(buf.toString('utf8'))
+}
+
 const testSeq = (t, a, b, c, node) => {
   const name = `node ${node.nodeId} ${node.state}`
   t.equal(a, b, `${name} seq = ${b}`)
