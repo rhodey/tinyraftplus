@@ -143,7 +143,7 @@ async function testRollbackFirst(t, encoder) {
 }
 
 test('test rollback first', (t) => testRollbackFirst(t, new Encoder()))
-test('test rollback first', (t) => testRollbackFirst(t, new XxHashEncoder()))
+test('test rollback first - xxhash', (t) => testRollbackFirst(t, new XxHashEncoder()))
 
 async function testRollbackSecond(t, encoder) {
   t.plan(8)
