@@ -437,8 +437,7 @@ async function testBatch2(t, encoder) {
 test('test append batch start, stop, new', (t) => testBatch2(t, new Encoder()))
 test('test append batch start, stop, new - xxhash', (t) => testBatch2(t, new XxHashEncoder()))
 
-/*
-test('test rollback batch first', async (t) => {
+async function testBatch3(t, encoder) {
   t.plan(6)
   t.teardown(() => log.stop())
 
@@ -446,7 +445,8 @@ test('test rollback batch first', async (t) => {
     if (seq === '0') { throw new Error('test roll') }
   }
 
-  const log = new FsLog('/tmp/', 'test', { rollbackCb })
+  const opts = { encoder, rollbackCb }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -466,9 +466,12 @@ test('test rollback batch first', async (t) => {
   t.pass('restart ok')
   t.equal(log.seq, '-1', 'seq = -1 again')
   t.equal(log.head, null, 'head = null again')
-})
+}
 
-test('test rollback batch second', async (t) => {
+test('test rollback batch first', (t) => testBatch3(t, new Encoder()))
+test('test rollback batch first - xxhash', (t) => testBatch3(t, new XxHashEncoder()))
+
+async function testBatch4(t, encoder) {
   t.plan(8)
   t.teardown(() => log.stop())
 
@@ -476,7 +479,8 @@ test('test rollback batch second', async (t) => {
     if (seq === '1') { throw new Error('test roll') }
   }
 
-  const log = new FsLog('/tmp/', 'test', { rollbackCb })
+  const opts = { encoder, rollbackCb }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -500,8 +504,12 @@ test('test rollback batch second', async (t) => {
   t.pass('restart ok')
   t.equal(log.seq, '0', 'seq = 0 again')
   t.deepEqual(toObj(log.head), data[0], 'head = data')
-})
+}
 
+test('test rollback batch second', (t) => testBatch4(t, new Encoder()))
+test('test rollback batch second - xxhash', (t) => testBatch4(t, new XxHashEncoder()))
+
+/*
 test('test rollback batch third', async (t) => {
   t.plan(12)
   t.teardown(() => log.stop())
@@ -510,7 +518,8 @@ test('test rollback batch third', async (t) => {
     if (seq === '3') { throw new Error('test roll') }
   }
 
-  const log = new FsLog('/tmp/', 'test', { rollbackCb })
+  const opts = { encoder, rollbackCb }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -547,7 +556,8 @@ test('test append batch then truncate -1', async (t) => {
   t.plan(2)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -563,7 +573,8 @@ test('test append batch then truncate 0', async (t) => {
   t.plan(4)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -584,7 +595,8 @@ test('test append batch then truncate 1', async (t) => {
   t.plan(6)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
