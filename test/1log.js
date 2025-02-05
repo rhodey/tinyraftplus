@@ -77,11 +77,12 @@ async function testAppendStartStopNew(t, encoder) {
 test('test append, stop, start, append, new, append', (t) => testAppendStartStopNew(t, new Encoder()))
 test('test append, stop, start, append, new, append - xxhash', (t) => testAppendStartStopNew(t, new XxHashEncoder()))
 
-async function testAppendOneStartStop(t) {
+async function testAppendOneStartStop(t, encoder) {
   t.plan(12)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
   t.equal(log.seq, '-1', 'seq = -1')
@@ -110,7 +111,7 @@ async function testAppendOneStartStop(t) {
 test('test append one, stop, start, append', (t) => testAppendOneStartStop(t, new Encoder()))
 test('test append one, stop, start, append - xxhash', (t) => testAppendOneStartStop(t, new XxHashEncoder()))
 
-async function testRollbackFirst(t) {
+async function testRollbackFirst(t, encoder) {
   t.plan(6)
   t.teardown(() => log.stop())
 
@@ -118,7 +119,8 @@ async function testRollbackFirst(t) {
     if (seq === '0') { throw new Error('test roll') }
   }
 
-  const log = new FsLog('/tmp/', 'test', { rollbackCb })
+  const opts = { encoder, rollbackCb }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -143,8 +145,7 @@ async function testRollbackFirst(t) {
 test('test rollback first', (t) => testRollbackFirst(t, new Encoder()))
 test('test rollback first', (t) => testRollbackFirst(t, new XxHashEncoder()))
 
-/*
-test('test rollback second', async (t) => {
+async function testRollbackSecond(t, encoder) {
   t.plan(8)
   t.teardown(() => log.stop())
 
@@ -152,7 +153,8 @@ test('test rollback second', async (t) => {
     if (seq === '1') { throw new Error('test roll') }
   }
 
-  const log = new FsLog('/tmp/', 'test', { rollbackCb })
+  const opts = { encoder, rollbackCb }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -175,9 +177,12 @@ test('test rollback second', async (t) => {
   t.pass('restart ok')
   t.equal(log.seq, '0', 'seq = 0 again')
   t.deepEqual(toObj(log.head), data, 'head = data again')
-})
+}
 
-test('test rollback third', async (t) => {
+test('test rollback second', (t) => testRollbackSecond(t, new Encoder()))
+test('test rollback second - xxhash', (t) => testRollbackSecond(t, new XxHashEncoder()))
+
+async function testRollbackThird(t, encoder) {
   t.plan(12)
   t.teardown(() => log.stop())
 
@@ -185,7 +190,8 @@ test('test rollback third', async (t) => {
     if (seq === '2') { throw new Error('test roll') }
   }
 
-  const log = new FsLog('/tmp/', 'test', { rollbackCb })
+  const opts = { encoder, rollbackCb }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -215,8 +221,12 @@ test('test rollback third', async (t) => {
   t.pass('restart ok')
   t.equal(log.seq, '1', 'seq = 1 again')
   t.deepEqual(toObj(log.head), data, 'head = data again')
-})
+}
 
+test('test rollback third', (t) => testRollbackThird(t, new Encoder()))
+test('test rollback third - xxhash', (t) => testRollbackThird(t, new XxHashEncoder()))
+
+/*
 test('test truncate, append, truncate, append, truncate, append', async (t) => {
   t.plan(12)
   t.teardown(() => log.stop())
