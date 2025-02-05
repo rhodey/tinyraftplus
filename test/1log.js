@@ -13,7 +13,7 @@ const toObj = (buf) => {
   return JSON.parse(buf.toString('utf8'))
 }
 
-async function test1(t, encoder) {
+async function testAppendStartStopNew(t, encoder) {
   t.plan(26)
   const opts = { encoder }
   let log = new FsLog('/tmp/', 'test', opts)
@@ -74,9 +74,9 @@ async function test1(t, encoder) {
   t.deepEqual(toObj(log.head), data, 'head = data')
 }
 
-test('test append, stop, start, append, new, append', (t) => test1(t, new Encoder()))
+test('test append, stop, start, append, new, append', (t) => testAppendStartStopNew(t, new Encoder()))
 
-test('test append, stop, start, append, new, append - xxhash', (t) => test1(t, new XxHashEncoder()))
+test('test append, stop, start, append, new, append - xxhash', (t) => testAppendStartStopNew(t, new XxHashEncoder()))
 
 /*
 test('test append one, stop, start, append', async (t) => {
