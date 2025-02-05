@@ -226,12 +226,12 @@ async function testRollbackThird(t, encoder) {
 test('test rollback third', (t) => testRollbackThird(t, new Encoder()))
 test('test rollback third - xxhash', (t) => testRollbackThird(t, new XxHashEncoder()))
 
-/*
-test('test truncate, append, truncate, append, truncate, append', async (t) => {
+async function testTruncate1(t, encoder) {
   t.plan(12)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -269,9 +269,12 @@ test('test truncate, append, truncate, append, truncate, append', async (t) => {
   t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
   await log.append(data[++i])
   t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
-})
+}
 
-test('test log seq -1 and roll forward truncate -1', async (t) => {
+test('test truncate, append, truncate, append, truncate, append', (t) => testTruncate1(t, new Encoder()))
+test('test truncate, append, truncate, append, truncate, append - xxhash', (t) => testTruncate1(t, new XxHashEncoder()))
+
+async function testTruncate2(t, encoder) {
   t.plan(4)
   t.teardown(() => log.stop())
 
@@ -279,7 +282,8 @@ test('test log seq -1 and roll forward truncate -1', async (t) => {
     if (seq === '-1') { throw new Error('test roll') }
   }
 
-  const log = new FsLog('/tmp/', 'test', { rollForwardCb })
+  const opts = { encoder, rollForwardCb }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -291,9 +295,12 @@ test('test log seq -1 and roll forward truncate -1', async (t) => {
   t.pass('restart ok')
   t.equal(log.seq, '-1', 'seq = -1 again')
   t.equal(log.head, null, 'head = null')
-})
+}
 
-test('test log seq 0 and roll forward truncate -1', async (t) => {
+test('test log seq -1 and roll forward truncate -1', (t) => testTruncate2(t, new Encoder()))
+test('test log seq -1 and roll forward truncate -1 - xxhash', (t) => testTruncate2(t, new XxHashEncoder()))
+
+async function testTruncate3(t, encoder) {
   t.plan(4)
   t.teardown(() => log.stop())
 
@@ -301,7 +308,8 @@ test('test log seq 0 and roll forward truncate -1', async (t) => {
     if (seq === '-1') { throw new Error('test roll') }
   }
 
-  const log = new FsLog('/tmp/', 'test', { rollForwardCb })
+  const opts = { encoder, rollForwardCb }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -324,8 +332,12 @@ test('test log seq 0 and roll forward truncate -1', async (t) => {
   t.pass('restart ok')
   t.equal(log.seq, '-1', 'seq = -1')
   t.deepEqual(log.head, null, 'head = data')
-})
+}
 
+test('test log seq 0 and roll forward truncate -1', (t) => testTruncate3(t, new Encoder()))
+test('test log seq 0 and roll forward truncate -1 - xxhash', (t) => testTruncate3(t, new XxHashEncoder()))
+
+/*
 test('test append batch', async (t) => {
   t.plan(18)
   t.teardown(() => log.stop())
