@@ -337,12 +337,12 @@ async function testTruncate3(t, encoder) {
 test('test log seq 0 and roll forward truncate -1', (t) => testTruncate3(t, new Encoder()))
 test('test log seq 0 and roll forward truncate -1 - xxhash', (t) => testTruncate3(t, new XxHashEncoder()))
 
-/*
-test('test append batch', async (t) => {
+async function testBatch1(t, encoder) {
   t.plan(18)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
   t.equal(log.seq, '-1', 'seq = -1')
@@ -375,13 +375,17 @@ test('test append batch', async (t) => {
   t.equal(log.seq, '4', 'seq = 4')
   t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
-})
+}
 
-test('test append batch start, stop, new', async (t) => {
+test('test append batch', (t) => testBatch1(t, new Encoder()))
+test('test append batch - xxhash', (t) => testBatch1(t, new XxHashEncoder()))
+
+async function testBatch2(t, encoder) {
   t.plan(24)
   t.teardown(() => log.stop())
 
-  let log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  let log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
   t.equal(log.seq, '-1', 'seq = -1')
@@ -424,12 +428,16 @@ test('test append batch start, stop, new', async (t) => {
   t.deepEqual(toObj(log.head), data[1], 'head = data')
   await log.stop()
 
-  log = new FsLog('/tmp/', 'test')
+  log = new FsLog('/tmp/', 'test', opts)
   await log.start()
   t.equal(log.seq, '5', 'seq = 5')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
-})
+}
 
+test('test append batch start, stop, new', (t) => testBatch2(t, new Encoder()))
+test('test append batch start, stop, new - xxhash', (t) => testBatch2(t, new XxHashEncoder()))
+
+/*
 test('test rollback batch first', async (t) => {
   t.plan(6)
   t.teardown(() => log.stop())
