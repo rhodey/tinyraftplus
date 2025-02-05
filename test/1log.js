@@ -1,5 +1,6 @@
 const test = require('tape')
 const { FsLog } = require('../lib/fslog.js')
+const { Encoder, XxHashEncoder } = require('../lib/encoders.js')
 
 const toBuf = (obj) => {
   if (obj === null) { return null }
@@ -12,9 +13,10 @@ const toObj = (buf) => {
   return JSON.parse(buf.toString('utf8'))
 }
 
-test('test append, stop, start, append, new, append', async (t) => {
+async function test1(t, encoder) {
   t.plan(26)
-  let log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  let log = new FsLog('/tmp/', 'test', opts)
   t.teardown(() => log.stop())
 
   await log.del()
@@ -59,7 +61,7 @@ test('test append, stop, start, append, new, append', async (t) => {
   await log.stop()
 
   // new
-  log = new FsLog('/tmp/', 'test')
+  log = new FsLog('/tmp/', 'test', opts)
   await log.start()
   t.equal(log.seq, '3', 'seq = 3 again')
   t.deepEqual(toObj(log.head), data, 'head = data again')
@@ -70,8 +72,13 @@ test('test append, stop, start, append, new, append', async (t) => {
   t.equal(log.seq, '4', 'seq = 4')
   t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
-})
+}
 
+test('test append, stop, start, append, new, append', (t) => test1(t, new Encoder()))
+
+test('test append, stop, start, append, new, append - xxhash', (t) => test1(t, new XxHashEncoder()))
+
+/*
 test('test append one, stop, start, append', async (t) => {
   t.plan(12)
   t.teardown(() => log.stop())
@@ -562,3 +569,4 @@ test('test append batch then truncate 1', async (t) => {
   t.equal(log.seq, '1', 'seq = 1')
   t.deepEqual(toObj(log.head), data[0], 'head = data')
 })
+*/

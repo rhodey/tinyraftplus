@@ -1,6 +1,7 @@
 const crypto = require('crypto')
 const TinyRaft = require('tinyraft')
 const { FsLog } = require('./lib/fslog.js')
+const { Encoder, XxHashEncoder } = require('./lib/encoders.js')
 
 const ACK = 'ack'
 const APPEND = 'append'
@@ -195,6 +196,6 @@ class TinyRaftPlus extends TinyRaft {
 }
 
 module.exports = {
-  TinyRaftPlus,
-  FsLog,
+  TinyRaftPlus, FsLog,
+  Encoder, XxHashEncoder,
 }
