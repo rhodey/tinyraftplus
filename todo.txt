@@ -1,7 +1,7 @@
 /*
+todo: crc logs
 todo: node groups
 todo: restore via repl
-todo: crc logs
 
 todo: check that retry ends on change nodes
 todo: gcp restore = new network id
@@ -20,7 +20,10 @@ seq,off,len,
 buf,
 
 crc,seq,off,len,
-crc,buf,
+buf,
 
 crc,seq,off,len,
 crc,enc(prev,seq,buf),
+
+crc,seq,off,len,
+enc(prev,seq,buf),
