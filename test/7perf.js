@@ -42,9 +42,8 @@ async function testAppendSmall(t, encoder) {
 }
 
 test('test append 100 small', (t) => testAppendSmall(t, new Encoder()))
-test('test append 100 small - xxhash meta', (t) => testAppendSmall(t, new XxHashEncoder(true, false)))
-test('test append 100 small - xxhash body', (t) => testAppendSmall(t, new XxHashEncoder(false, true)))
-test('test append 100 small - xxhash both', (t) => testAppendSmall(t, new XxHashEncoder()))
+test('test append 100 small - xxhash body', (t) => testAppendSmall(t, new XxHashEncoder()))
+test('test append 100 small - xxhash no body', (t) => testAppendSmall(t, new XxHashEncoder(false)))
 
 async function testAppendLarge(t, encoder) {
   t.plan(1)
@@ -81,6 +80,5 @@ async function testAppendLarge(t, encoder) {
 }
 
 test('test append 100 large', (t) => testAppendLarge(t, new Encoder()))
-test('test append 100 large - xxhash meta', (t) => testAppendLarge(t, new XxHashEncoder(true, false)))
-test('test append 100 large - xxhash body', (t) => testAppendLarge(t, new XxHashEncoder(false, true)))
-test('test append 100 large - xxhash both', (t) => testAppendLarge(t, new XxHashEncoder()))
+test('test append 100 large - xxhash body', (t) => testAppendLarge(t, new XxHashEncoder()))
+test('test append 100 large - xxhash no body', (t) => testAppendLarge(t, new XxHashEncoder(false)))
