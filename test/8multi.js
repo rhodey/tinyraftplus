@@ -56,12 +56,12 @@ async function testAppendStartStopNew(t, encoder) {
   t.ok(data.equals(log.head), 'head = data again')
   t.equal(log.logs.length, 2, 'logs = 2')
 
-  data = { d: 4 }
-  ok = await log.append(toBuf(data))
+  data = Buffer.from(new Array(16).fill('d').join(''))
+  ok = await log.append(data)
   t.equal(ok.seq, '3', 'seq = 3')
   t.equal(log.seq, '3', 'seq = 3')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
-  t.deepEqual(toObj(log.head), data, 'head = data')
+  t.ok(data.equals(ok.data), 'ok.data = data')
+  t.ok(data.equals(log.head), 'head = data')
   t.equal(log.logs.length, 3, 'logs = 3')
   await log.stop()
 
@@ -69,7 +69,7 @@ async function testAppendStartStopNew(t, encoder) {
   log = new MultiFsLog('/tmp/', 'test', opts)
   await log.start()
   t.equal(log.seq, '3', 'seq = 3 again')
-  t.deepEqual(toObj(log.head), data, 'head = data again')
+  t.ok(data.equals(log.head), 'head = data again')
   t.equal(log.logs.length, 3, 'logs = 3')
 
   data = { ee: 5 }
