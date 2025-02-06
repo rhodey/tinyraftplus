@@ -75,7 +75,9 @@ async function testAppendStartStopNew(t, encoder) {
 }
 
 test('test append, stop, start, append, new, append', (t) => testAppendStartStopNew(t, new Encoder()))
-test('test append, stop, start, append, new, append - xxhash', (t) => testAppendStartStopNew(t, new XxHashEncoder()))
+test('test append, stop, start, append, new, append - xxhash meta', (t) => testAppendStartStopNew(t, new XxHashEncoder(true, false)))
+test('test append, stop, start, append, new, append - xxhash body', (t) => testAppendStartStopNew(t, new XxHashEncoder(false, true)))
+test('test append, stop, start, append, new, append - xxhash both', (t) => testAppendStartStopNew(t, new XxHashEncoder()))
 
 async function testAppendOneStartStop(t, encoder) {
   t.plan(12)
@@ -109,7 +111,9 @@ async function testAppendOneStartStop(t, encoder) {
 }
 
 test('test append one, stop, start, append', (t) => testAppendOneStartStop(t, new Encoder()))
-test('test append one, stop, start, append - xxhash', (t) => testAppendOneStartStop(t, new XxHashEncoder()))
+test('test append one, stop, start, append - xxhash meta', (t) => testAppendOneStartStop(t, new XxHashEncoder(true, false)))
+test('test append one, stop, start, append - xxhash body', (t) => testAppendOneStartStop(t, new XxHashEncoder(false, true)))
+test('test append one, stop, start, append - xxhash both', (t) => testAppendOneStartStop(t, new XxHashEncoder()))
 
 async function testRollbackFirst(t, encoder) {
   t.plan(6)
@@ -143,7 +147,9 @@ async function testRollbackFirst(t, encoder) {
 }
 
 test('test rollback first', (t) => testRollbackFirst(t, new Encoder()))
-test('test rollback first - xxhash', (t) => testRollbackFirst(t, new XxHashEncoder()))
+test('test rollback first - xxhash meta', (t) => testRollbackFirst(t, new XxHashEncoder(true, false)))
+test('test rollback first - xxhash body', (t) => testRollbackFirst(t, new XxHashEncoder(false, true)))
+test('test rollback first - xxhash both', (t) => testRollbackFirst(t, new XxHashEncoder()))
 
 async function testRollbackSecond(t, encoder) {
   t.plan(8)
@@ -180,7 +186,9 @@ async function testRollbackSecond(t, encoder) {
 }
 
 test('test rollback second', (t) => testRollbackSecond(t, new Encoder()))
-test('test rollback second - xxhash', (t) => testRollbackSecond(t, new XxHashEncoder()))
+test('test rollback second - xxhash meta', (t) => testRollbackSecond(t, new XxHashEncoder(true, false)))
+test('test rollback second - xxhash body', (t) => testRollbackSecond(t, new XxHashEncoder(false, true)))
+test('test rollback second - xxhash both', (t) => testRollbackSecond(t, new XxHashEncoder()))
 
 async function testRollbackThird(t, encoder) {
   t.plan(12)
@@ -224,7 +232,9 @@ async function testRollbackThird(t, encoder) {
 }
 
 test('test rollback third', (t) => testRollbackThird(t, new Encoder()))
-test('test rollback third - xxhash', (t) => testRollbackThird(t, new XxHashEncoder()))
+test('test rollback third - xxhash meta', (t) => testRollbackThird(t, new XxHashEncoder(true, false)))
+test('test rollback third - xxhash body', (t) => testRollbackThird(t, new XxHashEncoder(false, true)))
+test('test rollback third - xxhash both', (t) => testRollbackThird(t, new XxHashEncoder()))
 
 async function testTruncate(t, encoder) {
   t.plan(12)
@@ -272,7 +282,9 @@ async function testTruncate(t, encoder) {
 }
 
 test('test truncate, append, truncate, append, truncate, append', (t) => testTruncate(t, new Encoder()))
-test('test truncate, append, truncate, append, truncate, append - xxhash', (t) => testTruncate(t, new XxHashEncoder()))
+test('test truncate, append, truncate, append, truncate, append - xxhash meta', (t) => testTruncate(t, new XxHashEncoder(true, false)))
+test('test truncate, append, truncate, append, truncate, append - xxhash body', (t) => testTruncate(t, new XxHashEncoder(false, true)))
+test('test truncate, append, truncate, append, truncate, append - xxhash both', (t) => testTruncate(t, new XxHashEncoder()))
 
 async function testTruncate2(t, encoder) {
   t.plan(4)
@@ -298,7 +310,9 @@ async function testTruncate2(t, encoder) {
 }
 
 test('test log seq -1 and roll forward truncate -1', (t) => testTruncate2(t, new Encoder()))
-test('test log seq -1 and roll forward truncate -1 - xxhash', (t) => testTruncate2(t, new XxHashEncoder()))
+test('test log seq -1 and roll forward truncate -1 - xxhash meta', (t) => testTruncate2(t, new XxHashEncoder(true, false)))
+test('test log seq -1 and roll forward truncate -1 - xxhash body', (t) => testTruncate2(t, new XxHashEncoder(false, true)))
+test('test log seq -1 and roll forward truncate -1 - xxhash both', (t) => testTruncate2(t, new XxHashEncoder()))
 
 async function testTruncate3(t, encoder) {
   t.plan(4)
@@ -335,7 +349,9 @@ async function testTruncate3(t, encoder) {
 }
 
 test('test log seq 0 and roll forward truncate -1', (t) => testTruncate3(t, new Encoder()))
-test('test log seq 0 and roll forward truncate -1 - xxhash', (t) => testTruncate3(t, new XxHashEncoder()))
+test('test log seq 0 and roll forward truncate -1 - xxhash meta', (t) => testTruncate3(t, new XxHashEncoder(true, false)))
+test('test log seq 0 and roll forward truncate -1 - xxhash body', (t) => testTruncate3(t, new XxHashEncoder(false, true)))
+test('test log seq 0 and roll forward truncate -1 - xxhash both', (t) => testTruncate3(t, new XxHashEncoder()))
 
 async function testBatch(t, encoder) {
   t.plan(18)
@@ -378,7 +394,9 @@ async function testBatch(t, encoder) {
 }
 
 test('test append batch', (t) => testBatch(t, new Encoder()))
-test('test append batch - xxhash', (t) => testBatch(t, new XxHashEncoder()))
+test('test append batch - xxhash meta', (t) => testBatch(t, new XxHashEncoder(true, false)))
+test('test append batch - xxhash body', (t) => testBatch(t, new XxHashEncoder(false, true)))
+test('test append batch - xxhash both', (t) => testBatch(t, new XxHashEncoder()))
 
 async function testBatchStartStopNew(t, encoder) {
   t.plan(24)
@@ -435,7 +453,9 @@ async function testBatchStartStopNew(t, encoder) {
 }
 
 test('test append batch start, stop, new', (t) => testBatchStartStopNew(t, new Encoder()))
-test('test append batch start, stop, new - xxhash', (t) => testBatchStartStopNew(t, new XxHashEncoder()))
+test('test append batch start, stop, new - xxhash meta', (t) => testBatchStartStopNew(t, new XxHashEncoder(true, false)))
+test('test append batch start, stop, new - xxhash body', (t) => testBatchStartStopNew(t, new XxHashEncoder(false, true)))
+test('test append batch start, stop, new - xxhash both', (t) => testBatchStartStopNew(t, new XxHashEncoder()))
 
 async function testBatchRollback(t, encoder) {
   t.plan(6)
@@ -469,7 +489,9 @@ async function testBatchRollback(t, encoder) {
 }
 
 test('test rollback batch first', (t) => testBatchRollback(t, new Encoder()))
-test('test rollback batch first - xxhash', (t) => testBatchRollback(t, new XxHashEncoder()))
+test('test rollback batch first - xxhash meta', (t) => testBatchRollback(t, new XxHashEncoder(true, false)))
+test('test rollback batch first - xxhash body', (t) => testBatchRollback(t, new XxHashEncoder(false, true)))
+test('test rollback batch first - xxhash both', (t) => testBatchRollback(t, new XxHashEncoder()))
 
 async function testBatchRollback2(t, encoder) {
   t.plan(8)
@@ -507,7 +529,9 @@ async function testBatchRollback2(t, encoder) {
 }
 
 test('test rollback batch second', (t) => testBatchRollback2(t, new Encoder()))
-test('test rollback batch second - xxhash', (t) => testBatchRollback2(t, new XxHashEncoder()))
+test('test rollback batch second - xxhash meta', (t) => testBatchRollback2(t, new XxHashEncoder(true, false)))
+test('test rollback batch second - xxhash body', (t) => testBatchRollback2(t, new XxHashEncoder(false, true)))
+test('test rollback batch second - xxhash both', (t) => testBatchRollback2(t, new XxHashEncoder()))
 
 async function testBatchRollback3(t, encoder) {
   t.plan(12)
@@ -552,7 +576,9 @@ async function testBatchRollback3(t, encoder) {
 }
 
 test('test rollback batch third', (t) => testBatchRollback3(t, new Encoder()))
-test('test rollback batch third - xxhash', (t) => testBatchRollback3(t, new XxHashEncoder()))
+test('test rollback batch third - xxhash meta', (t) => testBatchRollback3(t, new XxHashEncoder(true, false)))
+test('test rollback batch third - xxhash body', (t) => testBatchRollback3(t, new XxHashEncoder(false, true)))
+test('test rollback batch third - xxhash both', (t) => testBatchRollback3(t, new XxHashEncoder()))
 
 async function testBatchTruncate(t, encoder) {
   t.plan(2)
@@ -572,7 +598,9 @@ async function testBatchTruncate(t, encoder) {
 }
 
 test('test append batch then truncate -1', (t) => testBatchTruncate(t, new Encoder()))
-test('test append batch then truncate -1 - xxhash', (t) => testBatchTruncate(t, new XxHashEncoder()))
+test('test append batch then truncate -1 - xxhash meta', (t) => testBatchTruncate(t, new XxHashEncoder(true, false)))
+test('test append batch then truncate -1 - xxhash body', (t) => testBatchTruncate(t, new XxHashEncoder(false, true)))
+test('test append batch then truncate -1 - xxhash both', (t) => testBatchTruncate(t, new XxHashEncoder()))
 
 async function testBatchTruncate2(t, encoder) {
   t.plan(4)
@@ -597,7 +625,9 @@ async function testBatchTruncate2(t, encoder) {
 }
 
 test('test append batch then truncate 0', (t) => testBatchTruncate2(t, new Encoder()))
-test('test append batch then truncate 0 - xxhash', (t) => testBatchTruncate2(t, new XxHashEncoder()))
+test('test append batch then truncate 0 - xxhash meta', (t) => testBatchTruncate2(t, new XxHashEncoder(true, false)))
+test('test append batch then truncate 0 - xxhash body', (t) => testBatchTruncate2(t, new XxHashEncoder(false, true)))
+test('test append batch then truncate 0 - xxhash both', (t) => testBatchTruncate2(t, new XxHashEncoder()))
 
 async function testBatchTruncate3(t, encoder) {
   t.plan(6)
@@ -626,4 +656,6 @@ async function testBatchTruncate3(t, encoder) {
 }
 
 test('test append batch then truncate 1', (t) => testBatchTruncate3(t, new Encoder()))
-test('test append batch then truncate 1 - xxhash', (t) => testBatchTruncate3(t, new XxHashEncoder()))
+test('test append batch then truncate 1 - xxhash meta', (t) => testBatchTruncate3(t, new XxHashEncoder(true, false)))
+test('test append batch then truncate 1 - xxhash body', (t) => testBatchTruncate3(t, new XxHashEncoder(false, true)))
+test('test append batch then truncate 1 - xxhash both', (t) => testBatchTruncate3(t, new XxHashEncoder()))
