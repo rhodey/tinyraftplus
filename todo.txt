@@ -1,6 +1,6 @@
 /*
 todo: multi logs
-todo: partitions
+todo: shards / parts
 todo: node groups
 todo: restore via repl
 
