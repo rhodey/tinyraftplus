@@ -93,7 +93,7 @@ test('test append three then iter step size 2', async (t) => {
   await log.del()
   await log.start()
 
-  const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
+  const data = [{ a: 1 }, { bb: 2 }, { c: 3 }]
   for (const obj of data) {
     await log.append(toBuf(obj))
   }
@@ -118,7 +118,7 @@ test('test append three then iter step size 3', async (t) => {
   await log.del()
   await log.start()
 
-  const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
+  const data = [{ aaaa: 1 }, { bb: 2 }, { cc: 3 }]
   for (const obj of data) {
     await log.append(toBuf(obj))
   }
@@ -143,7 +143,7 @@ test('test append three then iter step size 4', async (t) => {
   await log.del()
   await log.start()
 
-  const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
+  const data = [{ a: 1 }, { bb: 2 }, { c: 3 }]
   for (const obj of data) {
     await log.append(toBuf(obj))
   }
