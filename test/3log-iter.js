@@ -282,7 +282,7 @@ test('test iter returns nothing if seq > log.seq', (t) => testIterEnd2(t, new En
 test('test iter returns nothing if seq > log.seq - xxhash body', (t) => testIterEnd2(t, new XxHashEncoder()))
 test('test iter returns nothing if seq > log.seq - xxhash no body', (t) => testIterEnd2(t, new XxHashEncoder(false)))
 
-async function testIterWithStop3(t, encoder) {
+async function testIterWithStop2(t, encoder) {
   t.plan(3)
   t.teardown(() => log.stop())
 
@@ -311,11 +311,11 @@ async function testIterWithStop3(t, encoder) {
   t.equal(log.iterators.length, 0, 'iter removed')
 }
 
-test('test iter stopped if last > trunc', (t) => testIterWithStop3(t, new Encoder()))
-test('test iter stopped if last > trunc - xxhash body', (t) => testIterWithStop3(t, new XxHashEncoder()))
-test('test iter stopped if last > trunc - xxhash no body', (t) => testIterWithStop3(t, new XxHashEncoder(false)))
+test('test iter stopped if last > trunc', (t) => testIterWithStop2(t, new Encoder()))
+test('test iter stopped if last > trunc - xxhash body', (t) => testIterWithStop2(t, new XxHashEncoder()))
+test('test iter stopped if last > trunc - xxhash no body', (t) => testIterWithStop2(t, new XxHashEncoder(false)))
 
-async function testIterWithStop4(t, encoder) {
+async function testIterWithStop3(t, encoder) {
   t.plan(3)
   t.teardown(() => log.stop())
 
@@ -344,9 +344,9 @@ async function testIterWithStop4(t, encoder) {
   t.equal(log.iterators.length, 0, 'iter removed')
 }
 
-test('test iter stopped if last > trunc again', (t) => testIterWithStop4(t, new Encoder()))
-test('test iter stopped if last > trunc again - xxhash body', (t) => testIterWithStop4(t, new XxHashEncoder()))
-test('test iter stopped if last > trunc again - xxhash no body', (t) => testIterWithStop4(t, new XxHashEncoder(false)))
+test('test iter stopped if last > trunc again', (t) => testIterWithStop3(t, new Encoder()))
+test('test iter stopped if last > trunc again - xxhash body', (t) => testIterWithStop3(t, new XxHashEncoder()))
+test('test iter stopped if last > trunc again - xxhash no body', (t) => testIterWithStop3(t, new XxHashEncoder(false)))
 
 async function testIterNotStopped(t, encoder) {
   t.plan(2)
