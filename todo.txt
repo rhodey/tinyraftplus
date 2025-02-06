@@ -1,5 +1,4 @@
 /*
-todo: crc logs
 todo: multi logs
 todo: partitions
 todo: node groups
