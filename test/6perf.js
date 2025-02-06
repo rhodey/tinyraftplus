@@ -1,5 +1,6 @@
 const test = require('tape')
 const { FsLog } = require('../lib/fslog.js')
+const { Encoder, XxHashEncoder } = require('../lib/encoders.js')
 
 const toBuf = (obj) => {
   if (obj === null) { return null }
@@ -7,9 +8,10 @@ const toBuf = (obj) => {
   return Buffer.from(obj, 'utf8')
 }
 
-test('test append 100 small', async (t) => {
+async function testAppendSmall(t, encoder) {
   t.plan(1)
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -36,11 +38,18 @@ test('test append 100 small', async (t) => {
 
   t.pass('ok')
   t.teardown(() => log.stop())
-})
+  console.log(`\n`)
+}
 
-test('test append 100 large', async (t) => {
+test('test append 100 small', (t) => testAppendSmall(t, new Encoder()))
+test('test append 100 small - xxhash meta', (t) => testAppendSmall(t, new XxHashEncoder(true, false)))
+test('test append 100 small - xxhash body', (t) => testAppendSmall(t, new XxHashEncoder(false, true)))
+test('test append 100 small - xxhash both', (t) => testAppendSmall(t, new XxHashEncoder()))
+
+async function testAppendLarge(t, encoder) {
   t.plan(1)
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -68,4 +77,10 @@ test('test append 100 large', async (t) => {
 
   t.pass('ok')
   t.teardown(() => log.stop())
-})
+  console.log(`\n`)
+}
+
+test('test append 100 large', (t) => testAppendLarge(t, new Encoder()))
+test('test append 100 large - xxhash meta', (t) => testAppendLarge(t, new XxHashEncoder(true, false)))
+test('test append 100 large - xxhash body', (t) => testAppendLarge(t, new XxHashEncoder(false, true)))
+test('test append 100 large - xxhash both', (t) => testAppendLarge(t, new XxHashEncoder()))
