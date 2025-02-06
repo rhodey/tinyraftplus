@@ -90,7 +90,7 @@ test('test xxhash encoder errors', async (t) => {
     await enc.decodeLock(buf, 0)
     t.fail('no lock error thrown')
   } catch (err) {
-    t.ok(err.message.includes('lock decode error'), 'lock error thrown')
+    t.ok(err.message.includes('lock hash incorrect'), 'lock error thrown')
   }
 
   buf = Buffer.allocUnsafe(enc.metaLen)
@@ -101,7 +101,7 @@ test('test xxhash encoder errors', async (t) => {
     await enc.decodeMeta(buf, 0)
     t.fail('no meta error thrown')
   } catch (err) {
-    t.ok(err.message.includes('meta decode error'), 'meta error thrown')
+    t.ok(err.message.includes('meta hash incorrect'), 'meta error thrown')
   }
 
   buf = Buffer.from('abc123', 'utf8')
@@ -112,6 +112,6 @@ test('test xxhash encoder errors', async (t) => {
     await enc.decodeBody(buf)
     t.fail('no body error thrown')
   } catch (err) {
-    t.ok(err.message.includes('body decode error'), 'body error thrown')
+    t.ok(err.message.includes('body hash incorrect'), 'body error thrown')
   }
 })
