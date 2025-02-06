@@ -20,8 +20,98 @@ test('test basic encoder', async (t) => {
   t.equal(off, 2n, 'off = 2')
   t.equal(len, 3n, 'len = 3')
 
-  buf = Buffer.allocUnsafe(enc.bodyLen)
+  buf = Buffer.from('abc123', 'utf8')
   data = await enc.encodeBody(buf)
   data = await enc.decodeBody(data)
   t.ok(buf.equals(data), 'body ok')
+})
+
+test('test xxhash encoder', async (t) => {
+  t.plan(6)
+  const enc = new XxHashEncoder()
+
+  let buf = Buffer.allocUnsafe(enc.lockLen)
+  await enc.encodeLock(buf, 0, 1n, 2n)
+  let data = await enc.decodeLock(buf, 0)
+  const { olen, llen } = data
+  t.equal(olen, 1n, 'olen = 1')
+  t.equal(llen, 2n, 'llen = 2')
+
+  buf = Buffer.allocUnsafe(enc.metaLen)
+  await enc.encodeMeta(buf, 0, 1n, 2n, 3n)
+  data = await enc.decodeMeta(buf, 0)
+  const { seq, off, len } = data
+  t.equal(seq, 1n, 'seq = 1')
+  t.equal(off, 2n, 'off = 2')
+  t.equal(len, 3n, 'len = 3')
+
+  buf = Buffer.from('abc123', 'utf8')
+  data = await enc.encodeBody(buf)
+  data = await enc.decodeBody(data)
+  t.ok(buf.equals(data), 'body ok')
+})
+
+test('test xxhash encoder no body', async (t) => {
+  t.plan(6)
+  const enc = new XxHashEncoder(false)
+  enc.name('test')
+
+  let buf = Buffer.allocUnsafe(enc.lockLen)
+  await enc.encodeLock(buf, 0, 1n, 2n)
+  let data = await enc.decodeLock(buf, 0)
+  const { olen, llen } = data
+  t.equal(olen, 1n, 'olen = 1')
+  t.equal(llen, 2n, 'llen = 2')
+
+  buf = Buffer.allocUnsafe(enc.metaLen)
+  await enc.encodeMeta(buf, 0, 1n, 2n, 3n)
+  data = await enc.decodeMeta(buf, 0)
+  const { seq, off, len } = data
+  t.equal(seq, 1n, 'seq = 1')
+  t.equal(off, 2n, 'off = 2')
+  t.equal(len, 3n, 'len = 3')
+
+  buf = Buffer.from('abc123', 'utf8')
+  data = await enc.encodeBody(buf)
+  data = await enc.decodeBody(data)
+  t.ok(buf.equals(data), 'body ok')
+})
+
+test('test xxhash encoder errors', async (t) => {
+  t.plan(3)
+  const enc = new XxHashEncoder()
+  enc.name('test')
+
+  let buf = Buffer.allocUnsafe(enc.lockLen)
+  await enc.encodeLock(buf, 0, 1n, 2n)
+
+  try {
+    buf.writeUInt8(0xff, 0)
+    await enc.decodeLock(buf, 0)
+    t.fail('no lock error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('lock decode error'), 'lock error thrown')
+  }
+
+  buf = Buffer.allocUnsafe(enc.metaLen)
+  await enc.encodeMeta(buf, 0, 1n, 2n, 3n)
+
+  try {
+    buf.writeUInt8(0xff, 0)
+    await enc.decodeMeta(buf, 0)
+    t.fail('no meta error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('meta decode error'), 'meta error thrown')
+  }
+
+  buf = Buffer.from('abc123', 'utf8')
+  buf = await enc.encodeBody(buf)
+
+  try {
+    buf.writeUInt8(0xff, 16)
+    await enc.decodeBody(buf)
+    t.fail('no body error thrown')
+  } catch (err) {
+    t.ok(err.message.includes('body decode error'), 'body error thrown')
+  }
 })
