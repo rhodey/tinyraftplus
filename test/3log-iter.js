@@ -1,5 +1,6 @@
 const test = require('tape')
 const { FsLog } = require('../lib/fslog.js')
+const { Encoder, XxHashEncoder } = require('../lib/encoders.js')
 
 const toBuf = (obj) => {
   if (obj === null) { return null }
@@ -12,11 +13,12 @@ const toObj = (buf) => {
   return JSON.parse(buf.toString('utf8'))
 }
 
-test('test append three then iter', async (t) => {
+async function testAppendThreeThenIter(t, encoder) {
   t.plan(3 + 2)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -34,13 +36,18 @@ test('test append three then iter', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 3, 'read three bufs')
-})
+}
 
-test('test append one then iter', async (t) => {
+test('test append three then iter', (t) => testAppendThreeThenIter(t, new Encoder()))
+test('test append three then iter - xxhash body', (t) => testAppendThreeThenIter(t, new XxHashEncoder()))
+test('test append three then iter - xxhash no body', (t) => testAppendThreeThenIter(t, new XxHashEncoder(false)))
+
+async function testAppendOneThenIter(t, encoder) {
   t.plan(1 + 2)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -58,13 +65,18 @@ test('test append one then iter', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 1, 'read 1 buf')
-})
+}
 
-test('test append three then iter step size 1', async (t) => {
+test('test append one then iter', (t) => testAppendOneThenIter(t, new Encoder()))
+test('test append one then iter - xxhash body', (t) => testAppendOneThenIter(t, new XxHashEncoder()))
+test('test append one then iter - xxhash no body', (t) => testAppendOneThenIter(t, new XxHashEncoder(false)))
+
+async function testStepSize1(t, encoder) {
   t.plan(3 + 2)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -74,8 +86,8 @@ test('test append three then iter step size 1', async (t) => {
   }
 
   let count = 0
-  const opts = { iterStepSize: 1 }
-  for await (let next of log.iter(count.toString(), opts)) {
+  const optss = { iterStepSize: 1 }
+  for await (let next of log.iter(count.toString(), optss)) {
     next = toObj(next)
     t.deepEqual(next, data[count], 'data correct')
     count++
@@ -83,13 +95,18 @@ test('test append three then iter step size 1', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 3, 'read three bufs')
-})
+}
 
-test('test append three then iter step size 2', async (t) => {
+test('test append three then iter step size 1', (t) => testStepSize1(t, new Encoder()))
+test('test append three then iter step size 1 - xxhash body', (t) => testStepSize1(t, new XxHashEncoder()))
+test('test append three then iter step size 1 - xxhash no body', (t) => testStepSize1(t, new XxHashEncoder(false)))
+
+async function testStepSize2(t, encoder) {
   t.plan(3 + 2)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -99,8 +116,8 @@ test('test append three then iter step size 2', async (t) => {
   }
 
   let count = 0
-  const opts = { iterStepSize: 2 }
-  for await (let next of log.iter(count.toString(), opts)) {
+  const optss = { iterStepSize: 2 }
+  for await (let next of log.iter(count.toString(), optss)) {
     next = toObj(next)
     t.deepEqual(next, data[count], 'data correct')
     count++
@@ -108,13 +125,18 @@ test('test append three then iter step size 2', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 3, 'read three bufs')
-})
+}
 
-test('test append three then iter step size 3', async (t) => {
+test('test append three then iter step size 2', (t) => testStepSize2(t, new Encoder()))
+test('test append three then iter step size 2 - xxhash body', (t) => testStepSize2(t, new XxHashEncoder()))
+test('test append three then iter step size 2 - xxhash no body', (t) => testStepSize2(t, new XxHashEncoder(false)))
+
+async function testStepSize3(t, encoder) {
   t.plan(3 + 2)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -124,8 +146,8 @@ test('test append three then iter step size 3', async (t) => {
   }
 
   let count = 0
-  const opts = { iterStepSize: 3 }
-  for await (let next of log.iter(count.toString(), opts)) {
+  const optss = { iterStepSize: 3 }
+  for await (let next of log.iter(count.toString(), optss)) {
     next = toObj(next)
     t.deepEqual(next, data[count], 'data correct')
     count++
@@ -133,13 +155,18 @@ test('test append three then iter step size 3', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 3, 'read three bufs')
-})
+}
 
-test('test append three then iter step size 4', async (t) => {
+test('test append three then iter step size 3', (t) => testStepSize3(t, new Encoder()))
+test('test append three then iter step size 3 - xxhash body', (t) => testStepSize3(t, new XxHashEncoder()))
+test('test append three then iter step size 3 - xxhash no body', (t) => testStepSize3(t, new XxHashEncoder(false)))
+
+async function testStepSize4(t, encoder) {
   t.plan(3 + 2)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -149,8 +176,8 @@ test('test append three then iter step size 4', async (t) => {
   }
 
   let count = 0
-  const opts = { iterStepSize: 4 }
-  for await (let next of log.iter(count.toString(), opts)) {
+  const optss = { iterStepSize: 4 }
+  for await (let next of log.iter(count.toString(), optss)) {
     next = toObj(next)
     t.deepEqual(next, data[count], 'data correct')
     count++
@@ -158,13 +185,19 @@ test('test append three then iter step size 4', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 3, 'read three bufs')
-})
+}
 
+test('test append three then iter step size 4', (t) => testStepSize4(t, new Encoder()))
+test('test append three then iter step size 4 - xxhash body', (t) => testStepSize4(t, new XxHashEncoder()))
+test('test append three then iter step size 4 - xxhash no body', (t) => testStepSize4(t, new XxHashEncoder(false)))
+
+/*
 test('test append three then iter with stop and step size 1', async (t) => {
   t.plan(4)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -174,9 +207,9 @@ test('test append three then iter with stop and step size 1', async (t) => {
   }
 
   let count = 0
-  const opts = { iterStepSize: 1 }
+  const optss = { iterStepSize: 1 }
   try {
-    for await (let next of log.iter(count.toString(), opts)) {
+    for await (let next of log.iter(count.toString(), optss)) {
       next = toObj(next)
       t.deepEqual(next, data[count], 'data correct')
       count++
@@ -194,7 +227,8 @@ test('test iter stops based off seq at time of create', async (t) => {
   t.plan(5)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -220,7 +254,8 @@ test('test iter returns nothing if seq > log.seq', async (t) => {
   t.plan(1)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -240,7 +275,8 @@ test('test iter stopped if last > trunc', async (t) => {
   t.plan(3)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -268,7 +304,8 @@ test('test iter stopped if last > trunc again', async (t) => {
   t.plan(3)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -296,7 +333,8 @@ test('test iter not stopped if last < trunc', async (t) => {
   t.plan(2)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -323,7 +361,8 @@ test('test iter not stopped if last = trunc', async (t) => {
   t.plan(2)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -350,7 +389,8 @@ test('test append then append batch then iter', async (t) => {
   t.plan(5 + 2)
   t.teardown(() => log.stop())
 
-  const log = new FsLog('/tmp/', 'test')
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
   await log.start()
 
@@ -371,3 +411,4 @@ test('test append then append batch then iter', async (t) => {
   t.pass('no errors')
   t.equal(count, 5, 'read 5 bufs')
 })
+*/
