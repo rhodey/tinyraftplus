@@ -226,7 +226,7 @@ async function testRollbackThird(t, encoder) {
 test('test rollback third', (t) => testRollbackThird(t, new Encoder()))
 test('test rollback third - xxhash', (t) => testRollbackThird(t, new XxHashEncoder()))
 
-async function testTruncate1(t, encoder) {
+async function testTruncate(t, encoder) {
   t.plan(12)
   t.teardown(() => log.stop())
 
@@ -271,8 +271,8 @@ async function testTruncate1(t, encoder) {
   t.deepEqual(toObj(log.head), toObj(data[i]), 'head = data')
 }
 
-test('test truncate, append, truncate, append, truncate, append', (t) => testTruncate1(t, new Encoder()))
-test('test truncate, append, truncate, append, truncate, append - xxhash', (t) => testTruncate1(t, new XxHashEncoder()))
+test('test truncate, append, truncate, append, truncate, append', (t) => testTruncate(t, new Encoder()))
+test('test truncate, append, truncate, append, truncate, append - xxhash', (t) => testTruncate(t, new XxHashEncoder()))
 
 async function testTruncate2(t, encoder) {
   t.plan(4)
@@ -337,7 +337,7 @@ async function testTruncate3(t, encoder) {
 test('test log seq 0 and roll forward truncate -1', (t) => testTruncate3(t, new Encoder()))
 test('test log seq 0 and roll forward truncate -1 - xxhash', (t) => testTruncate3(t, new XxHashEncoder()))
 
-async function testBatch1(t, encoder) {
+async function testBatch(t, encoder) {
   t.plan(18)
   t.teardown(() => log.stop())
 
@@ -377,10 +377,10 @@ async function testBatch1(t, encoder) {
   t.deepEqual(toObj(log.head), data, 'head = data')
 }
 
-test('test append batch', (t) => testBatch1(t, new Encoder()))
-test('test append batch - xxhash', (t) => testBatch1(t, new XxHashEncoder()))
+test('test append batch', (t) => testBatch(t, new Encoder()))
+test('test append batch - xxhash', (t) => testBatch(t, new XxHashEncoder()))
 
-async function testBatch2(t, encoder) {
+async function testBatchStartStopNew(t, encoder) {
   t.plan(24)
   t.teardown(() => log.stop())
 
@@ -434,10 +434,10 @@ async function testBatch2(t, encoder) {
   t.deepEqual(toObj(log.head), data[1], 'head = data')
 }
 
-test('test append batch start, stop, new', (t) => testBatch2(t, new Encoder()))
-test('test append batch start, stop, new - xxhash', (t) => testBatch2(t, new XxHashEncoder()))
+test('test append batch start, stop, new', (t) => testBatchStartStopNew(t, new Encoder()))
+test('test append batch start, stop, new - xxhash', (t) => testBatchStartStopNew(t, new XxHashEncoder()))
 
-async function testBatch3(t, encoder) {
+async function testBatchRollback1(t, encoder) {
   t.plan(6)
   t.teardown(() => log.stop())
 
@@ -468,10 +468,10 @@ async function testBatch3(t, encoder) {
   t.equal(log.head, null, 'head = null again')
 }
 
-test('test rollback batch first', (t) => testBatch3(t, new Encoder()))
-test('test rollback batch first - xxhash', (t) => testBatch3(t, new XxHashEncoder()))
+test('test rollback batch first', (t) => testBatchRollback1(t, new Encoder()))
+test('test rollback batch first - xxhash', (t) => testBatchRollback1(t, new XxHashEncoder()))
 
-async function testBatch4(t, encoder) {
+async function testBatchRollback2(t, encoder) {
   t.plan(8)
   t.teardown(() => log.stop())
 
@@ -506,10 +506,10 @@ async function testBatch4(t, encoder) {
   t.deepEqual(toObj(log.head), data[0], 'head = data')
 }
 
-test('test rollback batch second', (t) => testBatch4(t, new Encoder()))
-test('test rollback batch second - xxhash', (t) => testBatch4(t, new XxHashEncoder()))
+test('test rollback batch second', (t) => testBatchRollback2(t, new Encoder()))
+test('test rollback batch second - xxhash', (t) => testBatchRollback2(t, new XxHashEncoder()))
 
-async function testBatch5(t, encoder) {
+async function testBatchRollback3(t, encoder) {
   t.plan(12)
   t.teardown(() => log.stop())
 
@@ -551,8 +551,8 @@ async function testBatch5(t, encoder) {
   t.deepEqual(toObj(log.head), data[1], 'head = data')
 }
 
-test('test rollback batch third', (t) => testBatch5(t, new Encoder()))
-test('test rollback batch third - xxhash', (t) => testBatch5(t, new XxHashEncoder()))
+test('test rollback batch third', (t) => testBatchRollback3(t, new Encoder()))
+test('test rollback batch third - xxhash', (t) => testBatchRollback3(t, new XxHashEncoder()))
 
 async function testBatchTruncate1(t, encoder) {
   t.plan(2)
