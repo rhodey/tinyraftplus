@@ -574,8 +574,7 @@ async function testBatchTruncate1(t, encoder) {
 test('test append batch then truncate -1', (t) => testBatchTruncate1(t, new Encoder()))
 test('test append batch then truncate -1 - xxhash', (t) => testBatchTruncate1(t, new XxHashEncoder()))
 
-/*
-test('test append batch then truncate 0', async (t) => {
+async function testBatchTruncate2(t, encoder) {
   t.plan(4)
   t.teardown(() => log.stop())
 
@@ -595,9 +594,12 @@ test('test append batch then truncate 0', async (t) => {
   await log.appendBatch(data.map(toBuf))
   t.equal(log.seq, '1', 'seq = 1')
   t.deepEqual(toObj(log.head), data[0], 'head = data')
-})
+}
 
-test('test append batch then truncate 1', async (t) => {
+test('test append batch then truncate 0', (t) => testBatchTruncate2(t, new Encoder()))
+test('test append batch then truncate 0 - xxhash', (t) => testBatchTruncate2(t, new XxHashEncoder()))
+
+async function testBatchTruncate3(t, encoder) {
   t.plan(6)
   t.teardown(() => log.stop())
 
@@ -621,5 +623,7 @@ test('test append batch then truncate 1', async (t) => {
   await log.truncate('1')
   t.equal(log.seq, '1', 'seq = 1')
   t.deepEqual(toObj(log.head), data[0], 'head = data')
-})
-*/
+}
+
+test('test append batch then truncate 1', (t) => testBatchTruncate3(t, new Encoder()))
+test('test append batch then truncate 1 - xxhash', (t) => testBatchTruncate3(t, new XxHashEncoder()))
