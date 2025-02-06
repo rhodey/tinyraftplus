@@ -191,8 +191,7 @@ test('test append three then iter step size 4', (t) => testStepSize4(t, new Enco
 test('test append three then iter step size 4 - xxhash body', (t) => testStepSize4(t, new XxHashEncoder()))
 test('test append three then iter step size 4 - xxhash no body', (t) => testStepSize4(t, new XxHashEncoder(false)))
 
-/*
-test('test append three then iter with stop and step size 1', async (t) => {
+async function testIterWithStop(t, encoder) {
   t.plan(4)
   t.teardown(() => log.stop())
 
@@ -221,9 +220,13 @@ test('test append three then iter with stop and step size 1', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 1, 'read 1 buf')
-})
+}
 
-test('test iter stops based off seq at time of create', async (t) => {
+test('test append three then iter with stop and step size 1', (t) => testIterWithStop(t, new Encoder()))
+test('test append three then iter with stop and step size 1 - xxhash body', (t) => testIterWithStop(t, new XxHashEncoder()))
+test('test append three then iter with stop and step size 1 - xxhash no body', (t) => testIterWithStop(t, new XxHashEncoder(false)))
+
+async function testIterEnd(t, encoder) {
   t.plan(5)
   t.teardown(() => log.stop())
 
@@ -248,9 +251,13 @@ test('test iter stops based off seq at time of create', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 3, 'read three bufs')
-})
+}
 
-test('test iter returns nothing if seq > log.seq', async (t) => {
+test('test iter ends based off seq at time of create', (t) => testIterEnd(t, new Encoder()))
+test('test iter ends based off seq at time of create - xxhash body', (t) => testIterEnd(t, new XxHashEncoder()))
+test('test iter ends based off seq at time of create - xxhash no body', (t) => testIterEnd(t, new XxHashEncoder(false)))
+
+async function testIterEnd2(t, encoder) {
   t.plan(1)
   t.teardown(() => log.stop())
 
@@ -269,9 +276,13 @@ test('test iter returns nothing if seq > log.seq', async (t) => {
   for await (let next of iter) { seq++ }
 
   t.equal(seq, 3, 'read no bufs')
-})
+}
 
-test('test iter stopped if last > trunc', async (t) => {
+test('test iter returns nothing if seq > log.seq', (t) => testIterEnd2(t, new Encoder()))
+test('test iter returns nothing if seq > log.seq - xxhash body', (t) => testIterEnd2(t, new XxHashEncoder()))
+test('test iter returns nothing if seq > log.seq - xxhash no body', (t) => testIterEnd2(t, new XxHashEncoder(false)))
+
+async function testIterWithStop3(t, encoder) {
   t.plan(3)
   t.teardown(() => log.stop())
 
@@ -298,9 +309,13 @@ test('test iter stopped if last > trunc', async (t) => {
 
   t.equal(seq, 0, 'read no bufs')
   t.equal(log.iterators.length, 0, 'iter removed')
-})
+}
 
-test('test iter stopped if last > trunc again', async (t) => {
+test('test iter stopped if last > trunc', (t) => testIterWithStop3(t, new Encoder()))
+test('test iter stopped if last > trunc - xxhash body', (t) => testIterWithStop3(t, new XxHashEncoder()))
+test('test iter stopped if last > trunc - xxhash no body', (t) => testIterWithStop3(t, new XxHashEncoder(false)))
+
+async function testIterWithStop4(t, encoder) {
   t.plan(3)
   t.teardown(() => log.stop())
 
@@ -327,9 +342,13 @@ test('test iter stopped if last > trunc again', async (t) => {
 
   t.equal(seq, 0, 'read no bufs')
   t.equal(log.iterators.length, 0, 'iter removed')
-})
+}
 
-test('test iter not stopped if last < trunc', async (t) => {
+test('test iter stopped if last > trunc again', (t) => testIterWithStop4(t, new Encoder()))
+test('test iter stopped if last > trunc again - xxhash body', (t) => testIterWithStop4(t, new XxHashEncoder()))
+test('test iter stopped if last > trunc again - xxhash no body', (t) => testIterWithStop4(t, new XxHashEncoder(false)))
+
+async function testIterNotStopped(t, encoder) {
   t.plan(2)
   t.teardown(() => log.stop())
 
@@ -355,9 +374,13 @@ test('test iter not stopped if last < trunc', async (t) => {
 
   t.equal(count, 3, 'read 3 bufs')
   t.equal(log.iterators.length, 1, 'iter not removed')
-})
+}
 
-test('test iter not stopped if last = trunc', async (t) => {
+test('test iter not stopped if last < trunc', (t) => testIterNotStopped(t, new Encoder()))
+test('test iter not stopped if last < trunc - xxhash body', (t) => testIterNotStopped(t, new XxHashEncoder()))
+test('test iter not stopped if last < trunc - xxhash no body', (t) => testIterNotStopped(t, new XxHashEncoder(false)))
+
+async function testIterNotStopped2(t, encoder) {
   t.plan(2)
   t.teardown(() => log.stop())
 
@@ -383,9 +406,13 @@ test('test iter not stopped if last = trunc', async (t) => {
 
   t.equal(count, 3, 'read 3 bufs')
   t.equal(log.iterators.length, 1, 'iter not removed')
-})
+}
 
-test('test append then append batch then iter', async (t) => {
+test('test iter not stopped if last = trunc', (t) => testIterNotStopped2(t, new Encoder()))
+test('test iter not stopped if last = trunc - xxhash body', (t) => testIterNotStopped2(t, new XxHashEncoder()))
+test('test iter not stopped if last = trunc - xxhash no body', (t) => testIterNotStopped2(t, new XxHashEncoder(false)))
+
+async function testBatchWithIter(t, encoder) {
   t.plan(5 + 2)
   t.teardown(() => log.stop())
 
@@ -410,5 +437,8 @@ test('test append then append batch then iter', async (t) => {
 
   t.pass('no errors')
   t.equal(count, 5, 'read 5 bufs')
-})
-*/
+}
+
+test('test append then append batch then iter', (t) => testBatchWithIter(t, new Encoder()))
+test('test append then append batch then iter - xxhash body', (t) => testBatchWithIter(t, new XxHashEncoder()))
+test('test append then append batch then iter - xxhash no body', (t) => testBatchWithIter(t, new XxHashEncoder(false)))
