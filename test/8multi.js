@@ -86,7 +86,7 @@ test('test append, stop, start, append, new, append', (t) => testAppendStartStop
 // test('test append, stop, start, append, new, append - xxhash no body', (t) => testAppendStartStopNew(t, new XxHashEncoder(false)))
 
 async function testTruncate(t, encoder) {
-  t.plan(21)
+  t.plan(22)
   const opts = { encoder, maxLogLen: 64 }
   let log = new MultiFsLog('/tmp/', 'test', opts)
   t.teardown(() => log.stop())
@@ -138,6 +138,7 @@ async function testTruncate(t, encoder) {
   data = []
   data.push(Buffer.from(new Array(32).fill('a').join('')))
   await log.append(data[0])
+  t.equal(log.seq, '1', 'seq = 1')
   t.equal(log.logs.length, 1, 'logs = 1')
 
   data.push(Buffer.from(new Array(48).fill('b').join('')))
@@ -150,8 +151,8 @@ async function testTruncate(t, encoder) {
 
   await log.truncate('1')
   t.equal(log.seq, '1', 'seq = 1')
-  t.ok(data[1].equals(log.head), 'head = data again')
-  t.equal(log.logs.length, 2, 'logs = 2')
+  t.ok(data[0].equals(log.head), 'head = data again')
+  t.equal(log.logs.length, 1, 'logs = 1')
 }
 
 test('test truncate', (t) => testTruncate(t, new Encoder()))
