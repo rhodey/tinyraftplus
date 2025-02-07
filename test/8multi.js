@@ -157,9 +157,9 @@ async function testTruncate(t, encoder) {
 
 test('test truncate', (t) => testTruncate(t, new Encoder()))
 
-async function testTruncate2(t, encoder) {
+async function testTruncate2(t, encoder, maxLogLen) {
   t.plan(10)
-  const opts = { encoder, maxLogLen: 24 }
+  const opts = { encoder, maxLogLen }
   let log = new MultiFsLog('/tmp/', 'test', opts)
   t.teardown(() => log.stop())
 
@@ -199,4 +199,9 @@ async function testTruncate2(t, encoder) {
   t.ok(find.equals(log.head), 'head = data')
 }
 
-test('test truncate again', (t) => testTruncate2(t, new Encoder()))
+test('test truncate log len = 20', (t) => testTruncate2(t, new Encoder(), 20))
+test('test truncate log len = 24', (t) => testTruncate2(t, new Encoder(), 24))
+test('test truncate log len = 32', (t) => testTruncate2(t, new Encoder(), 32))
+test('test truncate log len = 64', (t) => testTruncate2(t, new Encoder(), 64))
+test('test truncate log len = 128', (t) => testTruncate2(t, new Encoder(), 128))
+test('test truncate log len = 256', (t) => testTruncate2(t, new Encoder(), 256))
