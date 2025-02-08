@@ -23,7 +23,7 @@ const logFnFn = (encoder) => {
 }
 
 async function testAppendStartStopNew(t, encoder) {
-  t.plan(33)
+  t.plan(38)
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
   let log = new MultiFsLog('/tmp/', 'test', opts)
@@ -34,16 +34,20 @@ async function testAppendStartStopNew(t, encoder) {
   t.equal(log.seq, -1n, 'seq = -1')
   t.equal(log.head, null, 'head = null')
 
+  const extra = encoder.bodyLen
+
   // start, stop same
-  let data = Buffer.from(new Array(32).fill('a').join(''))
+  let data = Buffer.from(new Array(32 - extra).fill('a').join(''))
   let ok = await log.append(data)
   t.equal(ok.seq, 0n, 'seq = 0')
   t.equal(log.seq, 0n, 'seq = 0')
   t.ok(data.equals(ok.data), 'ok.data = data')
   t.ok(data.equals(log.head), 'head = data')
   t.equal(log.logs.length, 1, 'logs = 1')
+  let llen = log.logs[0].offset + log.logs[0].hlen
+  t.equal(llen, 32n, 'log length correct')
 
-  data = Buffer.from(new Array(48).fill('b').join(''))
+  data = Buffer.from(new Array(40 - extra).fill('b').join(''))
   ok = await log.append(data)
   t.equal(ok.seq, 1n, 'seq = 1')
   t.equal(log.seq, 1n, 'seq = 1')
@@ -51,13 +55,15 @@ async function testAppendStartStopNew(t, encoder) {
   t.ok(data.equals(log.head), 'head = data')
   t.equal(log.logs.length, 2, 'logs = 2')
 
-  data = Buffer.from(new Array(16).fill('c').join(''))
+  data = Buffer.from(new Array(24 - extra).fill('c').join(''))
   ok = await log.append(data)
   t.equal(ok.seq, 2n, 'seq = 2')
   t.equal(log.seq, 2n, 'seq = 2')
   t.ok(data.equals(ok.data), 'ok.data = data')
   t.ok(data.equals(log.head), 'head = data')
   t.equal(log.logs.length, 2, 'logs = 2')
+  llen = log.logs[1].offset + log.logs[1].hlen
+  t.equal(llen, 40n + 24n, 'log length correct')
   await log.stop()
 
   // start, stop same
@@ -65,14 +71,18 @@ async function testAppendStartStopNew(t, encoder) {
   t.equal(log.seq, 2n, 'seq = 2 again')
   t.ok(data.equals(log.head), 'head = data again')
   t.equal(log.logs.length, 2, 'logs = 2')
+  llen = log.logs[1].offset + log.logs[1].hlen
+  t.equal(llen, 40n + 24n, 'log length correct')
 
-  data = Buffer.from(new Array(16).fill('d').join(''))
+  data = Buffer.from(new Array(16 - extra).fill('d').join(''))
   ok = await log.append(data)
   t.equal(ok.seq, 3n, 'seq = 3')
   t.equal(log.seq, 3n, 'seq = 3')
   t.ok(data.equals(ok.data), 'ok.data = data')
   t.ok(data.equals(log.head), 'head = data')
   t.equal(log.logs.length, 3, 'logs = 3')
+  llen = log.logs[2].offset + log.logs[2].hlen
+  t.equal(llen, 16n, 'log length correct')
   await log.stop()
 
   // new
@@ -81,6 +91,8 @@ async function testAppendStartStopNew(t, encoder) {
   t.equal(log.seq, 3n, 'seq = 3 again')
   t.ok(data.equals(log.head), 'head = data again')
   t.equal(log.logs.length, 3, 'logs = 3')
+  llen = log.logs[2].offset + log.logs[2].hlen
+  t.equal(llen, 16n, 'log length correct')
 
   data = { ee: 5 }
   ok = await log.append(toBuf(data))
@@ -92,8 +104,8 @@ async function testAppendStartStopNew(t, encoder) {
 }
 
 test('test append, stop, start, append, new, append', (t) => testAppendStartStopNew(t, new Encoder()))
-// test('test append, stop, start, append, new, append - xxhash body', (t) => testAppendStartStopNew(t, new XxHashEncoder()))
-// test('test append, stop, start, append, new, append - xxhash no body', (t) => testAppendStartStopNew(t, new XxHashEncoder(false)))
+test('test append, stop, start, append, new, append - xxhash body', (t) => testAppendStartStopNew(t, new XxHashEncoder()))
+test('test append, stop, start, append, new, append - xxhash no body', (t) => testAppendStartStopNew(t, new XxHashEncoder(false)))
 
 async function testTruncate(t, encoder) {
   t.plan(22)
@@ -166,9 +178,7 @@ async function testTruncate(t, encoder) {
   t.equal(log.logs.length, 1, 'logs = 1')
 }
 
-test('test truncate', (t) => testTruncate(t, new Encoder()))
-// test('test truncate - xxhash body', (t) => testTruncate(t, new XxHashEncoder()))
-// test('test truncate - xxhash no body', (t) => testTruncate(t, new XxHashEncoder(false)))
+test('test truncate many', (t) => testTruncate(t, new Encoder()))
 
 async function testTruncate2(t, encoder, maxLogLen) {
   t.plan(12)
@@ -224,9 +234,9 @@ async function testTruncate2(t, encoder, maxLogLen) {
   t.ok(find1.equals(log.head), 'head = data')
 }
 
-test('test truncate log len = 20', (t) => testTruncate2(t, new Encoder(), 20))
-test('test truncate log len = 24', (t) => testTruncate2(t, new Encoder(), 24))
-test('test truncate log len = 32', (t) => testTruncate2(t, new Encoder(), 32))
-test('test truncate log len = 64', (t) => testTruncate2(t, new Encoder(), 64))
-test('test truncate log len = 128', (t) => testTruncate2(t, new Encoder(), 128))
-test('test truncate log len = 256', (t) => testTruncate2(t, new Encoder(), 256))
+test('test truncate maxLogLen = 20', (t) => testTruncate2(t, new Encoder(), 20))
+test('test truncate maxLogLen = 24', (t) => testTruncate2(t, new Encoder(), 24))
+test('test truncate maxLogLen = 32', (t) => testTruncate2(t, new Encoder(), 32))
+test('test truncate maxLogLen = 64', (t) => testTruncate2(t, new Encoder(), 64))
+test('test truncate maxLogLen = 128', (t) => testTruncate2(t, new Encoder(), 128))
+test('test truncate maxLogLen = 256', (t) => testTruncate2(t, new Encoder(), 256))
