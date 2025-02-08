@@ -1,4 +1,11 @@
 /*
+todo: async logfn
+todo: encoder log ref
+todo: lock = seq
+todo: multi dir pattern
+todo: test multi lock recover
+todo: test multi append batch
+
 todo: multi logs
 todo: shards / parts
 todo: node groups
