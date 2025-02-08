@@ -1,5 +1,4 @@
 /*
-todo: lock = seq
 todo: seq bigint
 todo: async logfn
 todo: multi dir pattern
