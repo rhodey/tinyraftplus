@@ -1,4 +1,5 @@
 const test = require('tape')
+const { FsLog } = require('../lib/fslog.js')
 const { MultiFsLog } = require('../lib/multi.js')
 const { Encoder, XxHashEncoder } = require('../lib/encoders.js')
 
@@ -13,9 +14,18 @@ const toObj = (buf) => {
   return JSON.parse(buf.toString('utf8'))
 }
 
+const logFnFn = (encoder) => {
+  const opts = { encoder }
+  return (multi, id) => {
+    const name = `${multi.name}-m${id}`
+    return new FsLog(multi.dir, name, opts)
+  }
+}
+
 async function testAppendStartStopNew(t, encoder) {
   t.plan(33)
-  const opts = { encoder, maxLogLen: 64 }
+  const logFn = logFnFn(encoder)
+  const opts = { encoder, logFn, maxLogLen: 64 }
   let log = new MultiFsLog('/tmp/', 'test', opts)
   t.teardown(() => log.stop())
 
@@ -87,7 +97,8 @@ test('test append, stop, start, append, new, append', (t) => testAppendStartStop
 
 async function testTruncate(t, encoder) {
   t.plan(22)
-  const opts = { encoder, maxLogLen: 64 }
+  const logFn = logFnFn(encoder)
+  const opts = { encoder, logFn, maxLogLen: 64 }
   let log = new MultiFsLog('/tmp/', 'test', opts)
   t.teardown(() => log.stop())
 
@@ -156,10 +167,13 @@ async function testTruncate(t, encoder) {
 }
 
 test('test truncate', (t) => testTruncate(t, new Encoder()))
+// test('test truncate - xxhash body', (t) => testTruncate(t, new XxHashEncoder()))
+// test('test truncate - xxhash no body', (t) => testTruncate(t, new XxHashEncoder(false)))
 
 async function testTruncate2(t, encoder, maxLogLen) {
   t.plan(12)
-  const opts = { encoder, maxLogLen }
+  const logFn = logFnFn(encoder)
+  const opts = { encoder, logFn, maxLogLen }
   let log = new MultiFsLog('/tmp/', 'test', opts)
   t.teardown(() => log.stop())
 

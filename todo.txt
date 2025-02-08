@@ -1,6 +1,4 @@
 /*
-todo: multi encoder not being used in tests
-todo: seq bigint
 todo: async logfn
 todo: multi dir pattern
 todo: test multi lock recover
