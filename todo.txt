@@ -1,4 +1,8 @@
 /*
+
+todo: trade engine
+todo: trade aggregate logs
+
 todo: node groups
 todo: shards / parts
 todo: restore via repl
