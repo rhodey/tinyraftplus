@@ -16,7 +16,7 @@ const toObj = (buf) => {
 
 const logFnFn = (encoder) => {
   const opts = { encoder }
-  return (multi, id) => {
+  return async (multi, id) => {
     const name = `${multi.name}-m${id}`
     return new FsLog(multi.dir, name, opts)
   }

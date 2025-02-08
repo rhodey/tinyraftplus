@@ -1,12 +1,10 @@
 /*
-todo: async logfn
-todo: multi dir pattern
-todo: test multi lock recover
-todo: test multi append batch
-
 todo: multi logs
-todo: shards / parts
+todo: test multi lock
+todo: test multi batch
+
 todo: node groups
+todo: shards / parts
 todo: restore via repl
 
 todo: check that retry ends on change nodes
@@ -15,6 +13,7 @@ todo: protocol message for hash errors
 todo: ?? seq as bigint
 /*
 
+todo: ?? multi dir pattern
 todo: ?? read with majority agree
 
 gcp key stored in gcp tpm
