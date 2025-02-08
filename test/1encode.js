@@ -2,16 +2,14 @@ const test = require('tape')
 const { Encoder, XxHashEncoder } = require('../lib/encoders.js')
 
 test('test basic encoder', async (t) => {
-  t.plan(6)
+  t.plan(5)
   const log = { path: 'test' }
   const enc = new Encoder()
 
   let buf = Buffer.allocUnsafe(enc.lockLen)
-  await enc.encodeLock(log, buf, 0, 1n, 2n)
+  await enc.encodeLock(log, buf, 0, 1n)
   let data = await enc.decodeLock(log, buf, 0)
-  const { olen, llen } = data
-  t.equal(olen, 1n, 'olen = 1')
-  t.equal(llen, 2n, 'llen = 2')
+  t.equal(data, 1n, 'seq = 1')
 
   buf = Buffer.allocUnsafe(enc.metaLen)
   await enc.encodeMeta(log, buf, 0, 1n, 2n, 3n)
@@ -28,16 +26,14 @@ test('test basic encoder', async (t) => {
 })
 
 test('test xxhash encoder', async (t) => {
-  t.plan(6)
+  t.plan(5)
   const log = { path: 'test' }
   const enc = new XxHashEncoder()
 
   let buf = Buffer.allocUnsafe(enc.lockLen)
-  await enc.encodeLock(log, buf, 0, 1n, 2n)
+  await enc.encodeLock(log, buf, 0, 2n)
   let data = await enc.decodeLock(log, buf, 0)
-  const { olen, llen } = data
-  t.equal(olen, 1n, 'olen = 1')
-  t.equal(llen, 2n, 'llen = 2')
+  t.equal(data, 2n, 'seq = 2')
 
   buf = Buffer.allocUnsafe(enc.metaLen)
   await enc.encodeMeta(log, buf, 0, 1n, 2n, 3n)
@@ -54,16 +50,14 @@ test('test xxhash encoder', async (t) => {
 })
 
 test('test xxhash encoder no body', async (t) => {
-  t.plan(6)
+  t.plan(5)
   const log = { path: 'test' }
   const enc = new XxHashEncoder(false)
 
   let buf = Buffer.allocUnsafe(enc.lockLen)
-  await enc.encodeLock(log, buf, 0, 1n, 2n)
+  await enc.encodeLock(log, buf, 0, 3n)
   let data = await enc.decodeLock(log, buf, 0)
-  const { olen, llen } = data
-  t.equal(olen, 1n, 'olen = 1')
-  t.equal(llen, 2n, 'llen = 2')
+  t.equal(data, 3n, 'seq = 3')
 
   buf = Buffer.allocUnsafe(enc.metaLen)
   await enc.encodeMeta(log, buf, 0, 1n, 2n, 3n)
@@ -85,7 +79,7 @@ test('test xxhash encoder errors', async (t) => {
   const enc = new XxHashEncoder()
 
   let buf = Buffer.allocUnsafe(enc.lockLen)
-  await enc.encodeLock(log, buf, 0, 1n, 2n)
+  await enc.encodeLock(log, buf, 0, 4n)
 
   try {
     buf.writeUInt8(0xff, 0)
