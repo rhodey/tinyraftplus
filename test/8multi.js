@@ -21,30 +21,30 @@ async function testAppendStartStopNew(t, encoder) {
 
   await log.del()
   await log.start()
-  t.equal(log.seq, '-1', 'seq = -1')
+  t.equal(log.seq, -1n, 'seq = -1')
   t.equal(log.head, null, 'head = null')
 
   // start, stop same
   let data = Buffer.from(new Array(32).fill('a').join(''))
   let ok = await log.append(data)
-  t.equal(ok.seq, '0', 'seq = 0')
-  t.equal(log.seq, '0', 'seq = 0')
+  t.equal(ok.seq, 0n, 'seq = 0')
+  t.equal(log.seq, 0n, 'seq = 0')
   t.ok(data.equals(ok.data), 'ok.data = data')
   t.ok(data.equals(log.head), 'head = data')
   t.equal(log.logs.length, 1, 'logs = 1')
 
   data = Buffer.from(new Array(48).fill('b').join(''))
   ok = await log.append(data)
-  t.equal(ok.seq, '1', 'seq = 1')
-  t.equal(log.seq, '1', 'seq = 1')
+  t.equal(ok.seq, 1n, 'seq = 1')
+  t.equal(log.seq, 1n, 'seq = 1')
   t.ok(data.equals(ok.data), 'ok.data = data')
   t.ok(data.equals(log.head), 'head = data')
   t.equal(log.logs.length, 2, 'logs = 2')
 
   data = Buffer.from(new Array(16).fill('c').join(''))
   ok = await log.append(data)
-  t.equal(ok.seq, '2', 'seq = 2')
-  t.equal(log.seq, '2', 'seq = 2')
+  t.equal(ok.seq, 2n, 'seq = 2')
+  t.equal(log.seq, 2n, 'seq = 2')
   t.ok(data.equals(ok.data), 'ok.data = data')
   t.ok(data.equals(log.head), 'head = data')
   t.equal(log.logs.length, 2, 'logs = 2')
@@ -52,14 +52,14 @@ async function testAppendStartStopNew(t, encoder) {
 
   // start, stop same
   await log.start()
-  t.equal(log.seq, '2', 'seq = 2 again')
+  t.equal(log.seq, 2n, 'seq = 2 again')
   t.ok(data.equals(log.head), 'head = data again')
   t.equal(log.logs.length, 2, 'logs = 2')
 
   data = Buffer.from(new Array(16).fill('d').join(''))
   ok = await log.append(data)
-  t.equal(ok.seq, '3', 'seq = 3')
-  t.equal(log.seq, '3', 'seq = 3')
+  t.equal(ok.seq, 3n, 'seq = 3')
+  t.equal(log.seq, 3n, 'seq = 3')
   t.ok(data.equals(ok.data), 'ok.data = data')
   t.ok(data.equals(log.head), 'head = data')
   t.equal(log.logs.length, 3, 'logs = 3')
@@ -68,14 +68,14 @@ async function testAppendStartStopNew(t, encoder) {
   // new
   log = new MultiFsLog('/tmp/', 'test', opts)
   await log.start()
-  t.equal(log.seq, '3', 'seq = 3 again')
+  t.equal(log.seq, 3n, 'seq = 3 again')
   t.ok(data.equals(log.head), 'head = data again')
   t.equal(log.logs.length, 3, 'logs = 3')
 
   data = { ee: 5 }
   ok = await log.append(toBuf(data))
-  t.equal(ok.seq, '4', 'seq = 4')
-  t.equal(log.seq, '4', 'seq = 4')
+  t.equal(ok.seq, 4n, 'seq = 4')
+  t.equal(log.seq, 4n, 'seq = 4')
   t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
   t.equal(log.logs.length, 3, 'logs = 3')
@@ -94,8 +94,8 @@ async function testTruncate(t, encoder) {
   await log.del()
   await log.start()
 
-  await log.truncate('-1')
-  t.equal(log.seq, '-1', 'seq = -1')
+  await log.truncate(-1n)
+  t.equal(log.seq, -1n, 'seq = -1')
   t.equal(log.head, null, 'head = null')
   t.equal(log.logs.length, 0, 'logs = 0')
 
@@ -112,8 +112,8 @@ async function testTruncate(t, encoder) {
   await log.append(data[2])
   t.equal(log.logs.length, 2, 'logs = 2')
 
-  await log.truncate('-1')
-  t.equal(log.seq, '-1', 'seq = -1')
+  await log.truncate(-1n)
+  t.equal(log.seq, -1n, 'seq = -1')
   t.equal(log.head, null, 'head = null')
   t.equal(log.logs.length, 0, 'logs = 0')
 
@@ -130,15 +130,15 @@ async function testTruncate(t, encoder) {
   await log.append(data[2])
   t.equal(log.logs.length, 2, 'logs = 2')
 
-  await log.truncate('0')
-  t.equal(log.seq, '0', 'seq = 0')
+  await log.truncate(0n)
+  t.equal(log.seq, 0n, 'seq = 0')
   t.ok(data[0].equals(log.head), 'head = data again')
   t.equal(log.logs.length, 1, 'logs = 1')
 
   data = []
   data.push(Buffer.from(new Array(32).fill('a').join('')))
   await log.append(data[0])
-  t.equal(log.seq, '1', 'seq = 1')
+  t.equal(log.seq, 1n, 'seq = 1')
   t.equal(log.logs.length, 1, 'logs = 1')
 
   data.push(Buffer.from(new Array(48).fill('b').join('')))
@@ -149,8 +149,8 @@ async function testTruncate(t, encoder) {
   await log.append(data[2])
   t.equal(log.logs.length, 2, 'logs = 2')
 
-  await log.truncate('1')
-  t.equal(log.seq, '1', 'seq = 1')
+  await log.truncate(1n)
+  t.equal(log.seq, 1n, 'seq = 1')
   t.ok(data[0].equals(log.head), 'head = data again')
   t.equal(log.logs.length, 1, 'logs = 1')
 }
@@ -168,7 +168,7 @@ async function testTruncate2(t, encoder, maxLogLen) {
 
   let data = Buffer.from(new Array(10).fill('a').join(''))
   for (let i = 0; i < 25; i++) { await log.append(data) }
-  t.equal(log.seq, '24', 'seq = 24')
+  t.equal(log.seq, 24n, 'seq = 24')
   t.ok(data.equals(log.head), 'head = data')
 
   let seq = 24
@@ -181,7 +181,7 @@ async function testTruncate2(t, encoder, maxLogLen) {
       await log.append(data)
     }
   }
-  t.equal(log.seq, '49', 'seq = 49')
+  t.equal(log.seq, 49n, 'seq = 49')
   t.ok(data.equals(log.head), 'head = data')
 
   data = Buffer.from(new Array(12).fill('c').join(''))
@@ -193,20 +193,20 @@ async function testTruncate2(t, encoder, maxLogLen) {
       await log.append(data)
     }
   }
-  t.equal(log.seq, '74', 'seq = 74')
+  t.equal(log.seq, 74n, 'seq = 74')
   t.ok(data.equals(log.head), 'head = data')
 
   data = Buffer.from(new Array(14).fill('d').join(''))
   for (let i = 0; i < 25; i++) { await log.append(data) }
-  t.equal(log.seq, '99', 'seq = 99')
+  t.equal(log.seq, 99n, 'seq = 99')
   t.ok(data.equals(log.head), 'head = data')
 
-  await log.truncate('55')
-  t.equal(log.seq, '55', 'seq = 55')
+  await log.truncate(55n)
+  t.equal(log.seq, 55n, 'seq = 55')
   t.ok(find2.equals(log.head), 'head = data')
 
-  await log.truncate('44')
-  t.equal(log.seq, '44', 'seq = 44')
+  await log.truncate(44n)
+  t.equal(log.seq, 44n, 'seq = 44')
   t.ok(find1.equals(log.head), 'head = data')
 }
 
