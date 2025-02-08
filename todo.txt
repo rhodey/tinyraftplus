@@ -19,6 +19,11 @@ todo: ?? seq as bigint
 
 todo: ?? read with majority agree
 
+gcp key stored in gcp tpm
+aws asks for key from gcp
+aws encrypt root key using gcp key
+aws store encrypted root key on hdd
+
 100_000 apps
 1_000 updates per app
 1024B per update
