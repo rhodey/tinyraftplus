@@ -1,7 +1,7 @@
 /*
-todo: async logfn
-todo: encoder log ref
 todo: lock = seq
+todo: seq bigint
+todo: async logfn
 todo: multi dir pattern
 todo: test multi lock recover
 todo: test multi append batch
