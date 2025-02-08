@@ -158,7 +158,7 @@ async function testTruncate(t, encoder) {
 test('test truncate', (t) => testTruncate(t, new Encoder()))
 
 async function testTruncate2(t, encoder, maxLogLen) {
-  t.plan(10)
+  t.plan(12)
   const opts = { encoder, maxLogLen }
   let log = new MultiFsLog('/tmp/', 'test', opts)
   t.teardown(() => log.stop())
@@ -171,17 +171,24 @@ async function testTruncate2(t, encoder, maxLogLen) {
   t.equal(log.seq, '24', 'seq = 24')
   t.ok(data.equals(log.head), 'head = data')
 
+  let seq = 24
   data = Buffer.from(new Array(11).fill('b').join(''))
-  for (let i = 0; i < 25; i++) { await log.append(data) }
+  const find1 = Buffer.from(new Array(15).fill('e').join(''))
+  for (let i = 0; i < 25; i++) {
+    if (++seq === 44) {
+      await log.append(find1)
+    } else {
+      await log.append(data)
+    }
+  }
   t.equal(log.seq, '49', 'seq = 49')
   t.ok(data.equals(log.head), 'head = data')
 
-  let seq = 49
   data = Buffer.from(new Array(12).fill('c').join(''))
-  const find = Buffer.from(new Array(15).fill('e').join(''))
+  const find2 = Buffer.from(new Array(16).fill('f').join(''))
   for (let i = 0; i < 25; i++) {
     if (++seq === 55) {
-      await log.append(find)
+      await log.append(find2)
     } else {
       await log.append(data)
     }
@@ -196,7 +203,11 @@ async function testTruncate2(t, encoder, maxLogLen) {
 
   await log.truncate('55')
   t.equal(log.seq, '55', 'seq = 55')
-  t.ok(find.equals(log.head), 'head = data')
+  t.ok(find2.equals(log.head), 'head = data')
+
+  await log.truncate('44')
+  t.equal(log.seq, '44', 'seq = 44')
+  t.ok(find1.equals(log.head), 'head = data')
 }
 
 test('test truncate log len = 20', (t) => testTruncate2(t, new Encoder(), 20))
