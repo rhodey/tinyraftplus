@@ -1,4 +1,4 @@
-const { TinyRaftPlus, FsLog } = require('./index.js')
+const { RaftNode, FsLog } = require('./index.js')
 
 const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 const toBuf = (obj) => Buffer.from(JSON.stringify(obj), 'utf8')
@@ -10,13 +10,13 @@ for (let i = 1; i <= 3; i++) {
 }
 
 function node(id, ids) {
-  const log = new FsLog('/tmp/', 'demo')
+  const log = new FsLog('/tmp/', 'node'+id)
   const send = (to, msg) => {
     const node = nodes.find((node) => node.nodeId === to)
     node.onReceive(id, msg)
   }
   const opts = { minFollowers: 2 } // force full repl
-  return new TinyRaftPlus(id, ids, send, log, opts)
+  return new RaftNode(id, ids, send, log, opts)
 }
 
 async function main() {

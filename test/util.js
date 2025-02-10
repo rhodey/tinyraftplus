@@ -1,4 +1,4 @@
-const { TinyRaftPlus, FsLog } = require('../index.js')
+const { RaftNode, FsLog } = require('../index.js')
 
 const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 
@@ -10,7 +10,7 @@ function open(comms, a=1, b=null, opts={}, logFn=null) {
   return nodes.map((id) => {
     const log = logFn(id)
     const send = (to, msg) => comms.send(to, id, msg)
-    const node = new TinyRaftPlus(id, nodes, send, log, opts)
+    const node = new RaftNode(id, nodes, send, log, opts)
     comms.register(node)
     return node
   })

@@ -24,13 +24,13 @@ for (let i = 1; i <= 3; i++) {
 }
 
 function node(id, ids) {
-  const log = new FsLog('/tmp/', 'demo')
+  const log = new FsLog('/tmp/', 'node'+id)
   const send = (to, msg) => {
     const node = nodes.find((node) => node.nodeId === to)
     node.onReceive(id, msg)
   }
   const opts = { minFollowers: 2 } // force full repl
-  return new TinyRaftPlus(id, ids, send, log, opts)
+  return new RaftNode(id, ids, send, log, opts)
 }
 
 async function main() {

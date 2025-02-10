@@ -1,5 +1,5 @@
 const test = require('tape')
-const { TinyRaftPlus, FsLog } = require('../index.js')
+const { FsLog } = require('../index.js')
 const { sleep, open, comms, start, stop } = require('./util.js')
 
 const leaders = (nodes) => nodes.filter((node) => node.state === 'leader')

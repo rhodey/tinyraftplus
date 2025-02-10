@@ -55,7 +55,7 @@ function awaitChange(node, fn) {
   })
 }
 
-class TinyRaftPlus extends TinyRaft {
+class RaftNode extends TinyRaft {
   constructor(nodeId, nodes, send, log, opts={}) {
     opts = { ...opts, nodeId, nodes, send }
     opts = { ...defaults, ...opts }
@@ -196,6 +196,6 @@ class TinyRaftPlus extends TinyRaft {
 }
 
 module.exports = {
-  TinyRaftPlus, FsLog,
+  RaftNode, FsLog,
   Encoder, XxHashEncoder,
 }
