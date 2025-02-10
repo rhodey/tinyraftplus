@@ -7,9 +7,6 @@ A log with append(), appendBatch(), and truncate()
 ### Replication groups
 Nodes may be assigned groups to support for example majority replication in CloudA and CloudB
 
-### Hash chaining
-Hash of previous log entry included in next
-
 ### BigInt sequence numbers
 Uses JS native BigInt for sequence numbers so you can basically grow to infinity
 
