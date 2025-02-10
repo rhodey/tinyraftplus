@@ -1,4 +1,4 @@
-# tinyraft
+# tinyraftplus
 This is [tinyraft](https://www.npmjs.com/package/tinyraft) with extras. As with all Raft implementations a leader is elected and the network can survive 49% of nodes failing, what has been added to tinyraft is...
 
 ### Log replication
