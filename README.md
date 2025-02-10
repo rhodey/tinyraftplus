@@ -1,4 +1,4 @@
-# tinyraftplus
+# tinyraft
 This is [tinyraft](https://www.npmjs.com/package/tinyraft) with extras. As with all Raft implementations a leader is elected and the network can survive 49% of nodes failing, what has been added to tinyraft is...
 
 ### Log replication
@@ -15,7 +15,7 @@ Uses JS native BigInt for sequence numbers so you can basically grow to infinity
 
 ## Usage
 ```js
-const { TinyRaftPlus, TinyRaftLog } = require('tinyraftplus')
+const { RaftNode, FsLog } = require('tinyraftplus')
 
 const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 const toBuf = (obj) => Buffer.from(JSON.stringify(obj), 'utf8')
