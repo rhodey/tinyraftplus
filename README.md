@@ -14,7 +14,6 @@ Uses JS native BigInt for sequence numbers so you can basically grow to infinity
 ```js
 const { RaftNode, FsLog } = require('tinyraftplus')
 
-const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 const toBuf = (obj) => Buffer.from(JSON.stringify(obj), 'utf8')
 const toObj = (buf) => JSON.parse(buf.toString('utf8'))
 
@@ -36,7 +35,7 @@ function node(id, ids) {
 async function main() {
   nodes = nodes.map((id) => node(id, nodes))
   await Promise.all(nodes.map((node) => node.start()))
-  await sleep(100)
+  await Promise.all(nodes.map((node) => node.awaitLeader()))
 
   let ok = await nodes[0].append(toBuf({ a: 1 }))
   console.log('append', ok.seq, toObj(ok.data))

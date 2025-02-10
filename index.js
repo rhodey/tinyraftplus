@@ -7,6 +7,7 @@ const ACK = 'ack'
 const APPEND = 'append'
 const FORWARD = 'forward'
 const FOLLOWER = 'follower'
+const LEADER = 'leader'
 
 const defaults = {
   heartbeatTimeout: 500,
@@ -83,6 +84,16 @@ class RaftNode extends TinyRaft {
     this._stopped = true
     super.stop()
     return this.log.stop()
+  }
+
+  async awaitLeader() {
+    const { nodeId: name } = this
+    if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
+    const leading = (state) => state.state === LEADER && state.leader === state.nodeId
+    const following = (state) => state.state === FOLLOWER && state.leader !== null
+    const fn = (state) => leading(state) || following(state)
+    if (fn(this)) { return }
+    return awaitChange(this, fn)
   }
 
   setNodes(nodes) {
