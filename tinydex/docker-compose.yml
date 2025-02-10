@@ -1,0 +1,33 @@
+services:
+  gateway:
+    image: nginx
+    container_name: gateway
+    depends_on:
+      - node1
+      - node2
+      - node3
+    ports:
+      - 8080:8080
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+
+  node1:
+    image: tinydex
+    container_name: node1
+    env_file: .env
+    ports:
+      - 9001:9000
+
+  node2:
+    image: tinydex
+    container_name: node2
+    env_file: .env
+    ports:
+      - 9002:9000
+
+  node3:
+    image: tinydex
+    container_name: node3
+    env_file: .env
+    ports:
+      - 9003:9000

@@ -1,9 +1,15 @@
-# tinydex
-This is an example of what can be done with raftkit
+# tinydex (tiny decentralized exchange)
+Example of what can be made with tinyraftplus
+
+## Usage
+```
+./build.sh
+cp example.env .env
+docker compose up
+```
 
 ## Test
 ```
-npm install
 npm run test
 ```
 
