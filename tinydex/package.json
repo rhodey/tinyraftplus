@@ -4,7 +4,6 @@
   "description": "tiny decentralized exchange",
   "private": "true",
   "scripts": {
-    "main": "node main.js",
     "test": "tape 'test/*.js'"
   },
   "dependencies": {

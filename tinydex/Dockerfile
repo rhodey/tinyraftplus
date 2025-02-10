@@ -11,6 +11,9 @@ RUN npm install
 COPY node_modules/tinyraftplus /app/node_modules/tinyraftplus
 
 COPY ./lib /app/lib
-COPY ./main.js /app
+COPY ./app.js /app
 
-CMD ["npm", "run", "main"]
+COPY entry.sh /app/entry.sh
+RUN chmod +x entry.sh
+
+ENTRYPOINT ["/app/entry.sh"]
