@@ -1,5 +1,4 @@
 /*
-
 todo: trade engine
 todo: trade aggregate logs
 
@@ -10,7 +9,7 @@ todo: restore via repl
 todo: check that retry ends on change nodes
 todo: protocol message for hash errors
 
-todo: multi logs
+todo: multi iter
 todo: test multi lock
 todo: test multi batch
 /*
