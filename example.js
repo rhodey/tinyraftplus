@@ -1,21 +1,4 @@
-# tinyraftplus
-This is [tinyraft](https://www.npmjs.com/package/tinyraft) with extras. As with all Raft implementations a leader is elected and the network can survive 49% of nodes failing, what has been added to tinyraft is...
-
-### Log replication
-A log with append(), appendBatch(), and truncate()
-
-### Replication groups
-Nodes may be assigned groups to support for example majority replication in CloudA and CloudB
-
-### Hash chaining
-Hash of previous log entry included in next
-
-### BigInt sequence numbers
-Uses JS native BigInt for sequence numbers so you can basically grow to infinity
-
-## Usage
-```js
-const { TinyRaftPlus, TinyRaftLog } = require('tinyraftplus')
+const { TinyRaftPlus, FsLog } = require('./index.js')
 
 const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 const toBuf = (obj) => Buffer.from(JSON.stringify(obj), 'utf8')
@@ -58,27 +41,3 @@ async function main() {
 }
 
 main().catch(console.log)
-```
-
-## Output
-```
-append 0 { a: 1 }
-append 1 { b: 2 }
-append 2 { c: 3 }
-head { c: 3 }
-head { c: 3 }
-head { c: 3 }
-```
-
-## Configuration
-+ [tinyraft](https://www.npmjs.com/package/tinyraft) configs
-+ [tinyraftplus](https://github.com/rhodey/tinyraftplus/blob/master/index.js#L17) configs
-+ [fslog](https://github.com/rhodey/tinyraftplus/blob/master/index.js#L227)
-
-## Tests
-```
-npm run test
-```
-
-## License
-MIT
