@@ -43,7 +43,7 @@ class AutoRestartLog {
     })
   }
 
-  async append(data, seq=null) {
+  async append(data, seq) {
     await this._restartIfNeeded()
     return this.log.append(data, seq).then((res) => {
       this._update()
@@ -54,9 +54,9 @@ class AutoRestartLog {
     })
   }
 
-  async appendBatch(data, seq=null) {
+  async appendBatch(data, seq) {
     await this._restartIfNeeded()
-    this.log.appendBatch(data, seq).then((res) => {
+    return this.log.appendBatch(data, seq).then((res) => {
       this._update()
       return res
     }).catch((err) => {

@@ -32,14 +32,14 @@ class ConcurrentLog {
       .then(() => this._update())
   }
 
-  append(data, seq=null) {
+  append(data, seq) {
     return this._prev = this._prev
       .catch(noop)
       .then(() => this.log.append(data, seq))
       .then((res) => this._update(res))
   }
 
-  appendBatch(data, seq=null) {
+  appendBatch(data, seq) {
     return this._prev = this._prev
       .catch(noop)
       .then(() => this.log.appendBatch(data, seq))

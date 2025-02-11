@@ -37,14 +37,10 @@ function readBody(request) {
 }
 
 async function acceptPeer(request, response) {
-  if (!node) {
-    response.writeHead(503)
-    response.end('try again soon')
-    return
-  }
   const msg = await readBody(request)
   if (msg.seq !== undefined) { msg.seq = BigInt(msg.seq) }
-  if (msg.data) { msg.data = Buffer.from(msg.data, 'base64') }
+  if (msg.data && !Array.isArray(msg.data)) { msg.data = Buffer.from(msg.data, 'base64') }
+  if (Array.isArray(msg.data)) { msg.data = msg.data.map((str) => Buffer.from(str, 'base64')) }
   const from = msg.from
   delete msg.from
   node.onReceive(from, msg)
@@ -58,15 +54,19 @@ function paramsOfPath(path) {
 }
 
 async function acceptMsg(request, response) {
-  if (!node) {
-    response.writeHead(503)
-    response.end('try again soon')
-    return
-  }
   const params = paramsOfPath(request.url)
-  const seq = await node.append(Buffer.from(params.text, 'utf8'))
+  const seq = await node.append(Buffer.from(params.text))
   response.writeHead(200)
   response.end(`ok ${seq}`)
+}
+
+let batch = []
+
+async function acceptMsgBatch(request, response) {
+  const params = paramsOfPath(request.url)
+  batch.push(Buffer.from(params.text))
+  response.writeHead(200)
+  response.end('ok')
 }
 
 async function health(request, response) {
@@ -82,6 +82,8 @@ async function handleHttp(request, response) {
     await acceptPeer(request, response)
   } else if (path.startsWith('/msg')) {
     await acceptMsg(request, response)
+  } else if (path.startsWith('/batch')) {
+    await acceptMsgBatch(request, response)
   } else {
     on400(response)
   }
@@ -89,7 +91,8 @@ async function handleHttp(request, response) {
 
 async function send(to, msg) {
   if (msg.seq !== undefined) { msg.seq = msg.seq.toString() }
-  if (msg.data) { msg.data = msg.data.toString('base64') }
+  if (msg.data && !Array.isArray(msg.data)) { msg.data = msg.data.toString('base64') }
+  if (Array.isArray(msg.data)) { msg.data = msg.data.map((buf) => buf.toString('base64')) }
   msg.from = name
   msg = JSON.stringify(msg)
   const opts = { method: 'POST', hostname: to, port: 9000, path: '/peer' }
@@ -99,6 +102,24 @@ async function send(to, msg) {
 
 let node = null
 
+function appendBatches() {
+  setInterval(() => {
+    const next = [...batch]
+    if (next.length <= 0) { return }
+    batch = []
+    node.appendBatch(next).then((seq) => {
+      console.log(name, 'batch ok', seq)
+    }).catch(onError)
+  }, 200)
+}
+
+function watchHead() {
+  setInterval(() => {
+    const head = node.log.head ?? Buffer.from('null')
+    console.log(name, 'head', node.log.seq, head.toString())
+  }, 2000)
+}
+
 async function boot() {
   console.log(name, 'booting', nodes)
   let log = new FsLog('/tmp/', 'log')
@@ -107,13 +128,6 @@ async function boot() {
   node = new RaftNode(name, nodes, send, log)
   await node.start()
   console.log(name, 'started')
-  await node.awaitLeader()
-  console.log(name, 'have leader', node.leader)
-
-  setInterval(() => {
-    const head = node.log.head ?? Buffer.from('null', 'utf8')
-    console.log(name, 'head', node.log.seq, head.toString('utf8'))
-  }, 2000)
 }
 
 const defaults = { port: 9000 }
@@ -131,8 +145,11 @@ const handle = (request, response) => {
     .catch((err) => on500(request, response, err))
 }
 
-const server = http.createServer(handle)
-server.listen(port)
-
-boot(nodes, name)
-  .catch(console.log)
+boot(nodes, name).then(async () => {
+  const server = http.createServer(handle)
+  server.listen(port)
+  await node.awaitLeader()
+  console.log(name, 'have leader', node.leader)
+  watchHead()
+  appendBatches()
+}).catch(console.log)
