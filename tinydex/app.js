@@ -36,7 +36,7 @@ function readBody(request) {
   })
 }
 
-async function acceptMsg(request, response) {
+async function acceptPeer(request, response) {
   if (!node) {
     response.writeHead(503)
     response.end('try again soon')
@@ -52,6 +52,23 @@ async function acceptMsg(request, response) {
   response.end('ok')
 }
 
+function paramsOfPath(path) {
+  const query = path.split('?')[1]
+  return Object.fromEntries(new URLSearchParams(query))
+}
+
+async function acceptMsg(request, response) {
+  if (!node) {
+    response.writeHead(503)
+    response.end('try again soon')
+    return
+  }
+  const params = paramsOfPath(request.url)
+  const seq = await node.append(Buffer.from(params.text, 'utf8'))
+  response.writeHead(200)
+  response.end(`ok ${seq}`)
+}
+
 async function health(request, response) {
   response.writeHead(200)
   response.end(`ok ${name}`)
@@ -62,6 +79,8 @@ async function handleHttp(request, response) {
   if (path.startsWith('/health')) {
     await health(request, response)
   } else if (path.startsWith('/peer')) {
+    await acceptPeer(request, response)
+  } else if (path.startsWith('/msg')) {
     await acceptMsg(request, response)
   } else {
     on400(response)
@@ -78,9 +97,6 @@ async function send(to, msg) {
     .catch((err) => console.log(`${name} send to ${to} error`, err.message))
 }
 
-const toBuf = (obj) => Buffer.from(JSON.stringify(obj), 'utf8')
-const toObj = (buf) => JSON.parse(buf ? buf.toString('utf8') : 'null')
-
 let node = null
 
 async function boot() {
@@ -94,11 +110,9 @@ async function boot() {
   await node.awaitLeader()
   console.log(name, 'have leader', node.leader)
 
-  let c = 1
   setInterval(() => {
-    node.append(toBuf({ count: c++ }))
-      .then(() => console.log(name, 'head', node.log.seq, toObj(node.log.head)))
-      .catch(onError)
+    const head = node.log.head ?? Buffer.from('null', 'utf8')
+    console.log(name, 'head', node.log.seq, head.toString('utf8'))
   }, 2000)
 }
 
