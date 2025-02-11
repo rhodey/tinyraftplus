@@ -111,23 +111,23 @@ class RaftNode extends TinyRaft {
     if (this._stopped) { return }
     super.emit('receive', [from, msg])
     if (this.leader === from) { this.markAlive() }
-
     const ack = { type: ACK, cid: msg.cid }
     switch (msg.type) {
       case FORWARD:
+        // if (!this.state !== LEADER) { return }
         if (!this.followers.includes(from)) { return }
         if (this.term !== msg.term) { return }
         return this._appendToSelfAndFollowers(msg.data)
-          .then((ok) => this.send(from, { ...ack, data: ok.data, seq: ok.seq }))
+          .then((ok) => this.send(from, { ...ack, seq: ok.seq }))
 
       case APPEND:
         if (this.leader !== from) { return }
         if (this.term !== msg.term) { return }
         const { data, seq } = msg
-        const work = Array.isArray(data) ? this.log.appendBatch(data, seq) : this.log.append(data, seq)
+        const work = Array.isArray(data) ?
+          this.log.appendBatch(data, seq) : this.log.append(data, seq)
         return work.then(() => this.send(from, ack))
     }
-
     super.onReceive(from, msg)
   }
 
@@ -135,7 +135,8 @@ class RaftNode extends TinyRaft {
     return new Promise((res, rej) => {
       const listen = (arr) => {
         const [fromm, msg] = arr
-        if (ACK !== msg.type || from !== fromm || cid !== msg.cid) { return }
+        if (cid !== msg.cid) { return }
+        if (ACK !== msg.type || from !== fromm) { return }
         this.removeListener('receive', listen)
         res(msg)
       }
@@ -143,18 +144,12 @@ class RaftNode extends TinyRaft {
     })
   }
 
-  async _awaitFollowing() {
-    const fn = (state) => state.state === FOLLOWER && state.leader !== null
-    if (fn(this)) { return }
-    return awaitChange(this, fn)
-  }
-
   _fwdToLeader(data) {
     const { nodeId: name } = this
     const [timer, timedout] = timeout(this.leaderAckTimeout)
     const work = new Promise((res, rej) => {
       timedout.catch((err) => rej(new Error(`${name} forward to leader timeout`)))
-      this._awaitFollowing().then(() => {
+      this.awaitLeader().then(() => {
         const cid = crypto.randomUUID()
         const msg = { type: FORWARD, cid, data, term: this.term }
         const ack = this._awaitAck(this.leader, cid)
@@ -178,7 +173,7 @@ class RaftNode extends TinyRaft {
         this.send(id, msg)
         return ack
       })
-      awaitResolve(acks, this.minFollowers).then(() => res({ data, seq })).catch(rej)
+      awaitResolve(acks, this.minFollowers).then(() => res({ seq })).catch(rej)
     })
     work.catch(noop).finally(() => clearTimeout(timer))
     return work
@@ -190,19 +185,21 @@ class RaftNode extends TinyRaft {
     const have = this.followers.length - 1
     if (have < need) { throw new Error(`${name} append to self needs ${need} followers have ${have}`) }
     const work = Array.isArray(data) ? this.log.appendBatch(data) : this.log.append(data)
-    return work.then((ok) => this._appendToFollowers(ok.data, ok.seq))
+    return work.then((seq) => this._appendToFollowers(data, seq))
   }
 
   async append(data) {
     const { nodeId: name } = this
     if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
-    return this.leader !== this.nodeId ? this._fwdToLeader(data) : this._appendToSelfAndFollowers(data)
+    const work = this.leader !== this.nodeId ? this._fwdToLeader(data) : this._appendToSelfAndFollowers(data)
+    return work.then((ok) => ok.seq)
   }
 
   async appendBatch(data) {
     const { nodeId: name } = this
     if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
-    return this.leader !== this.nodeId ? this._fwdToLeader(data) : this._appendToSelfAndFollowers(data)
+    const work = this.leader !== this.nodeId ? this._fwdToLeader(data) : this._appendToSelfAndFollowers(data)
+    return work.then((ok) => ok.seq)
   }
 }
 

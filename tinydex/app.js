@@ -86,8 +86,8 @@ let node = null
 async function boot() {
   console.log(name, 'booting', nodes)
   let log = new FsLog('/tmp/', 'log')
-  log = new ConcurrentLog(log)
   log = new AutoRestartLog(log, onError)
+  log = new ConcurrentLog(log)
   node = new RaftNode(name, nodes, send, log)
   await node.start()
   console.log(name, 'started')
