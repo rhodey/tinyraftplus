@@ -1,4 +1,6 @@
 /*
+todo: msgpack
+todo: benchmark
 todo: trade engine
 todo: trade aggregate logs
 

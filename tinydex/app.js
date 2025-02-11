@@ -54,7 +54,7 @@ async function acceptMsg(request, response) {
 
 async function health(request, response) {
   response.writeHead(200)
-  response.end('ok')
+  response.end(`ok ${name}`)
 }
 
 async function handleHttp(request, response) {
