@@ -1,4 +1,4 @@
-# tinydex (decentralized exchange)
+# TinyDEX (decentralized exchange)
 Example of what can be made with tinyraftplus
 
 ## Usage
