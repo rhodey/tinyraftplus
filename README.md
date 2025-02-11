@@ -57,6 +57,7 @@ main().catch(console.log)
 ```
 
 ## Output
+If not for `minFollowers: 2` above then you may see that only two nodes agree on the head
 ```
 append 0 { a: 1 }
 append 1 { b: 2 }
