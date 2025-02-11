@@ -41,6 +41,7 @@ async function acceptPeer(request, response) {
     return
   }
   const msg = await readBody(request)
+  if (msg.seq) { msg.seq = BigInt(msg.seq) }
   if (msg.data) { msg.data = Buffer.from(msg.data, 'base64') }
   const from = msg.from
   delete msg.from
@@ -66,6 +67,7 @@ async function handleHttp(request, response) {
 }
 
 async function sendToPeer(to, msg) {
+  if (msg.seq !== undefined) { msg.seq = msg.seq.toString() }
   if (msg.data) { msg.data = msg.data.toString('base64') }
   msg.from = name
   msg = JSON.stringify(msg)
@@ -73,6 +75,9 @@ async function sendToPeer(to, msg) {
   await util.sendHttp(opts, msg)
     .catch((err) => console.log(`${name} send to ${to} error`, err.message))
 }
+
+const toBuf = (obj) => Buffer.from(JSON.stringify(obj), 'utf8')
+const toObj = (buf) => JSON.parse(buf.toString('utf8'))
 
 let node = null
 
@@ -85,6 +90,13 @@ async function boot() {
   console.log(name, 'started')
   await node.awaitLeader()
   console.log(name, 'have leader', node.leader)
+
+  let c = 1
+  setInterval(() => {
+    node.append(toBuf({ count: c++ }))
+      .then(() => console.log(name, 'head', toObj(node.log.head)))
+      .catch(onError)
+  }, 2000)
 }
 
 const defaults = { port: 9000 }
