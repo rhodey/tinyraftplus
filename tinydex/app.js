@@ -41,7 +41,7 @@ async function acceptPeer(request, response) {
     return
   }
   const msg = await readBody(request)
-  if (msg.seq) { msg.seq = BigInt(msg.seq) }
+  if (msg.seq !== undefined) { msg.seq = BigInt(msg.seq) }
   if (msg.data) { msg.data = Buffer.from(msg.data, 'base64') }
   const from = msg.from
   delete msg.from
@@ -94,7 +94,7 @@ async function boot() {
   let c = 1
   setInterval(() => {
     node.append(toBuf({ count: c++ }))
-      .then(() => console.log(name, 'head', toObj(node.log.head)))
+      .then(() => console.log(name, 'head', node.log.seq, toObj(node.log.head)))
       .catch(onError)
   }, 2000)
 }
