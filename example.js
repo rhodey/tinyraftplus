@@ -23,14 +23,12 @@ async function main() {
   await Promise.all(nodes.map((node) => node.start()))
   await Promise.all(nodes.map((node) => node.awaitLeader()))
 
-  let ok = await nodes[0].append(toBuf({ a: 1 }))
-  console.log('append', ok.seq, toObj(ok.data))
-
-  ok = await nodes[1].append(toBuf({ b: 2 }))
-  console.log('append', ok.seq, toObj(ok.data))
-
-  ok = await nodes[2].append(toBuf({ c: 3 }))
-  console.log('append', ok.seq, toObj(ok.data))
+  let seq = await nodes[0].append(toBuf({ a: 1 }))
+  console.log('seq =', seq)
+  seq = await nodes[1].append(toBuf({ b: 2 }))
+  console.log('seq =', seq)
+  seq = await nodes[2].append(toBuf({ c: 3 }))
+  console.log('seq =', seq)
 
   console.log('head', toObj(nodes[0].log.head))
   console.log('head', toObj(nodes[1].log.head))
