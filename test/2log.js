@@ -14,7 +14,7 @@ const toObj = (buf) => {
 }
 
 async function testAppendStartStopNew(t, encoder) {
-  t.plan(26)
+  t.plan(21)
   const opts = { encoder }
   let log = new FsLog('/tmp/', 'test', opts)
   t.teardown(() => log.stop())
@@ -26,24 +26,21 @@ async function testAppendStartStopNew(t, encoder) {
 
   // start, stop same
   let data = { a: 1 }
-  let ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 0n, 'seq = 0')
+  let seq = await log.append(toBuf(data))
+  t.equal(seq, 0n, 'seq = 0')
   t.equal(log.seq, 0n, 'seq = 0')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 
   data = { bb: 2 }
-  ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 1n, 'seq = 1')
+  seq = await log.append(toBuf(data))
+  t.equal(seq, 1n, 'seq = 1')
   t.equal(log.seq, 1n, 'seq = 1')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 
   data = { ccc: 3 }
-  ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 2n, 'seq = 2')
+  seq = await log.append(toBuf(data))
+  t.equal(seq, 2n, 'seq = 2')
   t.equal(log.seq, 2n, 'seq = 2')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
   await log.stop()
 
@@ -53,10 +50,9 @@ async function testAppendStartStopNew(t, encoder) {
   t.deepEqual(toObj(log.head), data, 'head = data again')
 
   data = { d: 4 }
-  ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 3n, 'seq = 3')
+  seq = await log.append(toBuf(data))
+  t.equal(seq, 3n, 'seq = 3')
   t.equal(log.seq, 3n, 'seq = 3')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
   await log.stop()
 
@@ -67,10 +63,9 @@ async function testAppendStartStopNew(t, encoder) {
   t.deepEqual(toObj(log.head), data, 'head = data again')
 
   data = { ee: 5 }
-  ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 4n, 'seq = 4')
+  seq = await log.append(toBuf(data))
+  t.equal(seq, 4n, 'seq = 4')
   t.equal(log.seq, 4n, 'seq = 4')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 }
 
@@ -79,7 +74,7 @@ test('test append, stop, start, append, new, append - xxhash body', (t) => testA
 test('test append, stop, start, append, new, append - xxhash no body', (t) => testAppendStartStopNew(t, new XxHashEncoder(false)))
 
 async function testAppendOneStartStop(t, encoder) {
-  t.plan(12)
+  t.plan(10)
   t.teardown(() => log.stop())
 
   const opts = { encoder }
@@ -90,10 +85,9 @@ async function testAppendOneStartStop(t, encoder) {
   t.equal(log.head, null, 'head = null')
 
   let data = { a: 1 }
-  let ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 0n, 'seq = 0')
+  let seq = await log.append(toBuf(data))
+  t.equal(seq, 0n, 'seq = 0')
   t.equal(log.seq, 0n, 'seq = 0')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
   await log.stop()
 
@@ -102,10 +96,9 @@ async function testAppendOneStartStop(t, encoder) {
   t.deepEqual(toObj(log.head), data, 'head = data again')
 
   data = { b: 2 }
-  ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 1n, 'seq = 1')
+  seq = await log.append(toBuf(data))
+  t.equal(seq, 1n, 'seq = 1')
   t.equal(log.seq, 1n, 'seq = 1')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 }
 
@@ -149,7 +142,7 @@ test('test rollback first - xxhash body', (t) => testRollbackFirst(t, new XxHash
 test('test rollback first - xxhash no body', (t) => testRollbackFirst(t, new XxHashEncoder(false)))
 
 async function testRollbackSecond(t, encoder) {
-  t.plan(8)
+  t.plan(7)
   t.teardown(() => log.stop())
 
   const rollbackCb = (seq) => {
@@ -162,10 +155,9 @@ async function testRollbackSecond(t, encoder) {
   await log.start()
 
   const data = { a: 1 }
-  const ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 0n, 'seq = 0')
+  const seq = await log.append(toBuf(data))
+  t.equal(seq, 0n, 'seq = 0')
   t.equal(log.seq, 0n, 'seq = 0')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 
   try {
@@ -187,7 +179,7 @@ test('test rollback second - xxhash body', (t) => testRollbackSecond(t, new XxHa
 test('test rollback second - xxhash no body', (t) => testRollbackSecond(t, new XxHashEncoder(false)))
 
 async function testRollbackThird(t, encoder) {
-  t.plan(12)
+  t.plan(10)
   t.teardown(() => log.stop())
 
   const rollbackCb = (seq) => {
@@ -200,17 +192,15 @@ async function testRollbackThird(t, encoder) {
   await log.start()
 
   let data = { a: 1 }
-  let ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 0n, 'seq = 0')
+  let seq = await log.append(toBuf(data))
+  t.equal(seq, 0n, 'seq = 0')
   t.equal(log.seq, 0n, 'seq = 0')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 
   data = { b: 2 }
-  ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 1n, 'seq = 1')
+  seq = await log.append(toBuf(data))
+  t.equal(seq, 1n, 'seq = 1')
   t.equal(log.seq, 1n, 'seq = 1')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 
   try {
@@ -346,7 +336,7 @@ test('test log seq 0 and roll forward truncate -1 - xxhash body', (t) => testTru
 test('test log seq 0 and roll forward truncate -1 - xxhash both no body', (t) => testTruncate3(t, new XxHashEncoder(false)))
 
 async function testBatch(t, encoder) {
-  t.plan(18)
+  t.plan(14)
   t.teardown(() => log.stop())
 
   const opts = { encoder }
@@ -357,31 +347,27 @@ async function testBatch(t, encoder) {
   t.equal(log.head, null, 'head = null')
 
   let data = { a: 1 }
-  let ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 0n, 'seq = 0')
+  let seq = await log.append(toBuf(data))
+  t.equal(seq, 0n, 'seq = 0')
   t.equal(log.seq, 0n, 'seq = 0')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 
   data = [{ bb: 2 }, { ccc: 3 }]
-  ok = await log.appendBatch(data.map(toBuf))
-  t.equal(ok.seq, 1n, 'seq = 1')
+  seq = await log.appendBatch(data.map(toBuf))
+  t.equal(seq, 1n, 'seq = 1')
   t.equal(log.seq, 2n, 'seq = 2')
-  t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
 
   data = { d: 4 }
-  ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 3n, 'seq = 3')
+  seq = await log.append(toBuf(data))
+  t.equal(seq, 3n, 'seq = 3')
   t.equal(log.seq, 3n, 'seq = 3')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 
   data = { eeee: 5 }
-  ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 4n, 'seq = 4')
+  seq = await log.append(toBuf(data))
+  t.equal(seq, 4n, 'seq = 4')
   t.equal(log.seq, 4n, 'seq = 4')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 }
 
@@ -390,7 +376,7 @@ test('test append batch - xxhash body', (t) => testBatch(t, new XxHashEncoder())
 test('test append batch - xxhash no body', (t) => testBatch(t, new XxHashEncoder(false)))
 
 async function testBatchStartStopNew(t, encoder) {
-  t.plan(24)
+  t.plan(20)
   t.teardown(() => log.stop())
 
   const opts = { encoder }
@@ -401,17 +387,15 @@ async function testBatchStartStopNew(t, encoder) {
   t.equal(log.head, null, 'head = null')
 
   let data = { a: 1 }
-  let ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 0n, 'seq = 0')
+  let seq = await log.append(toBuf(data))
+  t.equal(seq, 0n, 'seq = 0')
   t.equal(log.seq, 0n, 'seq = 0')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 
   data = [{ bb: 2 }, { ccc: 3 }]
-  ok = await log.appendBatch(data.map(toBuf))
-  t.equal(ok.seq, 1n, 'seq = 1')
+  seq = await log.appendBatch(data.map(toBuf))
+  t.equal(seq, 1n, 'seq = 1')
   t.equal(log.seq, 2n, 'seq = 2')
-  t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
   await log.stop()
 
@@ -419,10 +403,9 @@ async function testBatchStartStopNew(t, encoder) {
   t.equal(log.seq, 2n, 'seq = 2')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
   data = { d: 4 }
-  ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 3n, 'seq = 3')
+  seq = await log.append(toBuf(data))
+  t.equal(seq, 3n, 'seq = 3')
   t.equal(log.seq, 3n, 'seq = 3')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
   await log.stop()
 
@@ -430,10 +413,9 @@ async function testBatchStartStopNew(t, encoder) {
   t.equal(log.seq, 3n, 'seq = 3')
   t.deepEqual(toObj(log.head), data, 'head = data')
   data = [{ aaa: 5 }, { bbbb: 6 }]
-  ok = await log.appendBatch(data.map(toBuf))
-  t.equal(ok.seq, 4n, 'seq = 4')
+  seq = await log.appendBatch(data.map(toBuf))
+  t.equal(seq, 4n, 'seq = 4')
   t.equal(log.seq, 5n, 'seq = 5')
-  t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
   await log.stop()
 
@@ -483,7 +465,7 @@ test('test rollback batch first - xxhash body', (t) => testBatchRollback(t, new 
 test('test rollback batch first - xxhash no body', (t) => testBatchRollback(t, new XxHashEncoder(false)))
 
 async function testBatchRollback2(t, encoder) {
-  t.plan(8)
+  t.plan(7)
   t.teardown(() => log.stop())
 
   const rollbackCb = (seq) => {
@@ -496,10 +478,9 @@ async function testBatchRollback2(t, encoder) {
   await log.start()
 
   const data = [{ a: 1 }]
-  const ok = await log.appendBatch(data.map(toBuf))
-  t.equal(ok.seq, 0n, 'seq = 0')
+  const seq = await log.appendBatch(data.map(toBuf))
+  t.equal(seq, 0n, 'seq = 0')
   t.equal(log.seq, 0n, 'seq = 0')
-  t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data[0], 'head = data')
 
   try {
@@ -522,7 +503,7 @@ test('test rollback batch second - xxhash body', (t) => testBatchRollback2(t, ne
 test('test rollback batch second - xxhash no body', (t) => testBatchRollback2(t, new XxHashEncoder(false)))
 
 async function testBatchRollback3(t, encoder) {
-  t.plan(12)
+  t.plan(10)
   t.teardown(() => log.stop())
 
   const rollbackCb = (seq) => {
@@ -535,17 +516,15 @@ async function testBatchRollback3(t, encoder) {
   await log.start()
 
   let data = { a: 1 }
-  let ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 0n, 'seq = 0')
+  let seq = await log.append(toBuf(data))
+  t.equal(seq, 0n, 'seq = 0')
   t.equal(log.seq, 0n, 'seq = 0')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
 
   data = [{ bb: 2 }, { ccc: 3 }]
-  ok = await log.appendBatch(data.map(toBuf))
-  t.equal(ok.seq, 1n, 'seq = 1')
+  seq = await log.appendBatch(data.map(toBuf))
+  t.equal(seq, 1n, 'seq = 1')
   t.equal(log.seq, 2n, 'seq = 2')
-  t.deepEqual(ok.data.map(toObj), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
 
   try {
