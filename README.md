@@ -28,7 +28,7 @@ function node(id, ids) {
     node.onReceive(id, msg)
   }
   const log = new FsLog('/tmp/', 'node'+id)
-  const opts = { minFollowers: 2 } // force full repl
+  const opts = { minFollowers: 2 } // force full repl for demo
   return new RaftNode(id, ids, send, log, opts)
 }
 
@@ -57,7 +57,6 @@ main().catch(console.log)
 ```
 
 ## Output
-If not for `minFollowers: 2` above then you may see that only two nodes agree on the head
 ```
 append 0 { a: 1 }
 append 1 { b: 2 }
