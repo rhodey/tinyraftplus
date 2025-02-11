@@ -23,7 +23,7 @@ const logFnFn = (encoder) => {
 }
 
 async function testAppendStartStopNew(t, encoder) {
-  t.plan(38)
+  t.plan(33)
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
   let log = new MultiFsLog('/tmp/', 'test', opts)
@@ -38,28 +38,25 @@ async function testAppendStartStopNew(t, encoder) {
 
   // start, stop same
   let data = Buffer.from(new Array(32 - extra).fill('a').join(''))
-  let ok = await log.append(data)
-  t.equal(ok.seq, 0n, 'seq = 0')
+  let seq = await log.append(data)
+  t.equal(seq, 0n, 'seq = 0')
   t.equal(log.seq, 0n, 'seq = 0')
-  t.ok(data.equals(ok.data), 'ok.data = data')
   t.ok(data.equals(log.head), 'head = data')
   t.equal(log.logs.length, 1, 'logs = 1')
   let llen = log.logs[0].offset + log.logs[0].hlen
   t.equal(llen, 32n, 'log length correct')
 
   data = Buffer.from(new Array(40 - extra).fill('b').join(''))
-  ok = await log.append(data)
-  t.equal(ok.seq, 1n, 'seq = 1')
+  seq = await log.append(data)
+  t.equal(seq, 1n, 'seq = 1')
   t.equal(log.seq, 1n, 'seq = 1')
-  t.ok(data.equals(ok.data), 'ok.data = data')
   t.ok(data.equals(log.head), 'head = data')
   t.equal(log.logs.length, 2, 'logs = 2')
 
   data = Buffer.from(new Array(24 - extra).fill('c').join(''))
-  ok = await log.append(data)
-  t.equal(ok.seq, 2n, 'seq = 2')
+  seq = await log.append(data)
+  t.equal(seq, 2n, 'seq = 2')
   t.equal(log.seq, 2n, 'seq = 2')
-  t.ok(data.equals(ok.data), 'ok.data = data')
   t.ok(data.equals(log.head), 'head = data')
   t.equal(log.logs.length, 2, 'logs = 2')
   llen = log.logs[1].offset + log.logs[1].hlen
@@ -75,10 +72,9 @@ async function testAppendStartStopNew(t, encoder) {
   t.equal(llen, 40n + 24n, 'log length correct')
 
   data = Buffer.from(new Array(16 - extra).fill('d').join(''))
-  ok = await log.append(data)
-  t.equal(ok.seq, 3n, 'seq = 3')
+  seq = await log.append(data)
+  t.equal(seq, 3n, 'seq = 3')
   t.equal(log.seq, 3n, 'seq = 3')
-  t.ok(data.equals(ok.data), 'ok.data = data')
   t.ok(data.equals(log.head), 'head = data')
   t.equal(log.logs.length, 3, 'logs = 3')
   llen = log.logs[2].offset + log.logs[2].hlen
@@ -95,10 +91,9 @@ async function testAppendStartStopNew(t, encoder) {
   t.equal(llen, 16n, 'log length correct')
 
   data = { ee: 5 }
-  ok = await log.append(toBuf(data))
-  t.equal(ok.seq, 4n, 'seq = 4')
+  seq = await log.append(toBuf(data))
+  t.equal(seq, 4n, 'seq = 4')
   t.equal(log.seq, 4n, 'seq = 4')
-  t.deepEqual(toObj(ok.data), data, 'ok.data = data')
   t.deepEqual(toObj(log.head), data, 'head = data')
   t.equal(log.logs.length, 3, 'logs = 3')
 }
