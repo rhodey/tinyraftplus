@@ -1,5 +1,6 @@
 const noop = () => {}
 
+// todo: should stop skip ahead?
 class ConcurrentLog {
   constructor(log) {
     this.log = log

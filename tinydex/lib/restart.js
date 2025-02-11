@@ -34,42 +34,45 @@ class AutoRestartLog {
 
   async _restartIfNeeded() {
     if (!this._restart) { return }
-    await restart(this.log).catch((err) => {
+    await restart(this.log).then(() => {
+      this._update()
+      this._restart = false
+    }).catch((err) => {
       this.errorCb(err)
       throw err
     })
-    this._update()
-    this._restart = false
   }
 
   async append(data, seq=null) {
     await this._restartIfNeeded()
-    const result = this.log.append(data, seq).catch((err) => {
+    return this.log.append(data, seq).then((res) => {
+      this._update()
+      return res
+    }).catch((err) => {
       this._restart = true
       throw err
     })
-    this._update()
-    return result
   }
 
   async appendBatch(data, seq=null) {
     await this._restartIfNeeded()
-    const result = this.log.appendBatch(data, seq).catch((err) => {
+    this.log.appendBatch(data, seq).then((res) => {
+      this._update()
+      return res
+    }).catch((err) => {
       this._restart = true
       throw err
     })
-    this._update()
-    return result
   }
 
   async truncate(seq=-1n) {
     await this._restartIfNeeded()
-    const result = this.log.truncate(seq).catch((err) => {
+    return this.log.truncate(seq).then(() => {
+      this._update()
+    }).catch((err) => {
       this._restart = true
       throw err
     })
-    this._update()
-    return result
   }
 
   iter(seq=0n, opts={}) {
