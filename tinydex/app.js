@@ -1,6 +1,7 @@
 const http = require('http')
 const minimist = require('minimist')
 const { RaftNode, FsLog } = require('tinyraftplus')
+const util = require('./lib/util.js')
 
 function onError(err) {
   console.log('error', err)
@@ -18,11 +19,6 @@ function on400(response) {
   response.end()
 }
 
-async function health(request, response) {
-  response.writeHead(400)
-  response.end('ok')
-}
-
 function readBody(request) {
   return new Promise((res, rej) => {
     let str = ''
@@ -32,16 +28,29 @@ function readBody(request) {
       try {
         res(JSON.parse(str))
       } catch (err) {
-        rej(new Error('json parse http body failed'))
+        rej(new Error('parse body failed'))
       }
     })
   })
 }
 
-async function peer(request, response) {
-  const json = await readBody(request)
-  json.data = Buffer.from(json.data, 'base64')
-  response.writeHead(400)
+async function acceptPeer(request, response) {
+  if (!node) {
+    response.writeHead(503)
+    response.end('try again soon')
+    return
+  }
+  const msg = await readBody(request)
+  if (msg.data) { msg.data = Buffer.from(msg.data, 'base64') }
+  const from = msg.from
+  delete msg.from
+  node.onReceive(from, msg)
+  response.writeHead(200)
+  response.end('ok')
+}
+
+async function health(request, response) {
+  response.writeHead(200)
   response.end('ok')
 }
 
@@ -50,25 +59,32 @@ async function handleHttp(request, response) {
   if (path.startsWith('/health')) {
     await health(request, response)
   } else if (path.startsWith('/peer')) {
-    await peer(request, response)
+    await acceptPeer(request, response)
   } else {
     on400(response)
   }
 }
 
 async function sendToPeer(to, msg) {
-  // todo:
+  if (msg.data) { msg.data = msg.data.toString('base64') }
+  msg.from = name
+  msg = JSON.stringify(msg)
+  const opts = { method: 'POST', hostname: to, port: 9000, path: '/peer' }
+  await util.sendHttp(opts, msg)
+    .catch((err) => console.log(`${name} send to ${to} error`, err.message))
 }
 
-async function boot(nodes, name) {
-  console.log('booting', nodes, name)
+let node = null
+
+async function boot() {
+  console.log(name, 'booting', nodes)
   const log = new FsLog('/tmp/', 'log')
   const send = (to, msg) => sendToPeer(to, msg).catch(onError)
-  const node = new RaftNode(name, nodes, send, log)
+  node = new RaftNode(name, nodes, send, log)
   await node.start()
-  console.log('started')
+  console.log(name, 'started')
   await node.awaitLeader()
-  console.log('have leader')
+  console.log(name, 'have leader', node.leader)
 }
 
 const defaults = { port: 9000 }
@@ -76,6 +92,10 @@ const argv = minimist(process.argv.slice(2))
 const opts = { ...defaults, ...argv }
 const port = opts.port
 const name = argv._[0]
+
+let nodes = process.env.nodes ?? ''
+nodes = nodes.split(',')
+if (nodes.length < 3) { onError('need three or more nodes in env var') }
 
 const handle = (request, response) => {
   handleHttp(request, response)
@@ -85,8 +105,5 @@ const handle = (request, response) => {
 const server = http.createServer(handle)
 server.listen(port)
 
-let nodes = process.env.nodes ?? ''
-nodes = nodes.split(',')
-if (nodes.length <= 2) { onError('need three or more nodes in env var') }
-
-boot(nodes, name).catch(console.log)
+boot(nodes, name)
+  .catch(console.log)

@@ -89,7 +89,7 @@ class RaftNode extends TinyRaft {
   async awaitLeader() {
     const { nodeId: name } = this
     if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
-    const leading = (state) => state.state === LEADER && state.leader === state.nodeId
+    const leading = (state) => state.state === LEADER
     const following = (state) => state.state === FOLLOWER && state.leader !== null
     const fn = (state) => leading(state) || following(state)
     if (fn(this)) { return }

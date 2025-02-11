@@ -2,10 +2,6 @@ services:
   gateway:
     image: nginx
     container_name: gateway
-    depends_on:
-      - node1
-      - node2
-      - node3
     ports:
       - 8080:8080
     volumes:
