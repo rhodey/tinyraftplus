@@ -14,7 +14,7 @@ function node(id, ids) {
     node.onReceive(id, msg)
   }
   const log = new FsLog('/tmp/', 'node'+id)
-  const opts = { minFollowers: 2 } // force full repl
+  const opts = { minFollowers: 2 } // force full repl for demo
   return new RaftNode(id, ids, send, log, opts)
 }
 
