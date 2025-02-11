@@ -1,5 +1,5 @@
-# tinyraftplus
-This is [tinyraft](https://www.npmjs.com/package/tinyraft) with extras. As with all Raft implementations a leader is elected and the network can survive if any majority of nodes are online, what has been added to tinyraft is...
+# TinyRaftPlus
+This is [TinyRaft](https://www.npmjs.com/package/tinyraft) with extras. As with all Raft implementations a leader is elected and the network can survive if any majority of nodes are online, what has been added to tinyraft is...
 
 ### Log replication
 A log with append(), appendBatch(), and truncate()
@@ -67,9 +67,9 @@ head { c: 3 }
 ```
 
 ## Configuration
-+ [tinyraft](https://www.npmjs.com/package/tinyraft)
-+ [raftnode](https://github.com/rhodey/tinyraftplus/blob/master/index.js#L17)
-+ [fslog](https://github.com/rhodey/tinyraftplus/blob/master/index.js#L227)
++ [TinyRaft](https://www.npmjs.com/package/tinyraft)
++ [RaftNode](https://github.com/rhodey/tinyraftplus/blob/master/index.js#L17)
++ [FsLog](https://github.com/rhodey/tinyraftplus/blob/master/index.js#L227)
 
 ## Tests
 ```
