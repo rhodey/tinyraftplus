@@ -1,6 +1,8 @@
 const http = require('http')
 const minimist = require('minimist')
 const { RaftNode, FsLog } = require('tinyraftplus')
+const AutoRestartLog = require('./lib/restart.js')
+const ConcurrentLog = require('./lib/concurrent.js')
 const util = require('./lib/util.js')
 
 function onError(err) {
@@ -34,7 +36,7 @@ function readBody(request) {
   })
 }
 
-async function acceptPeer(request, response) {
+async function acceptMsg(request, response) {
   if (!node) {
     response.writeHead(503)
     response.end('try again soon')
@@ -60,13 +62,13 @@ async function handleHttp(request, response) {
   if (path.startsWith('/health')) {
     await health(request, response)
   } else if (path.startsWith('/peer')) {
-    await acceptPeer(request, response)
+    await acceptMsg(request, response)
   } else {
     on400(response)
   }
 }
 
-async function sendToPeer(to, msg) {
+async function send(to, msg) {
   if (msg.seq !== undefined) { msg.seq = msg.seq.toString() }
   if (msg.data) { msg.data = msg.data.toString('base64') }
   msg.from = name
@@ -77,14 +79,15 @@ async function sendToPeer(to, msg) {
 }
 
 const toBuf = (obj) => Buffer.from(JSON.stringify(obj), 'utf8')
-const toObj = (buf) => JSON.parse(buf.toString('utf8'))
+const toObj = (buf) => JSON.parse(buf ? buf.toString('utf8') : 'null')
 
 let node = null
 
 async function boot() {
   console.log(name, 'booting', nodes)
-  const log = new FsLog('/tmp/', 'log')
-  const send = (to, msg) => sendToPeer(to, msg).catch(onError)
+  let log = new FsLog('/tmp/', 'log')
+  log = new AutoRestartLog(log, onError)
+  log = new ConcurrentLog(log)
   node = new RaftNode(name, nodes, send, log)
   await node.start()
   console.log(name, 'started')
