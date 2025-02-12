@@ -61,14 +61,19 @@ async function acceptMsg(request, response) {
 }
 
 let batch = []
-let begin = null
 
 async function acceptMsgBatch(request, response) {
-  begin = begin ?? Date.now()
   const params = paramsOfPath(request.url)
-  batch.push(Buffer.from(params.text))
-  response.writeHead(200)
-  response.end('ok')
+  const cb = (err, seq) => {
+    if (err) {
+      on500(request, response, err)
+      return
+    }
+    response.writeHead(200)
+    response.end(`ok ${seq}`)
+  }
+  const data = Buffer.from(params.text)
+  batch.push([cb, data])
 }
 
 async function health(request, response) {
@@ -103,17 +108,17 @@ async function send(to, msg) {
 }
 
 let node = null
-let count = 0
 
 function appendBatches() {
   setInterval(() => {
-    const next = [...batch]
-    if (next.length <= 0) { return }
+    const cbs = batch.map((arr) => arr[0])
+    const data = batch.map((arr) => arr[1])
+    if (data.length <= 0) { return }
     batch = []
-    const begin2 = Date.now()
-    node.appendBatch(next).then((seq) => {
-      count += next.length
-      const diff = Date.now() - begin2
+    const begin = Date.now()
+    node.appendBatch(data).then((seq) => {
+      cbs.forEach((cb) => cb(null, seq))
+      const diff = Date.now() - begin
       console.log(name, 'batch time', seq, diff)
     }).catch(onError)
   }, 200)
@@ -121,10 +126,8 @@ function appendBatches() {
 
 function watchHead() {
   setInterval(() => {
-    const diff = Date.now() - begin
-    const rate = ((count / diff) * 1000).toFixed(2)
     const head = node.log.head ?? Buffer.from('null')
-    console.log(name, node.log.seq, rate)
+    console.log(name, node.log.seq, head.toString())
   }, 2000)
 }
 
