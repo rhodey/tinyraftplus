@@ -9,6 +9,7 @@ docker compose up
 npm install -g loadtest
 loadtest --cores 3 --rps 10000 -t 15 http://localhost:8080/batch?text=abc123
 loadtest --cores 4 --rps 20000 -t 15 http://localhost:8080/batch?text=abc123
+loadtest --rps 15000 -t 15 http://localhost:8080/batch?text=abc123
 ```
 
 ## Test

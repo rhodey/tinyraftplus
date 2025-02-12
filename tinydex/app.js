@@ -149,6 +149,8 @@ let nodes = process.env.nodes ?? ''
 nodes = nodes.split(',')
 if (nodes.length < 3) { onError('need three or more nodes in env var') }
 
+process.setMaxListeners = 1024
+
 boot().then(async () => {
   await node.awaitLeader()
   console.log(name, 'have leader', node.leader)
