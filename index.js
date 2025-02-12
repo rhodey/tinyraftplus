@@ -86,6 +86,10 @@ class RaftNode extends TinyRaft {
     return this.log.stop()
   }
 
+  isLeader() {
+    return this.state === LEADER
+  }
+
   async awaitLeader() {
     const { nodeId: name } = this
     if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
@@ -168,7 +172,8 @@ class RaftNode extends TinyRaft {
       timedout.catch((err) => rej(new Error(`${name} append to followers timeout`)))
       const cid = crypto.randomUUID()
       const msg = { type: APPEND, cid, data, seq, term: this.term }
-      const acks = this.followers.filter((id) => this.nodeId !== id).map((id) => {
+      const followers = this.followers ?? []
+      const acks = followers.filter((id) => this.nodeId !== id).map((id) => {
         const ack = this._awaitAck(id, cid)
         this.send(id, msg)
         return ack
@@ -182,8 +187,8 @@ class RaftNode extends TinyRaft {
   async _appendToSelfAndFollowers(data) {
     const { nodeId: name } = this
     const need = this.minFollowers
-    const have = this.followers.length - 1
-    if (have < need) { throw new Error(`${name} append to self needs ${need} followers have ${have}`) }
+    let have = this.followers?.length ?? 0
+    if (--have < need) { throw new Error(`${name} append to self needs ${need} followers have ${have}`) }
     const work = Array.isArray(data) ? this.log.appendBatch(data) : this.log.append(data)
     return work.then((seq) => this._appendToFollowers(data, seq))
   }
@@ -191,14 +196,14 @@ class RaftNode extends TinyRaft {
   async append(data) {
     const { nodeId: name } = this
     if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
-    const work = this.leader !== this.nodeId ? this._fwdToLeader(data) : this._appendToSelfAndFollowers(data)
+    const work = this.isLeader() ? this._appendToSelfAndFollowers(data) : this._fwdToLeader(data)
     return work.then((ok) => ok.seq)
   }
 
   async appendBatch(data) {
     const { nodeId: name } = this
     if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
-    const work = this.leader !== this.nodeId ? this._fwdToLeader(data) : this._appendToSelfAndFollowers(data)
+    const work = this.isLeader() ? this._appendToSelfAndFollowers(data) : this._fwdToLeader(data)
     return work.then((ok) => ok.seq)
   }
 }
