@@ -24,8 +24,8 @@ services:
   node2:
     image: tinydex
     container_name: node2
-    env_file: .env
     tmpfs: /tmp
+    env_file: .env
     ports:
       - 9002:9000
       - 9102:9100
@@ -34,8 +34,8 @@ services:
   node3:
     image: tinydex
     container_name: node3
-    env_file: .env
     tmpfs: /tmp
+    env_file: .env
     ports:
       - 9003:9000
       - 9103:9100

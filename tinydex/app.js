@@ -1,8 +1,10 @@
 const net = require('net')
 const http = require('http')
 const minimist = require('minimist')
+const _sodium = require('libsodium-wrappers')
 const { PackrStream } = require('msgpackr')
 const { RaftNode, FsLog } = require('tinyraftplus')
+const { getKey, EncryptStream } = require('./lib/sodium.js')
 const AutoRestartLog = require('./lib/restart.js')
 const ConcurrentLog = require('./lib/concurrent.js')
 const util = require('./lib/util.js')
@@ -71,6 +73,13 @@ function watchHead() {
     const head = node.log.head ?? Buffer.from('null')
     console.log(name, node.log.seq, head.toString())
   }, 2000)
+  // todo: remove
+  node.on('change', (st) => {
+    console.log(
+        '==== CHANGE '+node.nodeId+': '+(st.state == 'follower' ? 'following '+st.leader : st.state)+
+        ', term '+st.term+(st.state == 'leader' ? ', followers: '+st.followers.join(', ') : '')
+    )
+  })
 }
 
 async function health(request, response) {
@@ -98,10 +107,13 @@ function send(to, msg) {
   if (!peer) {
     peer = peers[to] = util.tcpClient(to, 9000, onError).then((socket) => {
       console.log(`${name} connection to ${to} open`)
-      const stream = new PackrStream()
-      stream.on('error', onError)
-      stream.pipe(socket)
-      peers[to] = stream
+      const pack = new PackrStream()
+      const key = getKey(sodium, process.env.password)
+      const encrypt = new EncryptStream(sodium, key)
+      pack.on('error', onError)
+      encrypt.on('error', onError)
+      pack.pipe(encrypt).pipe(socket)
+      peers[to] = pack
     }).catch((err) => {
       console.log(`${name} connection to ${to} failed`)
       peers[to] = undefined
@@ -119,9 +131,13 @@ function receive(msg) {
 }
 
 let node = null
+let sodium = null
 
 async function boot() {
-  console.log(name, 'booting')
+  await _sodium.ready
+  sodium = _sodium
+  const key = getKey(sodium, process.env.password)
+  console.log(name, 'booting', nodes)
   let log = new FsLog('/tmp/', 'log')
   log = new AutoRestartLog(log, onError)
   log = new ConcurrentLog(log)
@@ -129,7 +145,7 @@ async function boot() {
   node.setMaxListeners(1024)
   await node.start()
   console.log(name, 'started log')
-  await util.tcpServer(9000, onError, receive)
+  await util.tcpServer(9000, sodium, key, onError, receive)
   console.log(name, 'started peer socket')
 }
 

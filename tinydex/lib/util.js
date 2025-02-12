@@ -1,6 +1,7 @@
 const net = require('net')
 const http = require('http')
 const { UnpackrStream } = require('msgpackr')
+const { DecryptStream } = require('./sodium.js')
 
 const httpTimeout = 5_000
 
@@ -67,13 +68,15 @@ function sendHttp(options, body = '') {
   return result
 }
 
-function tcpServer(port, errCb, msgCb) {
+function tcpServer(port, sodium, key, errCb, msgCb) {
   const server = net.createServer((socket) => {
-    const unpack = new UnpackrStream()
     socket.on('close', () => errCb(new Error(`net close`)))
     socket.on('error', (err) => errCb(new Error(`net error ${err.message}`)))
+    const decrypt = new DecryptStream(sodium, key)
+    const unpack = new UnpackrStream()
+    decrypt.on('error', (err) => errCb(new Error(`net decrypt error ${err.message}`)))
     unpack.on('error', (err) => errCb(new Error(`net unpack error ${err.message}`)))
-    socket.pipe(unpack).on('data', msgCb)
+    socket.pipe(decrypt).pipe(unpack).on('data', msgCb)
   })
   server.on('error', (err) => errCb(new Error(`net server error ${err.message}`)))
   return new Promise((res, rej) => {
