@@ -41,7 +41,7 @@ function sendHttp(options, body = '') {
 
   if (body) {
     options.headers['Content-Type'] = options.headers['Content-Type'] ?? 'application/json'
-    options.headers['Content-Length'] = Buffer.byteLength(body)
+    options.headers['Content-Length'] = body.byteLength
   }
 
   const result = new Promise((res, rej) => {

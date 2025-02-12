@@ -1,5 +1,6 @@
 const http = require('http')
 const minimist = require('minimist')
+const { unpack, pack } = require('msgpackr')
 const { RaftNode, FsLog } = require('tinyraftplus')
 const AutoRestartLog = require('./lib/restart.js')
 const ConcurrentLog = require('./lib/concurrent.js')
@@ -23,24 +24,16 @@ function on400(response) {
 
 function readBody(request) {
   return new Promise((res, rej) => {
-    let str = ''
-    request.on('data', (chunk) => str += chunk)
+    const body = []
     request.on('error', rej)
-    request.on('end', () => {
-      try {
-        res(JSON.parse(str))
-      } catch (err) {
-        rej(new Error('parse body failed'))
-      }
-    })
+    request.on('data', (chunk) => body.push(chunk))
+    request.on('end', () => res(Buffer.concat(body)))
   })
 }
 
 async function acceptPeer(request, response) {
-  const msg = await readBody(request)
-  if (msg.seq !== undefined) { msg.seq = BigInt(msg.seq) }
-  if (msg.data && !Array.isArray(msg.data)) { msg.data = Buffer.from(msg.data, 'base64') }
-  if (Array.isArray(msg.data)) { msg.data = msg.data.map((str) => Buffer.from(str, 'base64')) }
+  const buf = await readBody(request)
+  const msg = unpack(buf)
   const from = msg.from
   delete msg.from
   node.onReceive(from, msg)
@@ -97,11 +90,8 @@ async function handleHttp(request, response) {
 }
 
 async function send(to, msg) {
-  if (msg.seq !== undefined) { msg.seq = msg.seq.toString() }
-  if (msg.data && !Array.isArray(msg.data)) { msg.data = msg.data.toString('base64') }
-  if (Array.isArray(msg.data)) { msg.data = msg.data.map((buf) => buf.toString('base64')) }
   msg.from = name
-  msg = JSON.stringify(msg)
+  msg = pack(msg)
   const opts = { method: 'POST', hostname: to, port: 9000, path: '/peer' }
   await util.sendHttp(opts, msg)
     .catch((err) => console.log(`${name} send to ${to} error`, err.message))
