@@ -1,6 +1,7 @@
+const net = require('net')
 const http = require('http')
 const minimist = require('minimist')
-const { unpack, pack } = require('msgpackr')
+const { PackrStream } = require('msgpackr')
 const { RaftNode, FsLog } = require('tinyraftplus')
 const AutoRestartLog = require('./lib/restart.js')
 const ConcurrentLog = require('./lib/concurrent.js')
@@ -20,25 +21,6 @@ function on500(request, response, err) {
 function on400(response) {
   response.writeHead(400)
   response.end()
-}
-
-function readBody(request) {
-  return new Promise((res, rej) => {
-    const body = []
-    request.on('error', rej)
-    request.on('data', (chunk) => body.push(chunk))
-    request.on('end', () => res(Buffer.concat(body)))
-  })
-}
-
-async function acceptPeer(request, response) {
-  const buf = await readBody(request)
-  const msg = unpack(buf)
-  const from = msg.from
-  delete msg.from
-  node.onReceive(from, msg)
-  response.writeHead(200)
-  response.end('ok')
 }
 
 function paramsOfPath(path) {
@@ -69,36 +51,6 @@ async function acceptMsgBatch(request, response) {
   batch.push([cb, data])
 }
 
-async function health(request, response) {
-  response.writeHead(200)
-  response.end(`ok ${name}`)
-}
-
-async function handleHttp(request, response) {
-  const path = request.url.split('?')[0]
-  if (path.startsWith('/health')) {
-    await health(request, response)
-  } else if (path.startsWith('/peer')) {
-    await acceptPeer(request, response)
-  } else if (path.startsWith('/msg')) {
-    await acceptMsg(request, response)
-  } else if (path.startsWith('/batch')) {
-    await acceptMsgBatch(request, response)
-  } else {
-    on400(response)
-  }
-}
-
-async function send(to, msg) {
-  msg.from = name
-  msg = pack(msg)
-  const opts = { method: 'POST', hostname: to, port: 9000, path: '/peer' }
-  await util.sendHttp(opts, msg)
-    .catch((err) => console.log(`${name} send to ${to} error`, err.message))
-}
-
-let node = null
-
 function appendBatches() {
   setInterval(() => {
     const cbs = batch.map((arr) => arr[0])
@@ -121,36 +73,87 @@ function watchHead() {
   }, 2000)
 }
 
+async function health(request, response) {
+  response.writeHead(200)
+  response.end(`ok ${name}`)
+}
+
+async function handleHttp(request, response) {
+  const path = request.url.split('?')[0]
+  if (path.startsWith('/health')) {
+    await health(request, response)
+  } else if (path.startsWith('/msg')) {
+    await acceptMsg(request, response)
+  } else if (path.startsWith('/batch')) {
+    await acceptMsgBatch(request, response)
+  } else {
+    on400(response)
+  }
+}
+
+const peers = {}
+
+function send(to, msg) {
+  let peer = peers[to]
+  if (!peer) {
+    peer = peers[to] = util.tcpClient(to, 9000, onError).then((socket) => {
+      console.log(`${name} connection to ${to} open`)
+      const stream = new PackrStream()
+      stream.on('error', onError)
+      stream.pipe(socket)
+      peers[to] = stream
+    }).catch((err) => {
+      console.log(`${name} connection to ${to} failed`)
+      peers[to] = undefined
+    })
+  }
+  if (peer instanceof Promise) { return }
+  msg.from = name
+  peer.write(msg)
+}
+
+function receive(msg) {
+  const from = msg.from
+  delete msg.from
+  node.onReceive(from, msg)
+}
+
+let node = null
+
 async function boot() {
-  console.log(name, 'booting', nodes)
+  console.log(name, 'booting')
   let log = new FsLog('/tmp/', 'log')
   log = new AutoRestartLog(log, onError)
   log = new ConcurrentLog(log)
   node = new RaftNode(name, nodes, send, log)
   await node.start()
-  console.log(name, 'started')
+  console.log(name, 'started log')
+  await util.tcpServer(9000, onError, receive)
+  console.log(name, 'started peer socket')
 }
 
-const defaults = { port: 9000 }
+function startHttp() {
+  const handle = (request, response) => {
+    handleHttp(request, response)
+      .catch((err) => on500(request, response, err))
+  }
+  const httpServer = http.createServer(handle)
+  httpServer.listen(9100)
+  console.log(name, 'started http server')
+}
+
 const argv = minimist(process.argv.slice(2))
-const opts = { ...defaults, ...argv }
-const port = opts.port
 const name = argv._[0]
 
 let nodes = process.env.nodes ?? ''
 nodes = nodes.split(',')
 if (nodes.length < 3) { onError('need three or more nodes in env var') }
 
-const handle = (request, response) => {
-  handleHttp(request, response)
-    .catch((err) => on500(request, response, err))
-}
-
-boot(nodes, name).then(async () => {
-  const server = http.createServer(handle)
-  server.listen(port)
+boot().then(async () => {
   await node.awaitLeader()
   console.log(name, 'have leader', node.leader)
   watchHead()
   appendBatches()
+  startHttp()
+  console.log(name, 'ready')
 }).catch(console.log)

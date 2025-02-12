@@ -1,6 +1,7 @@
 FROM node:23-alpine
 
 EXPOSE 9000
+EXPOSE 9100
 
 WORKDIR /app
 

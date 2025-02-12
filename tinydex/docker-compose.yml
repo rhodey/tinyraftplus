@@ -18,6 +18,7 @@ services:
     env_file: .env
     ports:
       - 9001:9000
+      - 9101:9100
     command: node1
 
   node2:
@@ -27,6 +28,7 @@ services:
     tmpfs: /tmp
     ports:
       - 9002:9000
+      - 9102:9100
     command: node2
 
   node3:
@@ -36,4 +38,5 @@ services:
     tmpfs: /tmp
     ports:
       - 9003:9000
+      - 9103:9100
     command: node3
