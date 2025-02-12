@@ -121,7 +121,7 @@ function appendBatches() {
       const diff = Date.now() - begin
       console.log(name, 'batch time', seq, diff)
     }).catch(onError)
-  }, 200)
+  }, 100)
 }
 
 function watchHead() {
