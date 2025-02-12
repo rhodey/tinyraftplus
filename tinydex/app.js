@@ -126,6 +126,7 @@ async function boot() {
   log = new AutoRestartLog(log, onError)
   log = new ConcurrentLog(log)
   node = new RaftNode(name, nodes, send, log)
+  node.setMaxListeners(1024)
   await node.start()
   console.log(name, 'started log')
   await util.tcpServer(9000, onError, receive)
@@ -148,8 +149,6 @@ const name = argv._[0]
 let nodes = process.env.nodes ?? ''
 nodes = nodes.split(',')
 if (nodes.length < 3) { onError('need three or more nodes in env var') }
-
-process.setMaxListeners = 1024
 
 boot().then(async () => {
   await node.awaitLeader()
