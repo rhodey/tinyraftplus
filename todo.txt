@@ -6,6 +6,7 @@ loadtest -k --cores 2 --rps 30000 -t 15 http://172.31.47.234:9100/batch?text=abc
 20k RPS
 loadtest -k --cores 2 --rps 30000 -t 15 http://LBTiny-1422899782.us-east-2.elb.amazonaws.com/batch?text=abc123
 21k RPS
+30k RPS
 
 todo: node groups
 todo: shards / parts
