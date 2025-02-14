@@ -2,14 +2,15 @@ const net = require('net')
 const { PackrStream, UnpackrStream } = require('msgpackr')
 const { getKey, EncryptStream, DecryptStream } = require('./sodium.js')
 
+// todo: survive client disconnect
 function tcpServer(sodium, key, port, errCb, msgCb) {
   const server = net.createServer((socket) => {
-    socket.on('close', () => errCb(new Error(`${port} net close`)))
-    socket.on('error', (err) => errCb(new Error(`${port} net error ${err.message}`)))
     const decrypt = new DecryptStream(sodium, key)
-    decrypt.on('error', (err) => errCb(new Error(`${port} net decrypt error ${err.message}`)))
     const unpack = new UnpackrStream()
+    decrypt.on('error', (err) => errCb(new Error(`${port} net decrypt error ${err.message}`)))
     unpack.on('error', (err) => errCb(new Error(`${port} net unpack error ${err.message}`)))
+    socket.on('error', (err) => errCb(new Error(`${port} net error ${err.message}`)))
+    socket.on('close', () => errCb(new Error(`${port} net close`)))
     socket.pipe(decrypt).pipe(unpack).on('data', msgCb)
   })
   server.on('error', (err) => errCb(new Error(`${port} net server error ${err.message}`)))
@@ -22,6 +23,7 @@ function tcpServer(sodium, key, port, errCb, msgCb) {
   })
 }
 
+// todo: survive server disconnect
 function tcpClient(sodium, key, host, port, errCb) {
   let connected = false
   const socket = new net.Socket()

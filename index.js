@@ -2,6 +2,7 @@ const crypto = require('crypto')
 const TinyRaft = require('tinyraft')
 const { FsLog } = require('./lib/fslog.js')
 const { ConcurrentLog, AutoRestartLog } = require('./lib/others.js')
+const { TcpLogServer, TcpLogClient } = require('./lib/remote.js')
 const { Encoder, XxHashEncoder } = require('./lib/encoders.js')
 
 const ACK = 'ack'
@@ -211,6 +212,7 @@ class RaftNode extends TinyRaft {
 
 module.exports = {
   RaftNode, FsLog,
-  Encoder, XxHashEncoder,
   ConcurrentLog, AutoRestartLog,
+  TcpLogServer, TcpLogClient,
+  Encoder, XxHashEncoder,
 }

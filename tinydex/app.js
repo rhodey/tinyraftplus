@@ -2,10 +2,8 @@ const net = require('net')
 const http = require('http')
 const minimist = require('minimist')
 const _sodium = require('libsodium-wrappers')
-const { PackrStream } = require('msgpackr')
 const { RaftNode, FsLog } = require('tinyraftplus')
 const { AutoRestartLog, ConcurrentLog } = require('tinyraftplus')
-const { getKey, EncryptStream } = require('./lib/sodium.js')
 
 function onError(err) {
   console.log('error', err)

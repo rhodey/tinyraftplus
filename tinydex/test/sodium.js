@@ -1,7 +1,7 @@
 const test = require('tape')
 const crypto = require('crypto')
 const _sodium = require('libsodium-wrappers')
-const { getKey, EncryptStream, DecryptStream } = require('..//lib/sodium.js')
+const { getKey, EncryptStream, DecryptStream } = require('../lib/sodium.js')
 
 const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 

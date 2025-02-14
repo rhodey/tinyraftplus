@@ -80,7 +80,7 @@ class DecryptStream extends Transform {
 
     while (next) {
       const res = sodium.crypto_secretstream_xchacha20poly1305_pull(this.state, next)
-      if (!res) { throw new Error('not ok') }
+      if (!res) { throw new Error('decrypt error') }
       const buf = Buffer.from(res.message)
       this.out.push(buf)
       next = this._next()
@@ -97,31 +97,5 @@ class DecryptStream extends Transform {
     callback()
   }
 }
-
-async function main() {
-  const fs = require('fs')
-  const sodium = require('libsodium-wrappers')
-  await sodium.ready
-
-  const key1 = await getKey(sodium, 'abc123')
-  const key2 = await getKey(sodium, 'abc123')
-
-  const encrypt = new EncryptStream(sodium, key1)
-  const decrypt = new DecryptStream(sodium, key2)
-
-  let input = fs.createReadStream('input.txt')
-  let output = fs.createWriteStream('output.bin')
-
-  input.pipe(encrypt).pipe(output).on('finish', () => {
-    console.log('encrypted')
-    input = fs.createReadStream('output.bin')
-    output = fs.createWriteStream('output.txt')
-
-    input.pipe(decrypt).pipe(output)
-      .on('finish', () => console.log('decrypted'))
-  })
-}
-
-// main().catch(console.log)
 
 module.exports = { getKey, EncryptStream, DecryptStream }

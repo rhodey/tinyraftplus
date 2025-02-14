@@ -4,7 +4,7 @@ const noop = () => { }
 const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 const serialize = (params) => new URLSearchParams(params).toString()
 
-const httpTimeout = 5_000
+const httpTimeout = 10_000
 
 // round timers forward to nearest 100ms
 const error = new Error('timedout')
