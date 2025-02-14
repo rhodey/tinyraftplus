@@ -4,9 +4,8 @@ const minimist = require('minimist')
 const _sodium = require('libsodium-wrappers')
 const { PackrStream } = require('msgpackr')
 const { RaftNode, FsLog } = require('tinyraftplus')
+const { AutoRestartLog, ConcurrentLog } = require('tinyraftplus')
 const { getKey, EncryptStream } = require('./lib/sodium.js')
-const AutoRestartLog = require('./lib/restart.js')
-const ConcurrentLog = require('./lib/concurrent.js')
 
 function onError(err) {
   console.log('error', err)
