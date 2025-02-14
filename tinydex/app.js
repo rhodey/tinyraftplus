@@ -7,7 +7,6 @@ const { RaftNode, FsLog } = require('tinyraftplus')
 const { getKey, EncryptStream } = require('./lib/sodium.js')
 const AutoRestartLog = require('./lib/restart.js')
 const ConcurrentLog = require('./lib/concurrent.js')
-const util = require('./lib/util.js')
 
 function onError(err) {
   console.log('error', err)
@@ -105,15 +104,9 @@ const peers = {}
 function send(to, msg) {
   let peer = peers[to]
   if (!peer) {
-    peer = peers[to] = util.tcpClient(to, 9000, onError).then((socket) => {
+    peer = peers[to] = tcpClient(to, 9000, pass, onError).then((socket) => {
       console.log(`${name} connection to ${to} open`)
-      const pack = new PackrStream()
-      const key = getKey(sodium, process.env.password)
-      const encrypt = new EncryptStream(sodium, key)
-      pack.on('error', onError)
-      encrypt.on('error', onError)
-      pack.pipe(encrypt).pipe(socket)
-      peers[to] = pack
+      peers[to] = socket
     }).catch((err) => {
       console.log(`${name} connection to ${to} failed`)
       peers[to] = undefined
@@ -132,11 +125,14 @@ function receive(msg) {
 
 let node = null
 let sodium = null
+let tcpClient = null
+const pass = process.env.password
 
 async function boot() {
   await _sodium.ready
   sodium = _sodium
-  const key = getKey(sodium, process.env.password)
+  const tcp = require('./lib/tcp.js')(sodium)
+  tcpClient = tcp.tcpClient
   console.log(name, 'booting', nodes)
   let log = new FsLog('/tmp/', 'log')
   log = new AutoRestartLog(log, onError)
@@ -145,7 +141,7 @@ async function boot() {
   node.setMaxListeners(1024)
   await node.start()
   console.log(name, 'started log')
-  await util.tcpServer(9000, sodium, key, onError, receive)
+  await tcp.tcpServer(9000, pass, onError, receive)
   console.log(name, 'started peer socket')
 }
 

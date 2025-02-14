@@ -1,13 +1,10 @@
-const net = require('net')
 const http = require('http')
-const { UnpackrStream } = require('msgpackr')
-const { DecryptStream } = require('./sodium.js')
-
-const httpTimeout = 5_000
 
 const noop = () => { }
 const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 const serialize = (params) => new URLSearchParams(params).toString()
+
+const httpTimeout = 5_000
 
 // round timers forward to nearest 100ms
 const error = new Error('timedout')
@@ -68,51 +65,4 @@ function sendHttp(options, body = '') {
   return result
 }
 
-function tcpServer(port, sodium, key, errCb, msgCb) {
-  const server = net.createServer((socket) => {
-    socket.on('close', () => errCb(new Error(`net close`)))
-    socket.on('error', (err) => errCb(new Error(`net error ${err.message}`)))
-    const decrypt = new DecryptStream(sodium, key)
-    const unpack = new UnpackrStream()
-    decrypt.on('error', (err) => errCb(new Error(`net decrypt error ${err.message}`)))
-    unpack.on('error', (err) => errCb(new Error(`net unpack error ${err.message}`)))
-    socket.pipe(decrypt).pipe(unpack).on('data', msgCb)
-  })
-  server.on('error', (err) => errCb(new Error(`net server error ${err.message}`)))
-  return new Promise((res, rej) => {
-    try {
-      server.listen(port, '0.0.0.0', res)
-    } catch (err) {
-      rej(err)
-    }
-  })
-}
-
-function tcpClient(host, port, errCb) {
-  let connected = false
-  const socket = new net.Socket()
-  return new Promise((res, rej) => {
-    socket.on('error', (err) => {
-      err = new Error(`${host} ${port} net error ${err.message}`)
-      if (connected) { errCb(err) }
-      rej(err)
-    })
-    socket.on('close', () => {
-      const err = new Error(`${host} ${port} net close`)
-      if (connected) { errCb(err) }
-      rej(err)
-    })
-    socket.once('connect', () => {
-      connected = true
-      res(socket)
-    })
-    socket.connect(port, host)
-  })
-}
-
-module.exports = {
-  sleep, timeout,
-  serialize, sendHttp,
-  tcpServer,
-  tcpClient,
-}
+module.exports = { sleep, timeout, serialize, sendHttp }

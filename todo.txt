@@ -1,4 +1,7 @@
 /*
+todo: remote log
+todo: crypto encoder
+
 todo: trade engine
 todo: trade aggregate logs
 
