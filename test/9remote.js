@@ -18,12 +18,15 @@ async function testRemote(t, encoder) {
   }
 
   const server = new TcpLogServer(9000, logFn)
+  server.on('error', () => t.fail(err.message))
+  server.on('clientError', () => t.fail(err.message))
   await server.start()
   t.ok(1, 'server start ok')
 
   const logArgs = () => ['/tmp/', 'remote']
   const path = logArgs().join('')
   const log = new TcpLogClient('127.0.0.1', 9000, path, logArgs)
+  log.on('error', () => t.fail(err.message))
   await log.del()
   await log.start()
   t.ok(1, 'log start ok')

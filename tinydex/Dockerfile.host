@@ -1,7 +1,6 @@
 FROM node:23-alpine
 
-EXPOSE 9100
-EXPOSE 9200
+EXPOSE 9000
 
 WORKDIR /app
 
@@ -12,7 +11,7 @@ RUN npm install
 COPY node_modules/tinyraftplus /app/node_modules/tinyraftplus
 
 COPY ./lib /app/lib
-COPY ./app.js /app
+COPY ./host.js /app/app.js
 
 COPY entry.sh /app/entry.sh
 RUN chmod +x entry.sh

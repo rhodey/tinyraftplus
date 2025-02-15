@@ -11,32 +11,59 @@ services:
       - node2
       - node3
 
+  host1:
+    image: tinydex-host
+    container_name: host1
+    tmpfs: /tmp
+    ports:
+      - 9001:9000
+
+  host2:
+    image: tinydex-host
+    container_name: host2
+    tmpfs: /tmp
+    ports:
+      - 9002:9000
+
+  host3:
+    image: tinydex-host
+    container_name: host3
+    tmpfs: /tmp
+    ports:
+      - 9003:9000
+
   node1:
     image: tinydex
     container_name: node1
+    depends_on:
+      - host1
     tmpfs: /tmp
     env_file: .env
     ports:
-      - 9001:9000
       - 9101:9100
-    command: node1
+      - 9201:9200
+    command: host1 node1
 
   node2:
     image: tinydex
     container_name: node2
+    depends_on:
+      - host2
     tmpfs: /tmp
     env_file: .env
     ports:
-      - 9002:9000
       - 9102:9100
-    command: node2
+      - 9202:9200
+    command: host2 node2
 
   node3:
     image: tinydex
     container_name: node3
+    depends_on:
+      - host3
     tmpfs: /tmp
     env_file: .env
     ports:
-      - 9003:9000
       - 9103:9100
-    command: node3
+      - 9203:9200
+    command: host3 node3

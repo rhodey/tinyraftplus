@@ -2,8 +2,7 @@ const net = require('net')
 const http = require('http')
 const minimist = require('minimist')
 const _sodium = require('libsodium-wrappers')
-const { RaftNode, FsLog } = require('tinyraftplus')
-const { AutoRestartLog, ConcurrentLog } = require('tinyraftplus')
+const { RaftNode, TcpLogClient, ConcurrentLog } = require('tinyraftplus')
 
 function onError(err) {
   console.log('error', err)
@@ -101,7 +100,7 @@ const peers = {}
 function send(to, msg) {
   let peer = peers[to]
   if (!peer) {
-    peer = peers[to] = tcpClient(to, 9000, pass, onError).then((socket) => {
+    peer = peers[to] = tcpClient(to, 9100, pass, onError).then((socket) => {
       console.log(`${name} connection to ${to} open`)
       peers[to] = socket
     }).catch((err) => {
@@ -131,14 +130,15 @@ async function boot() {
   const tcp = require('./lib/tcp.js')(sodium)
   tcpClient = tcp.tcpClient
   console.log(name, 'booting', nodes)
-  let log = new FsLog('/tmp/', 'log')
-  log = new AutoRestartLog(log, onError)
+  const logArgs = () => ['/tmp/', 'remote']
+  const path = logArgs().join('')
+  let log = new TcpLogClient(host, 9000, path, logArgs)
   log = new ConcurrentLog(log)
   node = new RaftNode(name, nodes, send, log)
   node.setMaxListeners(1024)
   await node.start()
   console.log(name, 'started log')
-  await tcp.tcpServer(9000, pass, onError, receive)
+  await tcp.tcpServer(9100, pass, onError, receive)
   console.log(name, 'started peer socket')
 }
 
@@ -148,12 +148,13 @@ function startHttp() {
       .catch((err) => on500(request, response, err))
   }
   const httpServer = http.createServer(handle)
-  httpServer.listen(9100)
+  httpServer.listen(9200)
   console.log(name, 'started http server')
 }
 
 const argv = minimist(process.argv.slice(2))
-const name = argv._[0]
+const host = argv._[0]
+const name = argv._[1]
 
 let nodes = process.env.nodes ?? ''
 nodes = nodes.split(',')
