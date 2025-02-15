@@ -1,9 +1,9 @@
 const net = require('net')
 const { PackrStream, UnpackrStream } = require('msgpackr')
-const { getKey, EncryptStream, DecryptStream } = require('./sodium.js')
+const { EncryptStream, DecryptStream } = require('./streams.js')
 
 // todo: survive client disconnect
-function tcpServer(sodium, key, port, errCb, msgCb) {
+function tcpServer(port, sodium, key, errCb, msgCb) {
   const server = net.createServer((socket) => {
     const decrypt = new DecryptStream(sodium, key)
     const unpack = new UnpackrStream()
@@ -24,7 +24,7 @@ function tcpServer(sodium, key, port, errCb, msgCb) {
 }
 
 // todo: survive server disconnect
-function tcpClient(sodium, key, host, port, errCb) {
+function tcpClient(host, port, sodium, key, errCb) {
   let connected = false
   const socket = new net.Socket()
   return new Promise((res, rej) => {
@@ -52,13 +52,7 @@ function tcpClient(sodium, key, host, port, errCb) {
 }
 
 module.exports = function init(sodium) {
-  const server = (port, password, errCb, msgCb) => {
-    const key = getKey(sodium, password)
-    return tcpServer(sodium, key, port, errCb, msgCb)
-  }
-  const client = (host, port, password, errCb) => {
-    const key = getKey(sodium, password)
-    return tcpClient(sodium, key, host, port, errCb)
-  }
+  const server = (port, key, errCb, msgCb) => tcpServer(port, sodium, key, errCb, msgCb)
+  const client = (host, port, key, errCb) => tcpClient(host, port, sodium, key, errCb)
   return { tcpServer: server, tcpClient: client }
 }

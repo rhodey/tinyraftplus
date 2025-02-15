@@ -1,8 +1,9 @@
 const net = require('net')
 const http = require('http')
 const minimist = require('minimist')
-const _sodium = require('libsodium-wrappers')
-const { RaftNode, TcpLogClient, ConcurrentLog } = require('tinyraftplus')
+const sodium = require('libsodium-wrappers')
+const { TcpLogClient, ConcurrentLog } = require('tinyraftplus')
+const { RaftNode, EncryptingEncoder } = require('tinyraftplus')
 
 function onError(err) {
   console.log('error', err)
@@ -65,8 +66,8 @@ function appendBatches() {
 
 function watchHead() {
   setInterval(() => {
-    const head = node.log.head ?? Buffer.from('null')
-    console.log(name, node.log.seq, head.toString())
+    const head = node.head ?? Buffer.from('null')
+    console.log(name, node.seq, head.toString())
   }, 2000)
   // todo: remove
   node.on('change', (st) => {
@@ -100,7 +101,7 @@ const peers = {}
 function send(to, msg) {
   let peer = peers[to]
   if (!peer) {
-    peer = peers[to] = tcpClient(to, 9100, pass, onError).then((socket) => {
+    peer = peers[to] = tcpClient(to, 9100, onError).then((socket) => {
       console.log(`${name} connection to ${to} open`)
       peers[to] = socket
     }).catch((err) => {
@@ -120,25 +121,28 @@ function receive(msg) {
 }
 
 let node = null
-let sodium = null
 let tcpClient = null
-const pass = process.env.password
 
 async function boot() {
-  await _sodium.ready
-  sodium = _sodium
+  await sodium.ready
+  const pass = process.env.password
+  const key = sodium.crypto_generichash(32, sodium.from_string(pass))
   const tcp = require('./lib/tcp.js')(sodium)
-  tcpClient = tcp.tcpClient
+  tcpClient = (host, port, errCb) => tcp.tcpClient(host, port, key, errCb)
   console.log(name, 'booting', nodes)
+
   const logArgs = () => ['/tmp/', 'remote']
   const path = logArgs().join('')
   let log = new TcpLogClient(host, 9000, path, logArgs)
   log = new ConcurrentLog(log)
-  node = new RaftNode(name, nodes, send, log)
-  node.setMaxListeners(1024)
+
+  const encrypt = new EncryptingEncoder(sodium, key)
+  const opts = { crypto: encrypt }
+  node = new RaftNode(name, nodes, send, log, opts)
+
   await node.start()
   console.log(name, 'started log')
-  await tcp.tcpServer(9100, pass, onError, receive)
+  await tcp.tcpServer(9100, key, onError, receive)
   console.log(name, 'started peer socket')
 }
 

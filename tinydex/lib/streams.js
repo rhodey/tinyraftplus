@@ -1,9 +1,5 @@
 const { Transform } = require('stream')
 
-function getKey(sodium, password) {
-  return sodium.crypto_generichash(32, sodium.from_string(password))
-}
-
 class EncryptStream extends Transform {
   constructor(sodium, key) {
     super()
@@ -20,7 +16,7 @@ class EncryptStream extends Transform {
       chunk, null, sodium.crypto_secretstream_xchacha20poly1305_TAG_MESSAGE,
     )
     const buf = Buffer.from(bytes)
-    const len = Buffer.alloc(4)
+    const len = Buffer.allocUnsafe(4)
     len.writeUInt32BE(buf.byteLength)
     this.push(Buffer.concat([len, buf]))
     callback()
@@ -80,7 +76,7 @@ class DecryptStream extends Transform {
 
     while (next) {
       const res = sodium.crypto_secretstream_xchacha20poly1305_pull(this.state, next)
-      if (!res) { throw new Error('decrypt error') }
+      if (!res) { throw new Error('stream decrypt error') }
       const buf = Buffer.from(res.message)
       this.out.push(buf)
       next = this._next()
@@ -98,4 +94,4 @@ class DecryptStream extends Transform {
   }
 }
 
-module.exports = { getKey, EncryptStream, DecryptStream }
+module.exports = { EncryptStream, DecryptStream }
