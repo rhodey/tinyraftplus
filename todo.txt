@@ -9,6 +9,7 @@ loadtest -k --cores 2 --rps 30000 -t 15 http://LBTiny-1422899782.us-east-2.elb.a
 21k RPS
 30k RPS
 30k RPS - sodium
+15k RPS - crypto body
 
 todo: node groups
 todo: shards / parts
