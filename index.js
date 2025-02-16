@@ -82,16 +82,17 @@ class RaftNode extends TinyRaft {
     return this.log.open()
   }
 
-  async _decryptHead() {
+  async _decryptHead(head=null) {
     if (!this.crypto) {
-      this.seq = this.log.seq
       this.head = this.log.head
-      return
+      this.seq = this.log.seq
+    } else if (head === null) {
+      head = this.log.head
     }
-    const ok = await this.crypto.decode(this.log, this.log.head)
-    // todo: validate prev
-    this.seq = ok.seq
+    const ok = await this.crypto.decode(this.log, head)
     this.head = ok.body
+    this.seq = ok.seq
+    // todo: validate prev
   }
 
   async start() {
@@ -157,7 +158,8 @@ class RaftNode extends TinyRaft {
         if (this.term !== msg.term) { return }
         const { data, seq } = msg
         const work = Array.isArray(data) ? this.log.appendBatch(data, seq) : this.log.append(data, seq)
-        return work.then(() => this._decryptHead())
+        const head = Array.isArray(data) ? data[data.length-1] : data
+        return work.then(() => this._decryptHead(head))
           .then(() => this.send(from, ack))
           .catch((err) => this.emit('error', err))
     }
@@ -242,9 +244,17 @@ class RaftNode extends TinyRaft {
       if (--have < need) { throw new Error(`${name} append to self needs ${need} followers have ${have}`) }
       const seq = this.seq + 1n
       const ready = await this._encrypt(data, seq, nonces)
-      data = { ready, seq }
       const work = Array.isArray(ready) ? this.log.appendBatch(ready, seq) : this.log.append(ready, seq)
-      return work.then((seq) => this._decryptHead()).then(() => data)
+      return work.then((seq2) => {
+        if (Array.isArray(data)) {
+          this.seq = seq + BigInt(data.length-1)
+          this.head = data[data.length-1]
+        } else {
+          this.seq = seq
+          this.head = data
+        }
+        return { ready, seq }
+      })
     })
     return this._prev.then((ok) => this._appendToFollowers(ok.ready, ok.seq))
   }
