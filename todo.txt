@@ -1,5 +1,5 @@
 /*
-todo: crypto body
+todo: ?? bun socket
 todo: trade engine
 todo: trade aggregate logs
 todo: replace head if seq = but buf dont match
@@ -13,6 +13,7 @@ loadtest -k --cores 2 --rps 30000 -t 15 http://LBTiny-1422899782.us-east-2.elb.a
 30k RPS - sodium
 15k RPS - crypto body
 30k RPS - crypto body - bun
+30k RPS - bun shard
 
 # auth
 user id

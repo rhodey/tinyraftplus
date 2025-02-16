@@ -7,3 +7,4 @@ cp -r ../lib node_modules/tinyraftplus
 cp ../index.js node_modules/tinyraftplus
 sudo docker build -t tinydex:latest .
 sudo docker build -f Dockerfile.host -t tinydex-host:latest .
+sudo docker build -f Dockerfile.gateway -t tinydex-gateway:latest .

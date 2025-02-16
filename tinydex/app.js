@@ -1,135 +1,118 @@
 const net = require('net')
-const http = require('http')
 const minimist = require('minimist')
 const sodium = require('libsodium-wrappers')
 const { TcpLogClient, ConcurrentLog } = require('tinyraftplus')
 const { RaftNode, EncryptingEncoder } = require('tinyraftplus')
+
+const noop = () => {}
 
 function onError(err) {
   console.log('error', err)
   process.exit(1)
 }
 
-function on500(request, response, err) {
-  console.error('500', request.url, err)
-  response.writeHead(500)
-  response.end()
-}
-
-function on400(response) {
-  response.writeHead(400)
-  response.end()
-}
-
-function paramsOfPath(path) {
-  const query = path.split('?')[1]
-  return Object.fromEntries(new URLSearchParams(query))
-}
-
-async function acceptMsg(request, response) {
-  const params = paramsOfPath(request.url)
-  const seq = await node.append(Buffer.from(params.text))
-  response.writeHead(200)
-  response.end(`ok ${seq}`)
+function onWarn(err) {
+  console.log('warn', err)
 }
 
 let batch = []
 
-async function acceptMsgBatch(request, response) {
-  const params = paramsOfPath(request.url)
-  const cb = (err, seq) => {
-    if (err) {
-      on500(request, response, err)
-      return
-    }
-    response.writeHead(200)
-    response.end(`ok ${seq}`)
+function receiveGateway(sock, msg) {
+  if (msg.type === 'msg') {
+    node.append(msg.data)
+      .then((seq) => sock.write({ type: 'ack', cid: msg.cid, seq }))
+      .catch((err) => sock.write({ type: 'ack', cid: msg.cid, err: err.message }))
+      .catch((err) => sock.destroy())
+  } else if (msg.type === 'batch') {
+    new Promise((res, rej) => batch.push([res, rej, msg.data]))
+      .then((seq) => sock.write({ type: 'ack', cid: msg.cid, seq }))
+      .catch((err) => sock.write({ type: 'ack', cid: msg.cid, err: err.message }))
+      .catch((err) => sock.destroy())
+  } else {
+    sock.destroy()
   }
-  const data = Buffer.from(params.text)
-  batch.push([cb, data])
 }
 
 function appendBatches() {
   setInterval(() => {
-    const cbs = batch.map((arr) => arr[0])
-    const data = batch.map((arr) => arr[1])
+    const res = batch.map((arr) => arr[0])
+    const rej = batch.map((arr) => arr[1])
+    const data = batch.map((arr) => arr[2])
     if (data.length <= 0) { return }
     batch = []
     const begin = Date.now()
     node.appendBatch(data).then((seq) => {
-      cbs.forEach((cb) => cb(null, seq))
       const diff = Date.now() - begin
-      console.log(name, 'batch time', seq, diff)
-    }).catch(onError)
+      console.log(name, shard, 'batch time', seq, diff)
+      res.forEach((cb) => cb(seq))
+    }).catch((err) => rej.forEach((cb) => cb(err)))
   }, 100)
+}
+
+// todo: send regularly
+function sendShardInfo(gateway, leader, term) {
+  return fetch(`http://${gateway}/info?shard=${shard}&leader=${leader}&term=${term}`)
+    .then((ok) => ok.text())
+    .catch((err) => onWarn(err))
 }
 
 function watchHead() {
   setInterval(() => {
     const head = node.head ?? Buffer.from('null')
-    console.log(name, node.seq, head.toString())
+    console.log(name, shard, node.seq, head.toString())
   }, 2000)
-  // todo: remove
-  node.on('change', (st) => {
-    console.log(
-        '==== CHANGE '+node.nodeId+': '+(st.state == 'follower' ? 'following '+st.leader : st.state)+
-        ', term '+st.term+(st.state == 'leader' ? ', followers: '+st.followers.join(', ') : '')
-    )
+  node.on('change', (state) => {
+    if (state.state !== 'leader') { return }
+    let followers = state.followers ?? []
+    followers = followers.length - 1
+    if (followers < node.minFollowers) { return }
+    gateways.forEach((gateway) => sendShardInfo(gateway, node.nodeId, state.term))
   })
-}
-
-async function health(request, response) {
-  response.writeHead(200)
-  response.end(`ok ${name}`)
-}
-
-async function handleHttp(request, response) {
-  const path = request.url.split('?')[0]
-  if (path.startsWith('/health')) {
-    await health(request, response)
-  } else if (path.startsWith('/msg')) {
-    await acceptMsg(request, response)
-  } else if (path.startsWith('/batch')) {
-    await acceptMsgBatch(request, response)
-  } else {
-    on400(response)
-  }
 }
 
 const peers = {}
 
-function send(to, msg) {
-  let peer = peers[to]
-  if (!peer) {
-    peer = peers[to] = tcpClient(to, 9100, onError).then((socket) => {
-      console.log(`${name} connection to ${to} open`)
-      peers[to] = socket
-    }).catch((err) => {
-      console.log(`${name} connection to ${to} failed`)
-      peers[to] = undefined
-    })
-  }
-  if (peer instanceof Promise) { return }
+function sendPeer(to, msg) {
   msg.from = name
-  peer.write(msg)
+  const peer = peers[to]
+  if (peer instanceof Promise) { return }
+  if (peer) { return peer.write(msg) }
+  const [host, port] = to.split(':')
+  peers[to] = tcpClient(host, parseInt(port)).then((sock) => {
+    const errCb = (err) => {
+      console.log(`${name} connection ${to} err`, err.message)
+      peers[to] = undefined
+      sock.destroy()
+     }
+    sock.on('error', errCb)
+    sock.once('close', () => errCb(new Error('close')))
+    console.log(`${name} connection ${to} open`)
+    peers[to] = sock
+  }).catch((err) => {
+    console.log(`${name} connection ${to} fail`)
+    peers[to] = undefined
+  })
 }
 
-function receive(msg) {
+function receivePeer(sock, msg) {
   const from = msg.from
   delete msg.from
   node.onReceive(from, msg)
 }
 
 let node = null
+let key = null
 let tcpClient = null
+let tcpServer = null
 
 async function boot() {
   await sodium.ready
   const pass = process.env.password
-  const key = sodium.crypto_generichash(32, sodium.from_string(pass))
+  key = sodium.crypto_generichash(32, sodium.from_string(pass))
   const tcp = require('./lib/tcp.js')(sodium)
-  tcpClient = (host, port, errCb) => tcp.tcpClient(host, port, key, errCb)
-  console.log(name, 'booting', nodes)
+  tcpClient = (host, port) => tcp.tcpClient(host, port, key, noop)
+  tcpServer = tcp.tcpServer
+  console.log(name, shard, 'booting', nodes)
 
   const logArgs = () => ['/tmp/', 'remote']
   const path = logArgs().join('')
@@ -138,37 +121,38 @@ async function boot() {
 
   const encrypt = new EncryptingEncoder(sodium, key)
   const opts = { crypto: encrypt }
-  node = new RaftNode(name, nodes, send, log, opts)
+  node = new RaftNode(name, nodes, sendPeer, log, opts)
 
   await node.start()
-  console.log(name, 'started log')
-  await tcp.tcpServer(9100, key, onError, receive)
-  console.log(name, 'started peer socket')
+  console.log(name, shard, 'started log')
+  const port = parseInt(name.split(':')[1])
+  await tcp.tcpServer(port, key, onError, receivePeer)
+  console.log(name, shard, 'started peer socket')
 }
 
-function startHttp() {
-  const handle = (request, response) => {
-    handleHttp(request, response)
-      .catch((err) => on500(request, response, err))
-  }
-  const httpServer = http.createServer(handle)
-  httpServer.listen(9200)
-  console.log(name, 'started http server')
+async function startGateway() {
+  const port = parseInt(name.split(':')[1]) + 1
+  await tcpServer(port, key, onError, receiveGateway)
+  console.log(name, shard, 'started gateway server')
 }
 
 const argv = minimist(process.argv.slice(2))
-const host = argv._[0]
-const name = argv._[1]
+const shard = parseInt(argv._[0])
+const host = argv._[1]
+const name = argv._[2]
 
-let nodes = process.env.nodes ?? ''
+let gateways = process.env.gateways ?? ''
+gateways = gateways.split(',')
+
+let nodes = process.env['nodes_'+shard] ?? ''
 nodes = nodes.split(',')
-if (nodes.length < 3) { onError('need three or more nodes in env var') }
+if (nodes.length < 3) { onError('need three or more nodes') }
 
 boot().then(async () => {
   await node.awaitLeader()
-  console.log(name, 'have leader', node.leader)
+  console.log(name, shard, 'have leader', node.leader)
   watchHead()
   appendBatches()
-  startHttp()
-  console.log(name, 'ready')
-}).catch(console.log)
+  startGateway()
+  console.log(name, shard, 'ready')
+}).catch(onError)

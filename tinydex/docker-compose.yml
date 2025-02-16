@@ -1,36 +1,40 @@
 services:
   gateway:
-    image: nginx
+    image: tinydex-gateway
     container_name: gateway
+    env_file: .env
     ports:
-      - 8080:8080
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - node1
-      - node2
-      - node3
+      - 9300:9300
 
   host1:
     image: tinydex-host
     container_name: host1
     tmpfs: /tmp
-    ports:
-      - 9001:9000
 
   host2:
     image: tinydex-host
     container_name: host2
     tmpfs: /tmp
-    ports:
-      - 9002:9000
 
   host3:
     image: tinydex-host
     container_name: host3
     tmpfs: /tmp
-    ports:
-      - 9003:9000
+
+  host4:
+    image: tinydex-host
+    container_name: host4
+    tmpfs: /tmp
+
+  host5:
+    image: tinydex-host
+    container_name: host5
+    tmpfs: /tmp
+
+  host6:
+    image: tinydex-host
+    container_name: host6
+    tmpfs: /tmp
 
   node1:
     image: tinydex
@@ -40,9 +44,8 @@ services:
     tmpfs: /tmp
     env_file: .env
     ports:
-      - 9101:9100
-      - 9201:9200
-    command: host1 node1
+      - 9200:9101
+    command: 0 host1 node1:9100
 
   node2:
     image: tinydex
@@ -51,10 +54,7 @@ services:
       - host2
     tmpfs: /tmp
     env_file: .env
-    ports:
-      - 9102:9100
-      - 9202:9200
-    command: host2 node2
+    command: 0 host2 node2:9100
 
   node3:
     image: tinydex
@@ -63,7 +63,31 @@ services:
       - host3
     tmpfs: /tmp
     env_file: .env
-    ports:
-      - 9103:9100
-      - 9203:9200
-    command: host3 node3
+    command: 0 host3 node3:9100
+
+  node4:
+    image: tinydex
+    container_name: node4
+    depends_on:
+      - host4
+    tmpfs: /tmp
+    env_file: .env
+    command: 1 host4 node4:9100
+
+  node5:
+    image: tinydex
+    container_name: node5
+    depends_on:
+      - host5
+    tmpfs: /tmp
+    env_file: .env
+    command: 1 host5 node5:9100
+
+  node6:
+    image: tinydex
+    container_name: node6
+    depends_on:
+      - host6
+    tmpfs: /tmp
+    env_file: .env
+    command: 1 host6 node6:9100
