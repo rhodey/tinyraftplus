@@ -148,7 +148,7 @@ class RaftNode extends TinyRaft {
         if (!this.isLeader()) { return }
         if (!this.followers.includes(from)) { return }
         if (this.term !== msg.term) { return }
-        return this._appendToSelfAndFollowers(msg.data)
+        return this._appendToSelfAndFollowers(msg.data, msg.nonces)
           .then((ok) => this.send(from, { ...ack, seq: ok.seq }))
           .catch((err) => this.emit('error', err))
 
@@ -182,9 +182,15 @@ class RaftNode extends TinyRaft {
     const [timer, timedout] = timeout(this.leaderAckTimeout)
     const work = new Promise((res, rej) => {
       timedout.catch((err) => rej(new Error(`${name} forward to leader timeout`)))
+      const nonce = () => {
+        if (!this.crypto) { return }
+        if (!Array.isArray(data)) { return this.crypto.nonce() }
+        return this.crypto.nonce(data.length)
+      }
       this.awaitLeader().then(() => {
         const cid = crypto.randomUUID()
-        const msg = { type: FORWARD, cid, data, term: this.term }
+        const nonces = nonce()
+        const msg = { type: FORWARD, term: this.term, cid, data, nonces }
         const ack = this._awaitAck(this.leader, cid)
         this.send(this.leader, msg)
         return ack
@@ -200,7 +206,7 @@ class RaftNode extends TinyRaft {
     const work = new Promise((res, rej) => {
       timedout.catch((err) => rej(new Error(`${name} append to followers timeout`)))
       const cid = crypto.randomUUID()
-      const msg = { type: APPEND, cid, data, seq, term: this.term }
+      const msg = { type: APPEND, term: this.term, cid, data, seq }
       const followers = this.followers ?? []
       const acks = followers.filter((id) => this.nodeId !== id).map((id) => {
         const ack = this._awaitAck(id, cid)
@@ -213,13 +219,16 @@ class RaftNode extends TinyRaft {
     return work
   }
 
-  async _encrypt(data, seq) {
+  async _encrypt(data, seq, nonces) {
     if (!this.crypto) { return data }
+    let n = 0
     const batch = Array.isArray(data)
     data = batch ? data : [data]
     let prev = this.head
     const works = data.map((body) => {
-      const buf = this.crypto.encode(this.log, seq++, prev, body)
+      const nonce = nonces ? nonces.slice(n, n + 24) : undefined
+      n += 24
+      const buf = this.crypto.encode(this.log, seq++, prev, body, nonce)
       prev = body
       return buf
     })
@@ -227,18 +236,19 @@ class RaftNode extends TinyRaft {
     return batch ? ready : ready[0]
   }
 
-  _appendToSelfAndFollowers(data) {
-    return this._prev = this._prev.catch(noop).then(async () => {
+  _appendToSelfAndFollowers(data, nonces=null) {
+    this._prev = this._prev.catch(noop).then(async () => {
       const { nodeId: name } = this
       const need = this.minFollowers
       let have = this.followers?.length ?? 0
       if (--have < need) { throw new Error(`${name} append to self needs ${need} followers have ${have}`) }
       const seq = this.seq + 1n
-      const ready = await this._encrypt(data, seq)
+      const ready = await this._encrypt(data, seq, nonces)
+      data = { ready, seq }
       const work = Array.isArray(ready) ? this.log.appendBatch(ready, seq) : this.log.append(ready, seq)
-      return work.then((seq) => this._decryptHead())
-        .then(() => this._appendToFollowers(ready, seq))
+      return work.then((seq) => this._decryptHead()).then(() => data)
     })
+    return this._prev.then((ok) => this._appendToFollowers(ok.ready, ok.seq))
   }
 
   async append(data) {

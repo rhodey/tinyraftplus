@@ -1,5 +1,5 @@
-const { FsLog, AutoRestartLog, ConcurrentLog } = require('tinyraftplus')
-const { Encoder, XxHashEncoder } = require('tinyraftplus')
+const { FsLog, XxHashEncoder } = require('tinyraftplus')
+const { AutoRestartLog, ConcurrentLog } = require('tinyraftplus')
 const { TcpLogServer } = require('tinyraftplus')
 
 function onError(err) {
@@ -10,7 +10,7 @@ function onError(err) {
 async function boot() {
   const logFn = (args) => {
     const [dir, name] = args
-    const encoder = new Encoder()
+    const encoder = new XxHashEncoder(false)
     let log = new FsLog(dir, name, { encoder })
     log = new AutoRestartLog(log)
     return new ConcurrentLog(log)
