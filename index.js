@@ -221,13 +221,11 @@ class RaftNode extends TinyRaft {
 
   async _encrypt(data, seq, nonces) {
     if (!this.crypto) { return data }
-    let n = 0
     const batch = Array.isArray(data)
     data = batch ? data : [data]
     let prev = this.head
-    const works = data.map((body) => {
-      const nonce = nonces ? nonces.slice(n, n + 24) : undefined
-      n += 24
+    const works = data.map((body, i) => {
+      const nonce = nonces ? nonces.slice(i*24, (i+1)*24) : undefined
       const buf = this.crypto.encode(this.log, seq++, prev, body, nonce)
       prev = body
       return buf
