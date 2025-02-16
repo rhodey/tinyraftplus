@@ -2,6 +2,8 @@
 todo: crypto body
 todo: trade engine
 todo: trade aggregate logs
+todo: replace head if seq = but buf dont match
+todo: maybe prev hash plain
 
 loadtest -k --cores 2 --rps 30000 -t 15 http://172.31.47.234:9100/batch?text=abc123
 20k RPS
@@ -10,17 +12,47 @@ loadtest -k --cores 2 --rps 30000 -t 15 http://LBTiny-1422899782.us-east-2.elb.a
 30k RPS
 30k RPS - sodium
 15k RPS - crypto body
+30k RPS - crypto body - bun
+
+# auth
+user id
+user pass
+user access key starts with uid
+user secret key signs
+
+# scale
+3/5 gateways
+ALB sticky session
+gateway accept user http
+gateway negotiate ephemeral key
+gateway rate limit ephemeral key id
+gateway decrypt user http
+gateway validate user http sig
+user shard = (ascii sum uid) % shard count
+gateway fwd to any node in shard
+shard node fwd to shard leader
+shard has 3/5 nodes
+shard leader encrypt and fwd to followers
+
+
+# maybe
+leader send node list to followers
+gateway fwd to any node
+node fwd to user leader + term
+user leader = (ascii sum uid) % node list
+leader encrypt and fwd to node list
+nodes ack or reject if seq != next
+leader accepts majority
+leader applies majority
+
 
 todo: node groups
-todo: shards / parts
-todo: restore via repl
-
-todo: check that retry ends on change nodes
-todo: protocol message for hash errors
-
 todo: multi iter
 todo: test multi lock
 todo: test multi batch
+
+todo: protocol message for hash errors
+todo: check that retry ends on change nodes
 /*
 
 todo: ?? multi dir pattern
