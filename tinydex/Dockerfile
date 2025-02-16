@@ -1,4 +1,4 @@
-FROM node:23-alpine
+FROM oven/bun:alpine
 
 EXPOSE 9100
 EXPOSE 9200
@@ -7,7 +7,7 @@ WORKDIR /app
 
 COPY package.json /app
 COPY package-lock.json /app
-RUN npm install
+RUN bun install
 
 COPY node_modules/tinyraftplus /app/node_modules/tinyraftplus
 
