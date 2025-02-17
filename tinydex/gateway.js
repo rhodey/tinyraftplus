@@ -109,6 +109,7 @@ function acceptShardInfo(req) {
 }
 
 // todo: maybe something faster
+// maybe: Bun.hash
 const hash = (str) => str.split('').reduce((acc, s) => acc + s.charCodeAt(0), 1)
 
 function acceptMsg(req) {
