@@ -59,6 +59,7 @@ const defaults = {
   crypto: null,
 }
 
+// todo: maybe prev plaintext
 // todo: allow start, stop, start
 class RaftNode extends TinyRaft {
   constructor(nodeId, nodes, send, log, opts={}) {

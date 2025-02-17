@@ -58,6 +58,7 @@ function connect(leader) {
   })
 }
 
+// todo: timeouts
 function send(leader, msg) {
   msg.cid = crypto.randomUUID()
   return new Promise((res, rej) => {

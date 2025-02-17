@@ -1,5 +1,4 @@
 /*
-todo: ?? bun socket
 todo: trade engine
 todo: trade aggregate logs
 todo: replace head if seq = but buf dont match

@@ -17,6 +17,7 @@ function onWarn(err) {
 
 let batch = []
 
+// todo: gateway can batch while fwd
 function receiveGateway(sock, msg) {
   if (msg.type === 'msg') {
     node.append(msg.data)
@@ -33,6 +34,7 @@ function receiveGateway(sock, msg) {
   }
 }
 
+// todo: cb with seq for caller
 function appendBatches() {
   setInterval(() => {
     const res = batch.map((arr) => arr[0])
@@ -100,8 +102,8 @@ function receivePeer(sock, msg) {
   node.onReceive(from, msg)
 }
 
-let node = null
 let key = null
+let node = null
 let tcpClient = null
 let tcpServer = null
 
@@ -126,7 +128,7 @@ async function boot() {
   await node.start()
   console.log(name, shard, 'started log')
   const port = parseInt(name.split(':')[1])
-  await tcp.tcpServer(port, key, onError, receivePeer)
+  await tcpServer(port, key, onError, receivePeer)
   console.log(name, shard, 'started peer socket')
 }
 
