@@ -108,13 +108,9 @@ function acceptShardInfo(req) {
   return new Response('stale')
 }
 
-// todo: maybe something faster
-// maybe: Bun.hash
-const hash = (str) => str.split('').reduce((acc, s) => acc + s.charCodeAt(0), 1)
-
 function acceptMsg(req) {
   const params = paramsOfPath(req.url)
-  const shard = hash(params.user) % shards.length
+  const shard = Bun.hash.cityHash32(params.user) % shards.length
   const leader = shards[shard].leader
   if (!leader) { return new Response('503', { status: 503 }) }
   const data = Buffer.from(params.text, 'utf8')
@@ -124,7 +120,7 @@ function acceptMsg(req) {
 
 function acceptMsgBatch(req) {
   const params = paramsOfPath(req.url)
-  const shard = hash(params.user) % shards.length
+  const shard = Bun.hash.cityHash32(params.user) % shards.length
   const leader = shards[shard].leader
   if (!leader) { return new Response('503', { status: 503 }) }
   const data = Buffer.from(params.text, 'utf8')
