@@ -1,5 +1,7 @@
 const test = require('tape')
+const sodium = require('libsodium-wrappers')
 const { Encoder, XxHashEncoder } = require('../lib/encoders.js')
+const { EncryptingEncoder } = require('../lib/encoders.js')
 
 test('test basic encoder', async (t) => {
   t.plan(5)
@@ -110,4 +112,40 @@ test('test xxhash encoder errors', async (t) => {
   } catch (err) {
     t.ok(err.message.includes('body hash incorrect'), 'body error thrown')
   }
+})
+
+test('test encrypting encoder', async (t) => {
+  t.plan(6)
+  await sodium.ready
+  const log = { path: 'test' }
+  const key = sodium.crypto_generichash(32, sodium.from_string('test'))
+  const enc = new EncryptingEncoder(sodium, key)
+
+  // body, seq
+  let seq = 0n
+  let prev = null
+  const body = Buffer.from('test', 'utf8')
+  let ciphertext = await enc.encode(log, seq, prev, body)
+  let ok = await enc.decode(log, ciphertext)
+  t.equal(ok.seq, seq, 'seq ok')
+  t.ok(ok.body.equals(body), 'body ok')
+
+  // prev = null
+  prev = Buffer.from('null', 'utf8')
+  let hbuf = Buffer.alloc(16)
+  await enc.hashPrev(log, prev, hbuf, 0)
+  t.ok(ok.prev.equals(hbuf), 'prev ok')
+
+  // body, seq
+  seq = 1n
+  prev = Buffer.from('test', 'utf8')
+  ciphertext = await enc.encode(log, seq, prev, body)
+  ok = await enc.decode(log, ciphertext)
+  t.equal(ok.seq, seq, 'seq ok')
+  t.ok(ok.body.equals(body), 'body ok')
+
+  // prev = test
+  hbuf = Buffer.alloc(16)
+  await enc.hashPrev(log, prev, hbuf, 0)
+  t.ok(ok.prev.equals(hbuf), 'prev ok')
 })

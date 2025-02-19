@@ -10,7 +10,7 @@ function onError(err) {
 async function boot() {
   const logFn = (args) => {
     const [dir, name] = args
-    const encoder = new XxHashEncoder(false)
+    const encoder = new XxHashEncoder()
     let log = new FsLog(dir, name, { encoder })
     log = new AutoRestartLog(log)
     return new ConcurrentLog(log)

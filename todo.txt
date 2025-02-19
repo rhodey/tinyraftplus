@@ -1,14 +1,12 @@
 /*
-todo: prev hash plaintext
-todo: host.js body = true
-todo: node allow restart
+todo: allow restart
+todo: resolve with seq
 todo: gateway timeouts
 
 
 todo: trade engine
 todo: trade aggregate logs
 todo: replace head if seq = but buf dont match
-todo: maybe prev hash plain
 
 loadtest -k --cores 2 --rps 30000 -t 15 http://172.31.47.234:9100/batch?text=abc123
 20k RPS

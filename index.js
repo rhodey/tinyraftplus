@@ -59,7 +59,6 @@ const defaults = {
   crypto: null,
 }
 
-// todo: maybe prev plaintext
 // todo: allow start, stop, start
 class RaftNode extends TinyRaft {
   constructor(nodeId, nodes, send, log, opts={}) {
@@ -75,8 +74,9 @@ class RaftNode extends TinyRaft {
     this._stopped = false
     this._prev = Promise.resolve(1)
     this.log = log
-    this.seq = -1n
+    this.headEnc = null
     this.head = null
+    this.seq = -1n
   }
 
   open() {
@@ -85,6 +85,7 @@ class RaftNode extends TinyRaft {
 
   async _decryptHead(head=null) {
     if (!this.crypto) {
+      this.headEnc = null
       this.head = this.log.head
       this.seq = this.log.seq
       return
@@ -92,6 +93,7 @@ class RaftNode extends TinyRaft {
       head = this.log.head
     }
     const ok = await this.crypto.decode(this.log, head)
+    this.headEnc = head
     this.head = ok.body
     this.seq = ok.seq
     // todo: validate prev
@@ -227,11 +229,11 @@ class RaftNode extends TinyRaft {
     if (!this.crypto) { return data }
     const batch = Array.isArray(data)
     data = batch ? data : [data]
-    let prev = this.head
+    let prev = this.headEnc
     const works = data.map((body, i) => {
       const nonce = nonces ? nonces.slice(i*24, (i+1)*24) : undefined
       const buf = this.crypto.encode(this.log, seq++, prev, body, nonce)
-      prev = body
+      prev = buf
       return buf
     })
     const ready = await Promise.all(works)
@@ -249,11 +251,13 @@ class RaftNode extends TinyRaft {
       const work = Array.isArray(ready) ? this.log.appendBatch(ready, seq) : this.log.append(ready, seq)
       return work.then((seq2) => {
         if (Array.isArray(data)) {
-          this.seq = seq + BigInt(data.length-1)
+          this.headEnc = ready[ready.length-1]
           this.head = data[data.length-1]
+          this.seq = seq + BigInt(data.length-1)
         } else {
-          this.seq = seq
+          this.headEnc = ready
           this.head = data
+          this.seq = seq
         }
         return { ready, seq }
       })
