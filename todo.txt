@@ -2,6 +2,7 @@
 todo: prev hash plaintext
 todo: host.js body = true
 todo: node allow restart
+todo: gateway timeouts
 
 
 todo: trade engine
