@@ -87,6 +87,7 @@ class RaftNode extends TinyRaft {
     if (!this.crypto) {
       this.head = this.log.head
       this.seq = this.log.seq
+      return
     } else if (head === null) {
       head = this.log.head
     }
