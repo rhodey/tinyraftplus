@@ -4,11 +4,11 @@ const { AutoRestartLog, ConcurrentLog } = require('../index.js')
 const { TcpLogServer, TcpLogClient } = require('../index.js')
 const { Encoder, XxHashEncoder } = require('../index.js')
 
-const stop = (arr) => Promise.all(arr.filter((s) => s).map((s) => s.stop()))
+const close = (arr) => Promise.all(arr.filter((s) => s).map((s) => s.close()))
 
 async function testRemote(t, encoder) {
   t.plan(14)
-  t.teardown(() => stop([server, log]))
+  t.teardown(() => close([server, log]))
 
   const logFn = (args) => {
     const [dir, name] = args
@@ -20,16 +20,16 @@ async function testRemote(t, encoder) {
   const server = new TcpLogServer(9000, logFn)
   server.on('error', () => t.fail(err.message))
   server.on('clientError', () => t.fail(err.message))
-  await server.start()
-  t.ok(1, 'server start ok')
+  await server.open()
+  t.ok(1, 'server open ok')
 
   const logArgs = () => ['/tmp/', 'remote']
   const path = logArgs().join('')
   const log = new TcpLogClient('127.0.0.1', 9000, path, logArgs)
   log.on('error', () => t.fail(err.message))
   await log.del()
-  await log.start()
-  t.ok(1, 'log start ok')
+  await log.open()
+  t.ok(1, 'log open ok')
   t.equal(log.seq, -1n, 'seq -1')
   t.equal(log.head, null, 'head null')
 
@@ -49,8 +49,8 @@ async function testRemote(t, encoder) {
   t.equal(log.seq, 1n, 'seq 1')
   t.ok(data[0].equals(log.head), 'head ok')
 
-  await log.stop()
-  await log.start()
+  await log.close()
+  await log.open()
   t.equal(log.seq, 1n, 'seq 1')
   t.ok(data[0].equals(log.head), 'head ok')
 }

@@ -13,7 +13,7 @@ async function testAppendSmall(t, encoder) {
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = []
   const count = 100
@@ -37,7 +37,7 @@ async function testAppendSmall(t, encoder) {
   console.log(`${avg} append per ms`)
 
   t.pass('ok')
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
   console.log(`\n`)
 }
 
@@ -50,7 +50,7 @@ async function testAppendLarge(t, encoder) {
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = []
   const count = 100
@@ -75,7 +75,7 @@ async function testAppendLarge(t, encoder) {
   console.log(`${avg} append per ms`)
 
   t.pass('ok')
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
   console.log(`\n`)
 }
 

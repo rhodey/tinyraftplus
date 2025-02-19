@@ -1,5 +1,5 @@
 const test = require('tape')
-const { sleep, open, comms, start, stop } = require('./util.js')
+const { sleep, connect, comms, open, close, ready } = require('./util.js')
 
 // const { nodeId, nodes, state, leader, followers, term } = node
 
@@ -8,16 +8,18 @@ const leaders = (nodes) => nodes.filter((node) => node.state === 'leader')
 const followers = (nodes) => nodes.filter((node) => node.state === 'follower')
 
 test('test elect n=3', async (t) => {
-  t.plan(4)
-  t.teardown(() => stop(nodes))
+  t.plan(5)
+  t.teardown(() => close(nodes))
 
   const coms = comms()
-  const nodes = open(coms, 3)
-  await start(nodes)
-  await sleep(100)
+  const nodes = connect(coms, 3)
+  await open(nodes)
+  await ready(nodes)
 
-  const ok = nodes.every((node) => [1, 2, 3].includes(node.nodeId))
+  let ok = nodes.every((node) => [1, 2, 3].includes(node.nodeId))
   t.ok(ok, 'ids correct')
+  ok = nodes.every((node) => node.isOpen)
+  t.ok(ok, 'nodes are open')
 
   let arr = leaders(nodes)
   t.equal(arr.length, 1, '1 leader')
@@ -30,13 +32,13 @@ test('test elect n=3', async (t) => {
 
 test('test elect n=3 and 1 offline', async (t) => {
   t.plan(5)
-  t.teardown(() => stop(nodes))
+  t.teardown(() => close(nodes))
 
   const allowSend = (to, from, msg) => from !== 3
   const coms = comms(allowSend)
-  const nodes = open(coms, 3)
-  await start(nodes)
-  await sleep(100)
+  const nodes = connect(coms, 3)
+  await open(nodes)
+  await ready(nodes, 2)
 
   let arr = leaders(nodes)
   t.equal(arr.length, 1, '1 leader')
@@ -52,12 +54,12 @@ test('test elect n=3 and 1 offline', async (t) => {
 
 test('test elect n=5', async (t) => {
   t.plan(3)
-  t.teardown(() => stop(nodes))
+  t.teardown(() => close(nodes))
 
   const coms = comms()
-  const nodes = open(coms, 5)
-  await start(nodes)
-  await sleep(100)
+  const nodes = connect(coms, 5)
+  await open(nodes)
+  await ready(nodes)
 
   let arr = leaders(nodes)
   t.equal(arr.length, 1, '1 leader')
@@ -70,13 +72,13 @@ test('test elect n=5', async (t) => {
 
 test('test elect n=5 and 1 offline', async (t) => {
   t.plan(5)
-  t.teardown(() => stop(nodes))
+  t.teardown(() => close(nodes))
 
   const allowSend = (to, from, msg) => from !== 5
   const coms = comms(allowSend)
-  const nodes = open(coms, 5)
-  await start(nodes)
-  await sleep(100)
+  const nodes = connect(coms, 5)
+  await open(nodes)
+  await ready(nodes, 4)
 
   let arr = leaders(nodes)
   t.equal(arr.length, 1, '1 leader')
@@ -92,14 +94,14 @@ test('test elect n=5 and 1 offline', async (t) => {
 })
 
 test('test elect n=5 and 1 delayed', async (t) => {
-  t.teardown(() => stop(nodes))
+  t.teardown(() => close(nodes))
 
   const delaySend = (to, from, msg) => from === 5 ? 1_000 : 0
   const coms = comms(undefined, delaySend)
-  const nodes = open(coms, 5)
-  await start(nodes)
+  const nodes = connect(coms, 5)
+  await open(nodes)
+  await ready(nodes, 4)
 
-  await sleep(100)
   let arr = leaders(nodes)
   t.equal(arr.length, 1, '1 leader')
 
@@ -150,13 +152,13 @@ test('test elect n=5 and 1 delayed', async (t) => {
 
 test('test elect n=5 and 2 offline', async (t) => {
   t.plan(7)
-  t.teardown(() => stop(nodes))
+  t.teardown(() => close(nodes))
 
   const allowSend = (to, from, msg) => from !== 4 && from !== 5
   const coms = comms(allowSend)
-  const nodes = open(coms, 5)
-  await start(nodes)
-  await sleep(100)
+  const nodes = connect(coms, 5)
+  await open(nodes)
+  await ready(nodes, 3)
 
   let arr = leaders(nodes)
   t.equal(arr.length, 1, '1 leader')
@@ -176,14 +178,14 @@ test('test elect n=5 and 2 offline', async (t) => {
 })
 
 test('test elect n=5 and 2 delayed', async (t) => {
-  t.teardown(() => stop(nodes))
+  t.teardown(() => close(nodes))
 
   const delaySend = (to, from, msg) => (from === 4 || from === 5) ? 1_000 : 0
   const coms = comms(undefined, delaySend)
-  const nodes = open(coms, 5)
-  await start(nodes)
+  const nodes = connect(coms, 5)
+  await open(nodes)
+  await ready(nodes, 3)
 
-  await sleep(100)
   let arr = leaders(nodes)
   t.equal(arr.length, 1, '1 leader')
   const count = arr[0]?.followers?.length - 1

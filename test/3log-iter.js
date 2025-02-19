@@ -15,12 +15,12 @@ const toObj = (buf) => {
 
 async function testAppendThreeThenIter(t, encoder) {
   t.plan(3 + 2)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = [{ a: 1 }, { bb: 2 }, { ccc: 3 }]
   for (const obj of data) {
@@ -44,12 +44,12 @@ test('test append three then iter - xxhash no body', (t) => testAppendThreeThenI
 
 async function testAppendOneThenIter(t, encoder) {
   t.plan(1 + 2)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = [{ a: 1 }]
   for (const obj of data) {
@@ -73,12 +73,12 @@ test('test append one then iter - xxhash no body', (t) => testAppendOneThenIter(
 
 async function testStepSize1(t, encoder) {
   t.plan(3 + 2)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = [{ aa: 1 }, { bbb: 2 }, { c: 3 }]
   for (const obj of data) {
@@ -103,12 +103,12 @@ test('test append three then iter step size 1 - xxhash no body', (t) => testStep
 
 async function testStepSize2(t, encoder) {
   t.plan(3 + 2)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = [{ a: 1 }, { bb: 2 }, { c: 3 }]
   for (const obj of data) {
@@ -133,12 +133,12 @@ test('test append three then iter step size 2 - xxhash no body', (t) => testStep
 
 async function testStepSize3(t, encoder) {
   t.plan(3 + 2)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = [{ aaaa: 1 }, { bb: 2 }, { cc: 3 }]
   for (const obj of data) {
@@ -163,12 +163,12 @@ test('test append three then iter step size 3 - xxhash no body', (t) => testStep
 
 async function testStepSize4(t, encoder) {
   t.plan(3 + 2)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = [{ a: 1 }, { bb: 2 }, { c: 3 }]
   for (const obj of data) {
@@ -193,12 +193,12 @@ test('test append three then iter step size 4 - xxhash no body', (t) => testStep
 
 async function testIterWithStop(t, encoder) {
   t.plan(4)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
   for (const obj of data) {
@@ -212,7 +212,7 @@ async function testIterWithStop(t, encoder) {
       next = toObj(next)
       t.deepEqual(next, data[count], 'data correct')
       count++
-      if (count === 1n) { await log.stop() }
+      if (count === 1n) { await log.close() }
     }
   } catch (err) {
     t.ok(err.message.includes('iter is not open'), 'error thrown')
@@ -222,18 +222,18 @@ async function testIterWithStop(t, encoder) {
   t.equal(count, 1n, 'read 1 buf')
 }
 
-test('test append three then iter with stop and step size 1', (t) => testIterWithStop(t, new Encoder()))
-test('test append three then iter with stop and step size 1 - xxhash body', (t) => testIterWithStop(t, new XxHashEncoder()))
-test('test append three then iter with stop and step size 1 - xxhash no body', (t) => testIterWithStop(t, new XxHashEncoder(false)))
+test('test append three then iter with close and step size 1', (t) => testIterWithStop(t, new Encoder()))
+test('test append three then iter with close and step size 1 - xxhash body', (t) => testIterWithStop(t, new XxHashEncoder()))
+test('test append three then iter with close and step size 1 - xxhash no body', (t) => testIterWithStop(t, new XxHashEncoder(false)))
 
 async function testIterEnd(t, encoder) {
   t.plan(5)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
   for (const obj of data) {
@@ -259,12 +259,12 @@ test('test iter ends based off seq at time of create - xxhash no body', (t) => t
 
 async function testIterEnd2(t, encoder) {
   t.plan(1)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
   for (const obj of data) {
@@ -284,12 +284,12 @@ test('test iter returns nothing if seq > log.seq - xxhash no body', (t) => testI
 
 async function testIterWithStop2(t, encoder) {
   t.plan(3)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
   for (const obj of data) {
@@ -304,25 +304,25 @@ async function testIterWithStop2(t, encoder) {
     for await (let next of iter) { seq++ }
     t.fail('no error thrown')
   } catch (err) {
-    t.ok(err.message.includes('iter is not open'), 'iter stopped')
+    t.ok(err.message.includes('iter is not open'), 'iter closed')
   }
 
   t.equal(seq, 0n, 'read no bufs')
   t.equal(log.iterators.length, 0, 'iter removed')
 }
 
-test('test iter stopped if last > trunc', (t) => testIterWithStop2(t, new Encoder()))
-test('test iter stopped if last > trunc - xxhash body', (t) => testIterWithStop2(t, new XxHashEncoder()))
-test('test iter stopped if last > trunc - xxhash no body', (t) => testIterWithStop2(t, new XxHashEncoder(false)))
+test('test iter closed if last > trunc', (t) => testIterWithStop2(t, new Encoder()))
+test('test iter closed if last > trunc - xxhash body', (t) => testIterWithStop2(t, new XxHashEncoder()))
+test('test iter closed if last > trunc - xxhash no body', (t) => testIterWithStop2(t, new XxHashEncoder(false)))
 
 async function testIterWithStop3(t, encoder) {
   t.plan(3)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
   for (const obj of data) {
@@ -337,25 +337,25 @@ async function testIterWithStop3(t, encoder) {
     for await (let next of iter) { seq++ }
     t.fail('no error thrown')
   } catch (err) {
-    t.ok(err.message.includes('iter is not open'), 'iter stopped')
+    t.ok(err.message.includes('iter is not open'), 'iter closed')
   }
 
   t.equal(seq, 0n, 'read no bufs')
   t.equal(log.iterators.length, 0, 'iter removed')
 }
 
-test('test iter stopped if last > trunc again', (t) => testIterWithStop3(t, new Encoder()))
-test('test iter stopped if last > trunc again - xxhash body', (t) => testIterWithStop3(t, new XxHashEncoder()))
-test('test iter stopped if last > trunc again - xxhash no body', (t) => testIterWithStop3(t, new XxHashEncoder(false)))
+test('test iter closed if last > trunc again', (t) => testIterWithStop3(t, new Encoder()))
+test('test iter closed if last > trunc again - xxhash body', (t) => testIterWithStop3(t, new XxHashEncoder()))
+test('test iter closed if last > trunc again - xxhash no body', (t) => testIterWithStop3(t, new XxHashEncoder(false)))
 
 async function testIterNotStopped(t, encoder) {
   t.plan(2)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
   for (const obj of data) {
@@ -376,18 +376,18 @@ async function testIterNotStopped(t, encoder) {
   t.equal(log.iterators.length, 1, 'iter not removed')
 }
 
-test('test iter not stopped if last < trunc', (t) => testIterNotStopped(t, new Encoder()))
-test('test iter not stopped if last < trunc - xxhash body', (t) => testIterNotStopped(t, new XxHashEncoder()))
-test('test iter not stopped if last < trunc - xxhash no body', (t) => testIterNotStopped(t, new XxHashEncoder(false)))
+test('test iter not closed if last < trunc', (t) => testIterNotStopped(t, new Encoder()))
+test('test iter not closed if last < trunc - xxhash body', (t) => testIterNotStopped(t, new XxHashEncoder()))
+test('test iter not closed if last < trunc - xxhash no body', (t) => testIterNotStopped(t, new XxHashEncoder(false)))
 
 async function testIterNotStopped2(t, encoder) {
   t.plan(2)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = [{ a: 1 }, { b: 2 }, { c: 3 }]
   for (const obj of data) {
@@ -408,18 +408,18 @@ async function testIterNotStopped2(t, encoder) {
   t.equal(log.iterators.length, 1, 'iter not removed')
 }
 
-test('test iter not stopped if last = trunc', (t) => testIterNotStopped2(t, new Encoder()))
-test('test iter not stopped if last = trunc - xxhash body', (t) => testIterNotStopped2(t, new XxHashEncoder()))
-test('test iter not stopped if last = trunc - xxhash no body', (t) => testIterNotStopped2(t, new XxHashEncoder(false)))
+test('test iter not closed if last = trunc', (t) => testIterNotStopped2(t, new Encoder()))
+test('test iter not closed if last = trunc - xxhash body', (t) => testIterNotStopped2(t, new XxHashEncoder()))
+test('test iter not closed if last = trunc - xxhash no body', (t) => testIterNotStopped2(t, new XxHashEncoder(false)))
 
 async function testBatchWithIter(t, encoder) {
   t.plan(5 + 2)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   const opts = { encoder }
   const log = new FsLog('/tmp/', 'test', opts)
   await log.del()
-  await log.start()
+  await log.open()
 
   const data = [{ a: 1 }, { bb: 2 }, { ccc: 3 }, { dd: 4 }, { e: 5 }]
   for (let i = 0; i < 3; i++) {

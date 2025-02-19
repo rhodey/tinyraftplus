@@ -125,7 +125,7 @@ async function boot() {
   const opts = { crypto: encrypt }
   node = new RaftNode(name, nodes, sendPeer, log, opts)
 
-  await node.start()
+  await node.open()
   console.log(name, shard, 'started log')
   const port = parseInt(name.split(':')[1])
   await tcpServer(port, key, onError, receivePeer)

@@ -1,6 +1,6 @@
 const test = require('tape')
 const { FsLog } = require('../index.js')
-const { sleep, open, comms, start, stop } = require('./util.js')
+const { connect, comms, open, close, ready } = require('./util.js')
 
 const leaders = (nodes) => nodes.filter((node) => node.state === 'leader')
 
@@ -35,14 +35,14 @@ const testHead = (t, data, node) => {
 const testHeadMulti = (t, data, nodes) => nodes.forEach((node) => testHead(t, data, node))
 
 test('test elect n=3 then append 6', async (t) => {
-  t.teardown(() => stop(nodes))
+  t.teardown(() => close(nodes))
   const coms = comms()
   const logs = (id) => new FsLog('/tmp/', `node-${id}`)
   const opts = { minFollowers: 2 } // force full repl
-  const nodes = open(coms, 3, null, opts, logs)
+  const nodes = connect(coms, 3, null, opts, logs)
   await reset(nodes)
-  await start(nodes)
-  await sleep(100)
+  await open(nodes)
+  await ready(nodes)
 
   const ok = nodes.every((node) => [1, 2, 3].includes(node.nodeId))
   t.ok(ok, 'ids correct')
@@ -73,6 +73,11 @@ test('test elect n=3 then append 6', async (t) => {
   testSeqMulti(t, seq, 3n, 3n, nodes)
   testHeadMulti(t, data, nodes)
 
+  // restart
+  await close(nodes)
+  await open(nodes)
+  await ready(nodes)
+
   // follower 2
   data = { e: 5 }
   seq = await flw[1].append(toBuf(data))
@@ -86,14 +91,14 @@ test('test elect n=3 then append 6', async (t) => {
 })
 
 test('test elect n=3 then append batch', async (t) => {
-  t.teardown(() => stop(nodes))
+  t.teardown(() => close(nodes))
   const coms = comms()
   const logs = (id) => new FsLog('/tmp/', `node-${id}`)
   const opts = { minFollowers: 2 } // force full repl
-  const nodes = open(coms, 3, null, opts, logs)
+  const nodes = connect(coms, 3, null, opts, logs)
   await reset(nodes)
-  await start(nodes)
-  await sleep(100)
+  await open(nodes)
+  await ready(nodes)
 
   const leader = leaders(nodes)[0]
   const flw = followers(nodes)
@@ -130,6 +135,11 @@ test('test elect n=3 then append batch', async (t) => {
   seq = await flw[1].appendBatch(data.map(toBuf))
   testSeqMulti(t, seq, 7n, 8n, nodes)
   testHeadMulti(t, data[1], nodes)
+
+  // restart
+  await close(nodes)
+  await open(nodes)
+  await ready(nodes)
 
   data = { c: 3 }
   seq = await flw[1].append(toBuf(data))

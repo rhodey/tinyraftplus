@@ -1,8 +1,10 @@
 const { RaftNode, FsLog } = require('../index.js')
 
+const noop = () => {}
+
 const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
 
-function open(comms, a=1, b=null, opts={}, logFn=null) {
+function connect(comms, a=1, b=null, opts={}, logFn=null) {
   b = b ? b : 1
   logFn = logFn ? logFn : (id) => new FsLog('/tmp/', `node-${id}`)
   const nodes = []
@@ -36,10 +38,27 @@ function comms(allowSend=sendAll, delaySend=delayNone) {
   return { register, send }
 }
 
-const start = (nodes) => Promise.all(nodes.map((node) => node.start()))
+const open = (nodes) => Promise.all(nodes.map((node) => node.open()))
 
-const stop = (nodes) => Promise.all(nodes.map((node) => node.stop()))
+const close = (nodes) => Promise.all(nodes.map((node) => node.close()))
+
+const awaitResolve = (promises, minimum) => {
+  return new Promise((res, rej) => {
+    let c = 0
+    promises.forEach((promise) => {
+      promise.then(() => {
+        if (++c < minimum) { return }
+        res()
+      }).catch(noop)
+    })
+  })
+}
+
+const ready = (nodes, count=null) => {
+  count = count ?? nodes.length
+  return awaitResolve(nodes.map((node) => node.awaitLeader()), count)
+}
 
 module.exports = {
-  sleep, open, comms, start, stop,
+  sleep, connect, comms, open, close, ready,
 }

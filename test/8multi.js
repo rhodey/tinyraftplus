@@ -27,16 +27,16 @@ async function testAppendStartStopNew(t, encoder) {
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
   let log = new MultiFsLog('/tmp/', 'test', opts)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   await log.del()
-  await log.start()
+  await log.open()
   t.equal(log.seq, -1n, 'seq = -1')
   t.equal(log.head, null, 'head = null')
 
   const extra = encoder.bodyLen
 
-  // start, stop same
+  // open, close same
   let data = Buffer.from(new Array(32 - extra).fill('a').join(''))
   let seq = await log.append(data)
   t.equal(seq, 0n, 'seq = 0')
@@ -61,10 +61,10 @@ async function testAppendStartStopNew(t, encoder) {
   t.equal(log.logs.length, 2, 'logs = 2')
   llen = log.logs[1].offset + log.logs[1].hlen
   t.equal(llen, 40n + 24n, 'log length correct')
-  await log.stop()
+  await log.close()
 
-  // start, stop same
-  await log.start()
+  // open, close same
+  await log.open()
   t.equal(log.seq, 2n, 'seq = 2 again')
   t.ok(data.equals(log.head), 'head = data again')
   t.equal(log.logs.length, 2, 'logs = 2')
@@ -79,11 +79,11 @@ async function testAppendStartStopNew(t, encoder) {
   t.equal(log.logs.length, 3, 'logs = 3')
   llen = log.logs[2].offset + log.logs[2].hlen
   t.equal(llen, 16n, 'log length correct')
-  await log.stop()
+  await log.close()
 
   // new
   log = new MultiFsLog('/tmp/', 'test', opts)
-  await log.start()
+  await log.open()
   t.equal(log.seq, 3n, 'seq = 3 again')
   t.ok(data.equals(log.head), 'head = data again')
   t.equal(log.logs.length, 3, 'logs = 3')
@@ -98,19 +98,19 @@ async function testAppendStartStopNew(t, encoder) {
   t.equal(log.logs.length, 3, 'logs = 3')
 }
 
-test('test append, stop, start, append, new, append', (t) => testAppendStartStopNew(t, new Encoder()))
-test('test append, stop, start, append, new, append - xxhash body', (t) => testAppendStartStopNew(t, new XxHashEncoder()))
-test('test append, stop, start, append, new, append - xxhash no body', (t) => testAppendStartStopNew(t, new XxHashEncoder(false)))
+test('test append, close, open, append, new, append', (t) => testAppendStartStopNew(t, new Encoder()))
+test('test append, close, open, append, new, append - xxhash body', (t) => testAppendStartStopNew(t, new XxHashEncoder()))
+test('test append, close, open, append, new, append - xxhash no body', (t) => testAppendStartStopNew(t, new XxHashEncoder(false)))
 
 async function testTruncate(t, encoder) {
   t.plan(22)
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
   let log = new MultiFsLog('/tmp/', 'test', opts)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   await log.del()
-  await log.start()
+  await log.open()
 
   await log.truncate(-1n)
   t.equal(log.seq, -1n, 'seq = -1')
@@ -180,10 +180,10 @@ async function testTruncate2(t, encoder, maxLogLen) {
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen }
   let log = new MultiFsLog('/tmp/', 'test', opts)
-  t.teardown(() => log.stop())
+  t.teardown(() => log.close())
 
   await log.del()
-  await log.start()
+  await log.open()
 
   let data = Buffer.from(new Array(10).fill('a').join(''))
   for (let i = 0; i < 25; i++) { await log.append(data) }

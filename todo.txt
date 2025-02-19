@@ -1,5 +1,4 @@
 /*
-todo: allow restart
 todo: resolve with seq
 todo: gateway timeouts
 

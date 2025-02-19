@@ -18,7 +18,7 @@ async function boot() {
   const server = new TcpLogServer(9000, logFn)
   server.on('error', onError)
   server.on('close', () => onError(new Error('server closed')))
-  await server.start()
+  await server.open()
   console.log('ready')
 }
 

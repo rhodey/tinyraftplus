@@ -59,7 +59,6 @@ const defaults = {
   crypto: null,
 }
 
-// todo: allow start, stop, start
 class RaftNode extends TinyRaft {
   constructor(nodeId, nodes, send, log, opts={}) {
     opts = { ...opts, nodeId, nodes, send }
@@ -71,16 +70,48 @@ class RaftNode extends TinyRaft {
     this.followerAckTimeout = opts.followerAckTimeout
     this.leaderAckTimeout = opts.leaderAckTimeout
     this.crypto = opts.crypto
-    this._stopped = false
     this._prev = Promise.resolve(1)
+    this._open = false
     this.log = log
     this.headEnc = null
     this.head = null
     this.seq = -1n
   }
 
-  open() {
-    return this.log.open()
+  start() {
+    // prevents tinyraft from restarting itself
+    if (!this._open) { return }
+    super.start()
+  }
+
+  get isOpen() {
+    return this._open
+  }
+
+  async open() {
+    await this.log.open()
+      .then(() => this._decryptHead())
+    this._open = true
+    this.start()
+  }
+
+  async close() {
+    super.stop()
+    await this.log.close()
+    this._open = false
+  }
+
+  markAlive() {
+    if (!this._open) { return }
+    super.markAlive()
+  }
+
+  setNodes(nodes) {
+    const { nodeId: name } = this
+    if (!this._open) { throw new Error(`${name} raft node not open`) }
+    super.setNodes(nodes)
+    // todo: keep opts setting
+    this.minFollowers = Math.ceil((nodes.length - 1) / 2)
   }
 
   async _decryptHead(head=null) {
@@ -96,26 +127,9 @@ class RaftNode extends TinyRaft {
     this.headEnc = head
     this.head = ok.body
     this.seq = ok.seq
-    // todo: validate prev
   }
 
-  async start() {
-    const { nodeId: name } = this
-    if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
-    super.start()
-    await this.log.start()
-      .then(() => this._decryptHead())
-      .catch((err) => this.emit('error', err))
-  }
-
-  async stop() {
-    this._stopped = true
-    super.stop()
-    await this.log.stop()
-      .catch((err) => this.emit('error', err))
-  }
-
-  isLeader(state) {
+  isLeader(state=null) {
     const followers = this.followers ?? []
     const have = followers.length - 1
     if (have < this.minFollowers) { return false }
@@ -124,27 +138,15 @@ class RaftNode extends TinyRaft {
 
   async awaitLeader() {
     const { nodeId: name } = this
-    if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
-    const leading = (state) => this.isLeader(state)
+    if (!this._open) { throw new Error(`${name} raft node not open`) }
     const following = (state) => state.state === FOLLOWER && state.leader !== null
-    const fn = (state) => leading(state) || following(state)
+    const fn = (state) => this.isLeader(state) || following(state)
     if (fn(this)) { return }
     return awaitChange(this, fn)
   }
 
-  setNodes(nodes) {
-    super.setNodes(nodes)
-    // todo: keep opts setting
-    this.minFollowers = Math.ceil((nodes.length - 1) / 2)
-  }
-
-  markAlive() {
-    if (this._stopped) { return }
-    super.markAlive()
-  }
-
   onReceive(from, msg) {
-    if (this._stopped) { return }
+    if (!this._open) { return }
     this.emit('receive', [from, msg])
     if (this.leader === from) { this.markAlive() }
     const ack = { type: ACK, cid: msg.cid }
@@ -230,13 +232,14 @@ class RaftNode extends TinyRaft {
     const batch = Array.isArray(data)
     data = batch ? data : [data]
     let prev = this.headEnc
-    const works = data.map((body, i) => {
+    const ready = []
+    for (let i = 0; i < data.length; i++) {
+      const body = data[i]
       const nonce = nonces ? nonces.slice(i*24, (i+1)*24) : undefined
-      const buf = this.crypto.encode(this.log, seq++, prev, body, nonce)
+      const buf = await this.crypto.encode(this.log, seq++, prev, body, nonce)
+      ready.push(buf)
       prev = buf
-      return buf
-    })
-    const ready = await Promise.all(works)
+    }
     return batch ? ready : ready[0]
   }
 
@@ -267,14 +270,14 @@ class RaftNode extends TinyRaft {
 
   async append(data) {
     const { nodeId: name } = this
-    if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
+    if (!this._open) { throw new Error(`${name} raft node not open`) }
     const work = this.isLeader() ? this._appendToSelfAndFollowers(data) : this._fwdToLeader(data)
     return work.then((ok) => ok.seq)
   }
 
   async appendBatch(data) {
     const { nodeId: name } = this
-    if (this._stopped) { throw new Error(`${name} raft node is stopped`) }
+    if (!this._open) { throw new Error(`${name} raft node not open`) }
     const work = this.isLeader() ? this._appendToSelfAndFollowers(data) : this._fwdToLeader(data)
     return work.then((ok) => ok.seq)
   }
