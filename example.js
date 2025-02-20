@@ -20,8 +20,10 @@ function node(id, ids) {
 
 async function main() {
   nodes = nodes.map((id) => node(id, nodes))
-  await Promise.all(nodes.map((node) => node.start()))
+  await Promise.all(nodes.map((node) => node.open()))
+  console.log('open')
   await Promise.all(nodes.map((node) => node.awaitLeader()))
+  console.log('have leader')
 
   let seq = await nodes[0].append(toBuf({ a: 1 }))
   console.log('seq =', seq)
@@ -34,7 +36,7 @@ async function main() {
   console.log('head', toObj(nodes[1].log.head))
   console.log('head', toObj(nodes[2].log.head))
 
-  await Promise.all(nodes.map((node) => node.stop()))
+  await Promise.all(nodes.map((node) => node.close()))
 }
 
 main().catch(console.log)
