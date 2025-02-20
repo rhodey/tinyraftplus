@@ -60,9 +60,9 @@ main().catch(console.log)
 ```
 open
 have leader
-seq = 3n
-seq = 4n
-seq = 5n
+seq = 0n
+seq = 1n
+seq = 2n
 head { c: 3 }
 head { c: 3 }
 head { c: 3 }
