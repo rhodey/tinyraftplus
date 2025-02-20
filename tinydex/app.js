@@ -34,7 +34,6 @@ function receiveGateway(sock, msg) {
   }
 }
 
-// todo: cb with seq for caller
 function appendBatches() {
   setInterval(() => {
     const res = batch.map((arr) => arr[0])
@@ -46,7 +45,7 @@ function appendBatches() {
     node.appendBatch(data).then((seq) => {
       const diff = Date.now() - begin
       console.log(name, shard, 'batch time', seq, diff)
-      res.forEach((cb) => cb(seq))
+      res.forEach((cb, i) => cb(BigInt(i) + seq))
     }).catch((err) => rej.forEach((cb) => cb(err)))
   }, 100)
 }

@@ -1,6 +1,5 @@
 /*
-todo: resolve seq
-todo: gateway timeouts
+todo: network iters
 
 todo: trade engine
 todo: trade aggregate logs

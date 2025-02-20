@@ -3,9 +3,23 @@ const sodium = require('libsodium-wrappers')
 
 const noop = () => {}
 
+const gatewayTimeout = 5_000
+
 function onError(err) {
   console.log('error', err)
   process.exit(1)
+}
+
+function timeout(ms, error) {
+  let timer = null
+  const timedout = new Promise((res, rej) => {
+    const now = Date.now()
+    let next = now + ms
+    next = next - (next % 100)
+    next = (100 + next) - now
+    timer = setTimeout(rej, next, error)
+  })
+  return [timer, timedout]
 }
 
 function on500(req, err) {
@@ -58,18 +72,21 @@ function connect(leader) {
   })
 }
 
-// todo: timeouts
 function send(leader, msg) {
   msg.cid = crypto.randomUUID()
-  return new Promise((res, rej) => {
+  const [timer, timedout] = timeout(gatewayTimeout)
+  const work = new Promise((res, rej) => {
+    timedout.catch((err) => rej(new Error(`send ${leader} timeout`)))
     callbacks[msg.cid] = [res, rej]
     const sock = connect(leader)
     if (!(sock instanceof Promise)) { return sock.write(msg) }
     sock.then((sock) => sock.write(msg)).catch(rej)
-  }).catch((err) => {
-    delete callbacks[msg.cid]
-    throw err
   })
+  work.catch(noop).finally(() => {
+    delete callbacks[msg.cid]
+    clearTimeout(timer)
+  })
+  return work
 }
 
 const bump = (leader) => {
@@ -167,8 +184,7 @@ async function boot() {
   key = sodium.crypto_generichash(32, sodium.from_string(pass))
   const tcp = require('./lib/tcp.js')(sodium)
   tcpClient = (host, port, msgCb) => tcp.tcpClient(host, port, key, msgCb)
-  // todo: server timeouts
-  Bun.serve({ port: 9300, fetch: handle })
+  Bun.serve({ port: 9300, idleTimeout: 10, fetch: handle })
   console.log('ready')
 }
 
