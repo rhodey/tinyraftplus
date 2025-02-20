@@ -1,7 +1,6 @@
 /*
-todo: resolve with seq
+todo: resolve seq
 todo: gateway timeouts
-
 
 todo: trade engine
 todo: trade aggregate logs
