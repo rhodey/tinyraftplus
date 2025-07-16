@@ -10,7 +10,8 @@
   },
   "homepage": "https://github.com/rhodey/tinyraftplus",
   "scripts": {
-    "test": "tape 'test/*.js'"
+    "test": "tape 'test/*.js'",
+    "testfast": "tape 'test/*.fast.js'"
   },
   "dependencies": {
     "tinyraft": "^1.0.1",
