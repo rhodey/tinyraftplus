@@ -13,7 +13,7 @@ const toObj = (buf) => {
   return JSON.parse(buf.toString('utf8'))
 }
 
-async function testAppendStartStopNew(t, encoder) {
+async function testAppendOpenCloseNew(t, encoder) {
   t.plan(21)
   const opts = { encoder }
   let log = new FsLog('/tmp/', 'test', opts)
@@ -69,11 +69,11 @@ async function testAppendStartStopNew(t, encoder) {
   t.deepEqual(toObj(log.head), data, 'head = data')
 }
 
-test('test append, close, open, append, new, append', (t) => testAppendStartStopNew(t, new Encoder()))
-test('test append, close, open, append, new, append - xxhash body', (t) => testAppendStartStopNew(t, new XxHashEncoder()))
-test('test append, close, open, append, new, append - xxhash no body', (t) => testAppendStartStopNew(t, new XxHashEncoder(false)))
+test('test append, close, open, append, new, append', (t) => testAppendOpenCloseNew(t, new Encoder()))
+test('test append, close, open, append, new, append - xxhash body', (t) => testAppendOpenCloseNew(t, new XxHashEncoder()))
+test('test append, close, open, append, new, append - xxhash no body', (t) => testAppendOpenCloseNew(t, new XxHashEncoder(false)))
 
-async function testAppendOneStartStop(t, encoder) {
+async function testAppendOneOpenClose(t, encoder) {
   t.plan(10)
   t.teardown(() => log.close())
 
@@ -102,9 +102,9 @@ async function testAppendOneStartStop(t, encoder) {
   t.deepEqual(toObj(log.head), data, 'head = data')
 }
 
-test('test append one, close, open, append', (t) => testAppendOneStartStop(t, new Encoder()))
-test('test append one, close, open, append - xxhash body', (t) => testAppendOneStartStop(t, new XxHashEncoder()))
-test('test append one, close, open, append - xxhash no body', (t) => testAppendOneStartStop(t, new XxHashEncoder(false)))
+test('test append one, close, open, append', (t) => testAppendOneOpenClose(t, new Encoder()))
+test('test append one, close, open, append - xxhash body', (t) => testAppendOneOpenClose(t, new XxHashEncoder()))
+test('test append one, close, open, append - xxhash no body', (t) => testAppendOneOpenClose(t, new XxHashEncoder(false)))
 
 async function testRollbackFirst(t, encoder) {
   t.plan(6)
@@ -375,7 +375,7 @@ test('test append batch', (t) => testBatch(t, new Encoder()))
 test('test append batch - xxhash body', (t) => testBatch(t, new XxHashEncoder()))
 test('test append batch - xxhash no body', (t) => testBatch(t, new XxHashEncoder(false)))
 
-async function testBatchStartStopNew(t, encoder) {
+async function testBatchOpenCloseNew(t, encoder) {
   t.plan(20)
   t.teardown(() => log.close())
 
@@ -425,9 +425,9 @@ async function testBatchStartStopNew(t, encoder) {
   t.deepEqual(toObj(log.head), data[1], 'head = data')
 }
 
-test('test append batch open, close, new', (t) => testBatchStartStopNew(t, new Encoder()))
-test('test append batch open, close, new - xxhash body', (t) => testBatchStartStopNew(t, new XxHashEncoder()))
-test('test append batch open, close, new - xxhash no body', (t) => testBatchStartStopNew(t, new XxHashEncoder(false)))
+test('test append batch open, close, new', (t) => testBatchOpenCloseNew(t, new Encoder()))
+test('test append batch open, close, new - xxhash body', (t) => testBatchOpenCloseNew(t, new XxHashEncoder()))
+test('test append batch open, close, new - xxhash no body', (t) => testBatchOpenCloseNew(t, new XxHashEncoder(false)))
 
 async function testBatchRollback(t, encoder) {
   t.plan(6)
