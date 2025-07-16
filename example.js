@@ -8,6 +8,8 @@ for (let i = 1; i <= 3; i++) {
   nodes.push(i)
 }
 
+nodes = nodes.map((id) => node(id, nodes))
+
 function node(id, ids) {
   const send = (to, msg) => {
     const node = nodes.find((node) => node.nodeId === to)
@@ -19,7 +21,6 @@ function node(id, ids) {
 }
 
 async function main() {
-  nodes = nodes.map((id) => node(id, nodes))
   await Promise.all(nodes.map((node) => node.open()))
   console.log('open')
   await Promise.all(nodes.map((node) => node.awaitLeader()))
