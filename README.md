@@ -5,7 +5,7 @@ This is the [TinyRaft](https://www.npmjs.com/package/tinyraft) API with extras. 
 A log with append(), appendBatch(), txn(), commit(), abort(), truncate()
 
 ### Replication groups
-Nodes may be assigned groups to support for example majority replication in CloudA and CloudB
+Nodes may be assigned groups to support for example majority replication in both CloudA, CloudB
 
 ### BigInt sequence numbers
 Uses JS native BigInt for sequence numbers so you can grow to infinity
