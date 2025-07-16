@@ -17,12 +17,8 @@ const { RaftNode, FsLog } = require('tinyraftplus')
 const toBuf = (obj) => Buffer.from(JSON.stringify(obj), 'utf8')
 const toObj = (buf) => JSON.parse(buf.toString('utf8'))
 
-let nodes = []
-for (let i = 1; i <= 3; i++) {
-  nodes.push(i)
-}
-
-nodes = nodes.map((id) => node(id, nodes))
+const ids = new Array(3).fill(0).map((z, idx) => ++idx)
+const nodes = ids.map((id) => node(id, ids))
 
 function node(id, ids) {
   const send = (to, msg) => {
