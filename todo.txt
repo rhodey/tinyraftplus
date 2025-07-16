@@ -1,4 +1,6 @@
 /*
+
+todo: txn
 todo: network iters
 
 todo: trade engine
