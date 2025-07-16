@@ -41,7 +41,7 @@ test('test append w/ txn - xxhash body', (t) => testAppendWithTxn(t, new XxHashE
 test('test append w/ txn - xxhash no body', (t) => testAppendWithTxn(t, new XxHashEncoder(false)))
 
 async function testTxnIsBlocking(t, encoder) {
-  t.plan(15)
+  t.plan(17)
   const opts = { encoder }
   let log = new FsLog('/tmp/', 'test', opts)
   t.teardown(() => log.close())
@@ -72,11 +72,14 @@ async function testTxnIsBlocking(t, encoder) {
   seq = await txn.append(toBuf(data))
   t.equal(seq, 1n, 'seq = 1')
   t.equal(log.seq, 1n, 'seq = 1')
+  t.deepEqual(toObj(log.head), data, 'head = data')
 
   data = { s: 2 }
   seq = await txn.append(toBuf(data))
   t.equal(seq, 2n, 'seq = 2')
   t.equal(log.seq, 2n, 'seq = 2')
+  t.deepEqual(toObj(log.head), data, 'head = data')
+
   await txn.commit()
 
   await delayed1
