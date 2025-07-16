@@ -9,7 +9,7 @@ const nodes = ids.map((id) => node(id, ids))
 function node(id, ids) {
   const send = (to, msg) => {
     const node = nodes.find((node) => node.nodeId === to)
-    node.onReceive(id, msg)
+    node.onReceive(id, msg) // from, msg
   }
   const log = new FsLog('/tmp/', 'node'+id)
   const opts = { minFollowers: 2 } // force full repl for demo
