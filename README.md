@@ -2,7 +2,7 @@
 This is [TinyRaft](https://www.npmjs.com/package/tinyraft) with extras. As with all Raft implementations a leader is elected and the network can survive if any majority of nodes are online, what has been added to tinyraft is...
 
 ### Log replication
-A log with append(), appendBatch(), and truncate()
+A log with append(), truncate(), txn(), and commit()
 
 ### Replication groups
 Nodes may be assigned groups to support for example majority replication in CloudA and CloudB
@@ -79,4 +79,4 @@ npm run test
 ```
 
 ## License
-MIT
+MIT - Copyright 2025 - mike@rhodey.org
