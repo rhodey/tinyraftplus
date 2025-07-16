@@ -94,7 +94,7 @@ test('test txn is blocking', (t) => testTxnIsBlocking(t, new Encoder()))
 test('test txn is blocking - xxhash body', (t) => testTxnIsBlocking(t, new XxHashEncoder()))
 test('test txn is blocking - xxhash no body', (t) => testTxnIsBlocking(t, new XxHashEncoder(false)))
 
-async function testAppendWithMixed(t, encoder) {
+async function testTxnWithOpenClose(t, encoder) {
   t.plan(22)
   const opts = { encoder }
   let log = new FsLog('/tmp/', 'test', opts)
@@ -112,8 +112,8 @@ async function testAppendWithMixed(t, encoder) {
   t.equal(log.seq, 0n, 'seq = 0')
   t.deepEqual(toObj(log.head), data, 'head = data')
 
-  let txn = await log.txn()
   data = { bb: 2 }
+  let txn = await log.txn()
   seq = await txn.append(toBuf(data))
   t.equal(seq, 1n, 'seq = 1')
   t.equal(log.seq, 1n, 'seq = 1')
@@ -147,8 +147,7 @@ async function testAppendWithMixed(t, encoder) {
 
   txn = await log.txn()
   data = { ee: 5 }
-  // seq = await txn.append(toBuf(data))
-  seq = await log.append(toBuf(data))
+  seq = await txn.append(toBuf(data))
   t.equal(seq, 4n, 'seq = 4')
   t.equal(log.seq, 4n, 'seq = 4')
   t.deepEqual(toObj(log.head), data, 'head = data')
@@ -157,6 +156,6 @@ async function testAppendWithMixed(t, encoder) {
   t.pass('commit ok')
 }
 
-// test('test append w/ mixed', (t) => testAppendWithMixed(t, new Encoder()))
-// test('test append w/ mixed - xxhash body', (t) => testAppendWithMixed(t, new XxHashEncoder()))
-// test('test append w/ mixed - xxhash no body', (t) => testAppendWithMixed(t, new XxHashEncoder(false)))
+test('test txn with open close', (t) => testTxnWithOpenClose(t, new Encoder()))
+test('test txn with open close - xxhash body', (t) => testTxnWithOpenClose(t, new XxHashEncoder()))
+test('test txn with open close - xxhash no body', (t) => testTxnWithOpenClose(t, new XxHashEncoder(false)))
