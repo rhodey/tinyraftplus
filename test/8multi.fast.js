@@ -22,7 +22,7 @@ const logFnFn = (encoder) => {
   }
 }
 
-async function testAppendStartStopNew(t, encoder) {
+async function testAppendOpenCloseNew(t, encoder) {
   t.plan(33)
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
@@ -98,9 +98,9 @@ async function testAppendStartStopNew(t, encoder) {
   t.equal(log.logs.length, 3, 'logs = 3')
 }
 
-test('test append, close, open, append, new, append', (t) => testAppendStartStopNew(t, new Encoder()))
-test('test append, close, open, append, new, append - xxhash body', (t) => testAppendStartStopNew(t, new XxHashEncoder()))
-test('test append, close, open, append, new, append - xxhash no body', (t) => testAppendStartStopNew(t, new XxHashEncoder(false)))
+test('test append, close, open, append, new, append', (t) => testAppendOpenCloseNew(t, new Encoder()))
+test('test append, close, open, append, new, append - xxhash body', (t) => testAppendOpenCloseNew(t, new XxHashEncoder()))
+test('test append, close, open, append, new, append - xxhash no body', (t) => testAppendOpenCloseNew(t, new XxHashEncoder(false)))
 
 async function testTruncate(t, encoder) {
   t.plan(22)
