@@ -1,5 +1,5 @@
 # TinyRaftPlus
-Same API as [TinyRaft](https://www.npmjs.com/package/tinyraft) with extras. As with all Raft implementations a leader is elected and the network can survive if any majority of nodes are alive, what has been added to tinyraft is...
+This is the [TinyRaft](https://www.npmjs.com/package/tinyraft) API with extras. As with all Raft implementations a leader is elected and the network can survive if any majority of nodes are alive, what has been added to tinyraft is...
 
 ### Log replication
 A log with append(), appendBatch(), txn(), commit(), abort(), truncate()
