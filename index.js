@@ -88,6 +88,7 @@ class RaftNode extends TinyRaft {
     return this._open
   }
 
+  // todo: dupe start, stop
   async open() {
     await this.log.open()
       .then(() => this._decryptHead())
