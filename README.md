@@ -8,7 +8,7 @@ A log with append(), appendBatch(), txn(), commit(), abort(), truncate()
 Nodes may be assigned groups to support for example majority replication in CloudA and CloudB
 
 ### BigInt sequence numbers
-Uses JS native BigInt for sequence numbers so you can basically grow to infinity
+Uses JS native BigInt for sequence numbers so you can grow to infinity
 
 ## Usage
 ```js
