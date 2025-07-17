@@ -204,3 +204,53 @@ async function testTxnCloseOnLogClose(t, encoder) {
 test('test txn close on log close', (t) => testTxnCloseOnLogClose(t, new Encoder()))
 test('test txn close on log close - xxhash body', (t) => testTxnCloseOnLogClose(t, new XxHashEncoder()))
 test('test txn close on log close - xxhash no body', (t) => testTxnCloseOnLogClose(t, new XxHashEncoder(false)))
+
+async function testTxnDoubleCommitDoubleAbort(t, encoder) {
+  t.plan(12)
+  const opts = { encoder }
+  let log = new FsLog('/tmp/', 'test', opts)
+  t.teardown(() => log.close())
+
+  await log.del()
+  await log.open()
+
+  let data = { a: 0 }
+  let txn = await log.txn()
+  let seq = await txn.append(toBuf(data))
+  t.equal(seq, 0n, 'seq = 0')
+  t.equal(log.seq, 0n, 'seq = 0')
+  t.deepEqual(toObj(log.head), data, 'head = data')
+
+  await txn.commit()
+  t.pass('commit ok')
+
+  try {
+    await txn.commit()
+    t.fail('no error')
+  } catch (err) {
+    t.ok(err.message.includes('already commit or abort'))
+  }
+
+  data = { b: 1 }
+  txn = await log.txn()
+  seq = await txn.append(toBuf(data))
+  t.equal(seq, 1n, 'seq = 1')
+  t.equal(log.seq, 1n, 'seq = 1')
+  t.deepEqual(toObj(log.head), data, 'head = data')
+
+  await txn.abort()
+  t.pass('abort ok')
+  t.equal(log.seq, 0n, 'seq = 0')
+  t.deepEqual(toObj(log.head), { a: 0 }, 'head = data')
+
+  try {
+    await txn.abort()
+    t.fail('no error')
+  } catch (err) {
+    t.ok(err.message.includes('already commit or abort'))
+  }
+}
+
+test('test txn double commit double abort', (t) => testTxnDoubleCommitDoubleAbort(t, new Encoder()))
+test('test txn double commit double abort - xxhash body', (t) => testTxnDoubleCommitDoubleAbort(t, new XxHashEncoder()))
+test('test txn double commit double abort - xxhash no body', (t) => testTxnDoubleCommitDoubleAbort(t, new XxHashEncoder(false)))
