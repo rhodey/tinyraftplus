@@ -2,7 +2,7 @@
 This is the [TinyRaft](https://www.npmjs.com/package/tinyraft) API with extras. As with all Raft implementations a leader is elected and the network can survive if any majority of nodes are alive, what has been added to tinyraft is...
 
 ### Log replication
-A log with append(), appendBatch(), txn(), commit(), abort(), truncate()
+A log with append(), appendBatch(), txn(), commit(), abort(), truncate(), iter()
 
 ### Replication groups
 Nodes may be assigned groups to support for example majority replication in both CloudA, CloudB
