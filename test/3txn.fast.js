@@ -254,3 +254,5 @@ async function testTxnDoubleCommitDoubleAbort(t, encoder) {
 test('test txn double commit double abort', (t) => testTxnDoubleCommitDoubleAbort(t, new Encoder()))
 test('test txn double commit double abort - xxhash body', (t) => testTxnDoubleCommitDoubleAbort(t, new XxHashEncoder()))
 test('test txn double commit double abort - xxhash no body', (t) => testTxnDoubleCommitDoubleAbort(t, new XxHashEncoder(false)))
+
+// todo: test truncate
