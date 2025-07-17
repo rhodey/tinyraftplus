@@ -82,3 +82,43 @@ async function testAppendLarge(t, encoder) {
 test('test append 100 large', (t) => testAppendLarge(t, new Encoder()))
 test('test append 100 large - xxhash body', (t) => testAppendLarge(t, new XxHashEncoder()))
 test('test append 100 large - xxhash no body', (t) => testAppendLarge(t, new XxHashEncoder(false)))
+
+async function testAppendLargeTxn(t, encoder) {
+  t.plan(1)
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
+  await log.del()
+  await log.open()
+
+  const data = []
+  const count = 100
+  const large = new Array(1024).fill('a').join('')
+  for (let i = 0; i < count; i++) {
+    data.push(toBuf({ i, large }))
+  }
+
+  const begin = Date.now()
+  const txn = await log.txn()
+  for (const buf of data) {
+    await txn.append(buf)
+  }
+
+  await txn.commit()
+  const ms = Date.now() - begin
+  console.log(`done ${count} in ${ms}ms`)
+
+  const seconds = ms / 1000
+  let avg = (count / seconds).toFixed(1)
+  console.log(`${avg} append per second`)
+
+  avg = (avg / 1000).toFixed(2)
+  console.log(`${avg} append per ms`)
+
+  t.pass('ok')
+  t.teardown(() => log.close())
+  console.log(`\n`)
+}
+
+test('test append 100 large txn', (t) => testAppendLargeTxn(t, new Encoder()))
+test('test append 100 large txn - xxhash body', (t) => testAppendLargeTxn(t, new XxHashEncoder()))
+test('test append 100 large txn - xxhash no body', (t) => testAppendLargeTxn(t, new XxHashEncoder(false)))
