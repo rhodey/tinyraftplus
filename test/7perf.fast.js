@@ -91,7 +91,7 @@ async function testAppendLargeTxn(t, encoder) {
   await log.open()
 
   const data = []
-  const count = 100
+  const count = 1_000
   const large = new Array(1024).fill('a').join('')
   for (let i = 0; i < count; i++) {
     data.push(toBuf({ i, large }))
@@ -119,6 +119,6 @@ async function testAppendLargeTxn(t, encoder) {
   console.log(`\n`)
 }
 
-test('test append 100 large txn', (t) => testAppendLargeTxn(t, new Encoder()))
-test('test append 100 large txn - xxhash body', (t) => testAppendLargeTxn(t, new XxHashEncoder()))
-test('test append 100 large txn - xxhash no body', (t) => testAppendLargeTxn(t, new XxHashEncoder(false)))
+test('test append 1000 large txn', (t) => testAppendLargeTxn(t, new Encoder()))
+test('test append 1000 large txn - xxhash body', (t) => testAppendLargeTxn(t, new XxHashEncoder()))
+test('test append 1000 large txn - xxhash no body', (t) => testAppendLargeTxn(t, new XxHashEncoder(false)))
