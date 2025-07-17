@@ -622,3 +622,16 @@ async function testBatchTruncate3(t, encoder) {
 test('test append batch then truncate 1', (t) => testBatchTruncate3(t, new Encoder()))
 test('test append batch then truncate 1 - xxhash body', (t) => testBatchTruncate3(t, new XxHashEncoder()))
 test('test append batch then truncate 1 - xxhash no body', (t) => testBatchTruncate3(t, new XxHashEncoder(false)))
+
+async function testDoubleOpen(t, encoder) {
+  t.plan(1)
+  t.teardown(() => log.close())
+  const opts = { encoder }
+  const log = new FsLog('/tmp/', 'test', opts)
+  await log.del()
+  const p1 = log.open()
+  const p2 = log.open()
+  t.ok(p1 === p2, 'p1 = p2')
+}
+
+test('test double open', (t) => testDoubleOpen(t, new Encoder()))
