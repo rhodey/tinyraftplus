@@ -162,3 +162,45 @@ async function testTxnWithOpenClose(t, encoder) {
 test('test txn with open close', (t) => testTxnWithOpenClose(t, new Encoder()))
 test('test txn with open close - xxhash body', (t) => testTxnWithOpenClose(t, new XxHashEncoder()))
 test('test txn with open close - xxhash no body', (t) => testTxnWithOpenClose(t, new XxHashEncoder(false)))
+
+async function testTxnCloseOnLogClose(t, encoder) {
+  t.plan(10)
+  const opts = { encoder }
+  let log = new FsLog('/tmp/', 'test', opts)
+  t.teardown(() => log.close())
+
+  await log.del()
+  await log.open()
+
+  let data = { a: 0 }
+  let txn = await log.txn()
+  let seq = await txn.append(toBuf(data))
+  t.equal(seq, 0n, 'seq = 0')
+  t.equal(log.seq, 0n, 'seq = 0')
+  t.deepEqual(toObj(log.head), data, 'head = data')
+  await log.close()
+  await log.open()
+
+  try {
+    await txn.append(toBuf(data))
+    t.fail('txn not closed')
+  } catch (err) {
+    t.ok(err.message.includes('was closed'))
+  }
+
+  data = { b: 0 }
+  txn = await log.txn()
+  seq = await txn.append(toBuf(data))
+  t.equal(seq, 0n, 'seq = 0')
+  t.equal(log.seq, 0n, 'seq = 0')
+  t.deepEqual(toObj(log.head), data, 'head = data')
+
+  await txn.commit()
+  t.equal(seq, 0n, 'seq = 0')
+  t.equal(log.seq, 0n, 'seq = 0')
+  t.deepEqual(toObj(log.head), data, 'head = data')
+}
+
+test('test txn close on log close', (t) => testTxnCloseOnLogClose(t, new Encoder()))
+test('test txn close on log close - xxhash body', (t) => testTxnCloseOnLogClose(t, new XxHashEncoder()))
+test('test txn close on log close - xxhash no body', (t) => testTxnCloseOnLogClose(t, new XxHashEncoder(false)))
