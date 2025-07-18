@@ -15,7 +15,7 @@ const toObj = (buf) => {
 }
 
 async function testTxnAppend(t, encoder) {
-  t.plan(6)
+  t.plan(14)
   const opts = { encoder }
   let log = new FsLog('/tmp/', 'test', opts)
   t.teardown(() => log.close())
@@ -34,11 +34,65 @@ async function testTxnAppend(t, encoder) {
 
   await txn.commit()
   t.pass('commit ok')
+  t.equal(log.seq, 0n, 'seq = 0')
+  t.deepEqual(toObj(log.head), data, 'head = data')
+
+  data = { b: 2 }
+  txn = await log.txn()
+  seq = await txn.append(toBuf(data))
+  t.equal(seq, 1n, 'seq = 1')
+  t.equal(log.seq, 1n, 'seq = 1')
+  t.deepEqual(toObj(log.head), data, 'head = data')
+
+  await txn.abort()
+  t.pass('abort ok')
+  t.equal(log.seq, 0n, 'seq = 0')
+  t.deepEqual(toObj(log.head), { a: 1 }, 'head = data')
 }
 
 test('test append w/ txn', (t) => testTxnAppend(t, new Encoder()))
 test('test append w/ txn - xxhash body', (t) => testTxnAppend(t, new XxHashEncoder()))
 test('test append w/ txn - xxhash no body', (t) => testTxnAppend(t, new XxHashEncoder(false)))
+
+async function testTxnAppendBatch(t, encoder) {
+  t.plan(14)
+  const opts = { encoder }
+  let log = new FsLog('/tmp/', 'test', opts)
+  t.teardown(() => log.close())
+
+  await log.del()
+  await log.open()
+  t.equal(log.seq, -1n, 'seq = -1')
+  t.equal(log.head, null, 'head = null')
+
+  let data = [{ a: 1 }, { bb: 2 }]
+  let txn = await log.txn()
+  let seq = await txn.appendBatch(data.map(toBuf))
+  t.equal(seq, 0n, 'seq = 0')
+  t.equal(log.seq, 1n, 'seq = 1')
+  t.deepEqual(toObj(log.head), data[1], 'head = data')
+
+  await txn.commit()
+  t.pass('commit ok')
+  t.equal(log.seq, 1n, 'seq = 1')
+  t.deepEqual(toObj(log.head), data[1], 'head = data')
+
+  data = [{ ccc: 3 }]
+  txn = await log.txn()
+  seq = await txn.appendBatch(data.map(toBuf))
+  t.equal(seq, 2n, 'seq = 2')
+  t.equal(log.seq, 2n, 'seq = 2')
+  t.deepEqual(toObj(log.head), data[0], 'head = data')
+
+  await txn.abort()
+  t.pass('abort ok')
+  t.equal(log.seq, 1n, 'seq = 1')
+  t.deepEqual(toObj(log.head), { bb: 2 }, 'head = data')
+}
+
+test('test append batch w/ txn', (t) => testTxnAppendBatch(t, new Encoder()))
+test('test append batch w/ txn - xxhash body', (t) => testTxnAppendBatch(t, new XxHashEncoder()))
+test('test append batch w/ txn - xxhash no body', (t) => testTxnAppendBatch(t, new XxHashEncoder(false)))
 
 async function testTxnWithOpenClose(t, encoder) {
   t.plan(22)
