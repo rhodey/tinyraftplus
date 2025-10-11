@@ -20,15 +20,13 @@ function opts() {
   return { apply, read, group: 'name', groupFn }
 }
 
-let nodes = []
-
 function node(sodium, key, id, ids) {
   const clients = {}
-  const send = async (to, msg) => {
-    const node = nodes.find((node) => node.id === to)
+  const send = (to, msg) => {
     let client = clients[to]
     if (!client) {
-      client = clients[to] = tcpClient(sodium, key, node.host, node.port).then((sock) => sock)
+      const [host, port] = to.split(`:`)
+      client = clients[to] = tcpClient(sodium, key, host, parseInt(port)).then((sock) => sock)
     }
     return client.then((sock) => sock.write(msg))
   }
@@ -36,10 +34,9 @@ function node(sodium, key, id, ids) {
   let log = new FsLog('/tmp/', 'node'+id, { encoder })
   log = new TimeoutLog(log, { default: 1_000 })
   const node = new RaftNode(id, ids, send, log, opts)
-  node.host = '127.0.0.1'
-  node.port = 9000 + id
+  const port = parseInt(id.split(`:`)[1])
   const msgCb = (sock, msg) => node.onReceive(msg.from, msg)
-  return tcpServer(sodium, key, node.port, msgCb, errCb).then((srv) => {
+  return tcpServer(sodium, key, port, msgCb, errCb).then((srv) => {
     node.clients = clients
     node.srv = srv
     return node
@@ -51,9 +48,9 @@ async function main() {
   await sodium.ready
   const key = sodium.crypto_generichash(32, sodium.from_string('key'))
 
-  const ids = new Array(3).fill(0).map((z, idx) => ++idx)
-  const create = ids.map((id) => node(sodium, key, id, ids))
-  nodes = await Promise.all(create)
+  const ids = new Array(3).fill(0).map((z, idx) => `127.0.0.1:${9000 + idx + 1}`)
+  let nodes = ids.map((id) => node(sodium, key, id, ids))
+  nodes = await Promise.all(nodes)
 
   await Promise.all(nodes.map((node) => node.log.del()))
   await Promise.all(nodes.map((node) => node.open()))
