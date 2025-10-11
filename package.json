@@ -1,7 +1,8 @@
 {
   "name": "tinyraftplus",
-  "version": "0.2.0",
+  "author": "Rhodey Orbits",
   "description": "tinyraft with extras",
+  "version": "0.2.0",
   "license": "MIT",
   "main": "src/index.js",
   "repository": {
@@ -10,7 +11,7 @@
   },
   "homepage": "https://github.com/rhodey/tinyraftplus",
   "scripts": {
-    "test": "tape 'test/*.js'"
+    "test": "tape test/*.js"
   },
   "dependencies": {
     "mkdirp": "^3.0.1",
