@@ -176,7 +176,7 @@ Node v20.11.0 (LTS) is best
 ## Test
 The [tests](https://github.com/rhodey/tinyraftplus/tree/master/test) include 3744 assertions
 
-The API is stable to dev against but I intend to add approx 20% more RaftNode tests
+The API is stable to dev against but I intend to add approx 20% more tests
 ```
 npm run test
 ```
