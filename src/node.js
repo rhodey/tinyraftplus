@@ -296,7 +296,6 @@ class RaftNode extends EventEmitter {
 
   _voteForSelf() {
     this.state = CANDIDATE
-    this.leader = this.id
     this.followers = []
     const term = ++this.term
     this._votes = []
@@ -327,11 +326,9 @@ class RaftNode extends EventEmitter {
     const termPF = this.log.term
     const seqPF = this.log.seq
 
-    if (term > this.term) {
+    if (termP > termPF) {
       msg = { type: VOTE, term, voteGranted: true, group: this.group }
-    } else if (seqP === -1n && seqPF === -1n) {
-      msg = { type: VOTE, term, voteGranted: true, group: this.group }
-    } else if (termP > termPF || (termP === termPF && seqP >= seqPF)) {
+    } else if (termP === termPF && seqP >= seqPF) {
       msg = { type: VOTE, term, voteGranted: true, group: this.group }
     } else {
       msg = { type: VOTE, term, voteGranted: false }
