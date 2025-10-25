@@ -30,9 +30,6 @@ async function main() {
   await Promise.all(nodes.map((node) => node.open()))
   await Promise.all(nodes.map((node) => node.awaitLeader()))
 
-  const leader = nodes.find((node) => node.state === 'leader')
-  console.log('state', leader.seq)
-
   // return type has changed
   let ok = await nodes[0].append(toBuf({ a: 1 }))
   let [seq, result] = ok

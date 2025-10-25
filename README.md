@@ -98,9 +98,6 @@ async function main() {
   await Promise.all(nodes.map((node) => node.open()))
   await Promise.all(nodes.map((node) => node.awaitLeader()))
 
-  const leader = nodes.find((node) => node.state === 'leader')
-  console.log('state', leader.seq)
-
   // return type has changed
   let ok = await nodes[0].append(toBuf({ a: 1 }))
   let [seq, result] = ok
@@ -127,7 +124,6 @@ async function main() {
 main().catch(console.log)
 ```
 ```
-state 0n
 state 1n 1n
 state 2n 2n
 state 3n 3n
