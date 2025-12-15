@@ -55,7 +55,7 @@ const awaitResolve = (promises, minimum) => {
   })
 }
 
-const ready = (nodes, count=null, commit=0) => {
+const ready = (nodes, count=null, commit=false) => {
   count = count ?? nodes.length
   return awaitResolve(nodes.map((node) => node.awaitLeader(commit)), count)
 }

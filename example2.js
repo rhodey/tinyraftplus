@@ -10,7 +10,7 @@ function node(id, ids) {
   // opts may be fn
   const opts = () => {
     let myCount = 0n
-    const apply = (bufs) => {
+    const apply = (bufs, seq) => {
       const results = []
       bufs.forEach((buf) => results.push(buf ? ++myCount : null))
       return results
@@ -27,8 +27,9 @@ function node(id, ids) {
 }
 
 async function main() {
+  await Promise.all(nodes.map((node) => node.log.del()))
   await Promise.all(nodes.map((node) => node.open()))
-  await Promise.all(nodes.map((node) => node.awaitLeader()))
+  await Promise.all(nodes.map((node) => node.awaitLeader(1)))
 
   // return type has changed
   let ok = await nodes[0].append(toBuf({ a: 1 }))

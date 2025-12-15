@@ -1,16 +1,15 @@
+const sodium = require('libsodium-wrappers')
 const { Transform } = require('stream')
 
 class EncryptingStream extends Transform {
-  constructor(sodium, key) {
+  constructor(key) {
     super()
-    this.sodium = sodium
-    const res = this.sodium.crypto_secretstream_xchacha20poly1305_init_push(key)
+    const res = sodium.crypto_secretstream_xchacha20poly1305_init_push(key)
     this.state = res.state
     this.push(Buffer.from(res.header))
   }
 
   _transform(chunk, encoding, callback) {
-    const { sodium } = this
     const bytes = sodium.crypto_secretstream_xchacha20poly1305_push(this.state,
       chunk, null, sodium.crypto_secretstream_xchacha20poly1305_TAG_MESSAGE,
     )
@@ -23,9 +22,8 @@ class EncryptingStream extends Transform {
 }
 
 class DecryptingStream extends Transform {
-  constructor(sodium, key) {
+  constructor(key) {
     super()
-    this.sodium = sodium
     this.key = key
     this.state = null
     this.len = null
@@ -53,7 +51,6 @@ class DecryptingStream extends Transform {
   }
 
   _transform(chunk, encoding, callback) {
-    const { sodium } = this
     if (this.state === null) {
       this.headBuf = Buffer.concat([this.headBuf, chunk])
       if (this.headBuf.byteLength < sodium.crypto_secretstream_xchacha20poly1305_HEADERBYTES) {

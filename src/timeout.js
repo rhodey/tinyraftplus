@@ -2,7 +2,7 @@ const noop = () => {}
 
 const terr = new Error('timeout')
 
-// use less OS timers by group 100ms
+// use less timers by group 100ms
 const timeout = (ms) => {
   let timer = null
   const timedout = new Promise((res, rej) => {
@@ -201,6 +201,7 @@ class TimeoutLog {
 
   async trim(seq=-1n, txn=false) {
     const { path } = this
+    if (typeof seq !== 'bigint') { throw new Error(`${path} seq must be big int`) }
     if (seq < -1n) { throw new Error(`${path} seq must be >= -1`) }
     this.iterators.filter((iter) => iter.last > seq).forEach((iter) => iter.close())
     this.iterators = this.iterators.filter((iter) => iter._open)
@@ -278,10 +279,10 @@ class TimeoutIterator {
         const work = Promise.race([timedout, nextt])
 
         nextt = await work
+        clearTimeout(timer)
         if (!this._open) { return }
         if (nextt.done) { break }
         next++
-        clearTimeout(timer)
         yield nextt.value
       }
 

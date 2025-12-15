@@ -4,12 +4,12 @@ const { EncryptingStream, DecryptingStream } = require('./stream.js')
 
 const noop = () => {}
 
-function tcpServer(sodium, key, port, msgCb, errCb) {
+function tcpServer(key, port, msgCb, errCb) {
   const server = net.createServer((sock) => {
-    const decrypt = new DecryptingStream(sodium, key)
+    const decrypt = new DecryptingStream(key)
     const unpack = new UnpackrStream()
     const pack = new PackrStream()
-    const encrypt = new EncryptingStream(sodium, key)
+    const encrypt = new EncryptingStream(key)
     const close = () => {
       decrypt.destroy()
       unpack.destroy()
@@ -38,15 +38,15 @@ function tcpServer(sodium, key, port, msgCb, errCb) {
   })
 }
 
-function tcpClient(sodium, key, host, port, msgCb=noop) {
+function tcpClient(key, host, port, msgCb=noop) {
   const sock = new net.Socket()
   return new Promise((res, rej) => {
     sock.on('error', (err) => rej(new Error(`net error ${err.message}`)))
     sock.once('close', (err) => rej(new Error(`close`)))
     sock.once('connect', () => {
       const pack = new PackrStream()
-      const encrypt = new EncryptingStream(sodium, key)
-      const decrypt = new DecryptingStream(sodium, key)
+      const encrypt = new EncryptingStream(key)
+      const decrypt = new DecryptingStream(key)
       const unpack = new UnpackrStream()
       const close = () => {
         pack.destroy()
