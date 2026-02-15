@@ -2,7 +2,7 @@
   "name": "tinyraftplus",
   "author": "rhodey",
   "description": "tinyraft with extras",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "license": "MIT",
   "main": "src/index.js",
   "repository": {
