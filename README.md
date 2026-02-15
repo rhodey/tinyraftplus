@@ -153,14 +153,14 @@ If your apply and read functions are not throwing errors then the log / fs is ba
 
 If you suspect the fs restart the host. If node.open fails on restart you need to replace the node / host
 
-Use [XxHashEncoder](https://github.com/rhodey/tinyraftplus/blob/master/src/encoder.js#L63) to identify fs corruption
+Use [XxHashEncoder](https://github.com/rhodey/tinyraftplus/blob/main/src/encoder.js#L63) to identify fs corruption
 
 ## Configuration
-+ [FsLog](https://github.com/rhodey/tinyraftplus/blob/master/src/fslog.js#L20)
-+ [MultiFsLog](https://github.com/rhodey/tinyraftplus/blob/master/src/multi.js#L35)
-+ [TimeoutLog](https://github.com/rhodey/tinyraftplus/blob/master/src/timeout.js#L19)
-+ [XxHashEncoder](https://github.com/rhodey/tinyraftplus/blob/master/src/encoder.js#L63)
-+ [RaftNode](https://github.com/rhodey/tinyraftplus/blob/master/src/node.js#L69)
++ [FsLog](https://github.com/rhodey/tinyraftplus/blob/main/src/fslog.js#L20)
++ [MultiFsLog](https://github.com/rhodey/tinyraftplus/blob/main/src/multi.js#L35)
++ [TimeoutLog](https://github.com/rhodey/tinyraftplus/blob/main/src/timeout.js#L19)
++ [XxHashEncoder](https://github.com/rhodey/tinyraftplus/blob/main/src/encoder.js#L63)
++ [RaftNode](https://github.com/rhodey/tinyraftplus/blob/main/src/node.js#L69)
 
 ## Performance
 Node v20.11.0 (LTS) is best
@@ -171,7 +171,7 @@ Node v20.11.0 (LTS) is best
 + RaftNode appendBatch = 100,000 bufs/sec
 
 ## Test
-The [tests](https://github.com/rhodey/tinyraftplus/tree/master/test) include 3800+ assertions
+The [tests](https://github.com/rhodey/tinyraftplus/tree/main/test) include 3800+ assertions
 
 The API is stable to dev against but I intend to add approx 25% more tests
 ```
@@ -179,7 +179,7 @@ npm run test
 ```
 
 ## Tcp
-See [example3.js](https://github.com/rhodey/tinyraftplus/blob/master/example3.js) which shows a TCP example and advanced options
+See [example3.js](https://github.com/rhodey/tinyraftplus/blob/main/example3.js) which shows a TCP example and advanced options
 
 ## License
 mike@rhodey.org
