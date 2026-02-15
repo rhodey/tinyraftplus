@@ -471,7 +471,6 @@ class MultiFsLog {
 
   iter(seq=0n, opts={}) {
     const { path } = this
-    // todo: why opts.txn
     if (!opts.txn && (!this._open || this._closing)) { throw new Error(`${path} is not open`) }
     if (typeof seq !== 'bigint') { throw new Error(`${path} seq must be big int`) }
     if (seq < 0n) { throw new Error(`${path} seq must be >= 0`) }
