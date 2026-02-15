@@ -151,7 +151,7 @@ Error (error) emits an instance of Error and these come from operations with the
 
 If your apply and read functions are not throwing errors then the log / fs is bad
 
-If you suspect the fs then restart the host. If node.open fails on restart then you need to replace the node / host
+If you suspect the fs restart the host. If node.open fails on restart you need to replace the node / host
 
 Use [XxHashEncoder](https://github.com/rhodey/tinyraftplus/blob/master/src/encoder.js#L63) to identify fs corruption
 
@@ -182,4 +182,6 @@ npm run test
 See [example3.js](https://github.com/rhodey/tinyraftplus/blob/master/example3.js) which shows a TCP example and advanced options
 
 ## License
+mike@rhodey.org
+
 MIT
