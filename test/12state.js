@@ -39,9 +39,13 @@ test('test elect n=3 then append 6', async (t) => {
   const coms = comms()
 
   let myCount = 0n
-  const apply = (bufs) => {
+  let myCount2 = 0n
+  const apply = (bufs, seq) => {
     const results = []
-    bufs.forEach((buf) => results.push(++myCount))
+    bufs.forEach((buf, idx) => {
+      t.equal(seq + BigInt(idx), myCount2++, `fn seq ok`)
+      results.push(++myCount)
+    })
     return results
   }
   const read = (cmd) => {
@@ -161,10 +165,14 @@ test('test elect n=3 then append 6 - async', async (t) => {
   const coms = comms()
 
   let myCount = 0n
-  const apply = async (bufs) => {
+  let myCount2 = 0n
+  const apply = async (bufs, seq) => {
     await sleep(50)
     const results = []
-    bufs.forEach((buf) => results.push(++myCount))
+    bufs.forEach((buf, idx) => {
+      t.equal(seq + BigInt(idx), myCount2++, `fn seq ok`)
+      results.push(++myCount)
+    })
     return results
   }
   const read = async (cmd) => {
@@ -285,9 +293,13 @@ test('test elect n=3 then append batch', async (t) => {
   const coms = comms()
 
   let myCount = 0n
-  const apply = (bufs) => {
+  let myCount2 = 0n
+  const apply = (bufs, seq) => {
     const results = []
-    bufs.forEach((buf) => results.push(++myCount))
+    bufs.forEach((buf, idx) => {
+      t.equal(seq + BigInt(idx), myCount2++, `fn seq ok`)
+      results.push(++myCount)
+    })
     return results
   }
   const read = (cmd) => {
@@ -400,10 +412,14 @@ test('test elect n=3 then append batch - async', async (t) => {
   const coms = comms()
 
   let myCount = 0n
-  const apply = async (bufs) => {
+  let myCount2 = 0n
+  const apply = async (bufs, seq) => {
     await sleep(50)
     const results = []
-    bufs.forEach((buf) => results.push(++myCount))
+    bufs.forEach((buf, idx) => {
+      t.equal(seq + BigInt(idx), myCount2++, `fn seq ok`)
+      results.push(++myCount)
+    })
     return results
   }
   const read = async (cmd) => {

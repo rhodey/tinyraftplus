@@ -7,8 +7,8 @@ test('test encrypting stream', async (t) => {
   t.plan(3)
   await sodium.ready
   const key = sodium.crypto_generichash(32, sodium.from_string('test'))
-  const encrypt = new EncryptingStream(sodium, key)
-  const decrypt = new DecryptingStream(sodium, key)
+  const encrypt = new EncryptingStream(key)
+  const decrypt = new DecryptingStream(key)
 
   const input = ['one', 'two', 'three']
 
@@ -29,8 +29,8 @@ test('test encrypting stream with big bufs', async (t) => {
   t.plan(9)
   await sodium.ready
   const key = sodium.crypto_generichash(32, sodium.from_string('test'))
-  const encrypt = new EncryptingStream(sodium, key)
-  const decrypt = new DecryptingStream(sodium, key)
+  const encrypt = new EncryptingStream(key)
+  const decrypt = new DecryptingStream(key)
 
   const input = []
   for (let i = 1; i <= 9; i++) {

@@ -17,9 +17,10 @@ function node(id, ids) {
 }
 
 async function main() {
+  await Promise.all(nodes.map((node) => node.log.del()))
   await Promise.all(nodes.map((node) => node.open()))
   console.log('open')
-  await Promise.all(nodes.map((node) => node.awaitLeader()))
+  await Promise.all(nodes.map((node) => node.awaitLeader(1)))
   console.log('have leader')
 
   // append to any node = fwd to leader

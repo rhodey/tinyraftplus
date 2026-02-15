@@ -1,6 +1,6 @@
-const sodium = require('libsodium-wrappers')
 const { RaftNode, FsLog, TimeoutLog } = require('./src/index.js')
-const { EncryptingEncoder } = require('./src/index.js')
+const { XxHashEncoder } = require('./src/index.js')
+const sodium = require('libsodium-wrappers')
 const { tcpServer, tcpClient } = require('./src/index.js')
 
 function errCb(err) {
@@ -10,7 +10,7 @@ function errCb(err) {
 
 function opts() {
   let myCount = 0n
-  const apply = (bufs) => {
+  const apply = (bufs, seq) => {
     const results = []
     bufs.forEach((buf) => results.push(buf ? ++myCount : null))
     return results
@@ -20,23 +20,23 @@ function opts() {
   return { apply, read, group: 'name', groupFn }
 }
 
-function node(sodium, key, id, ids) {
+function node(key, id, ids) {
   const clients = {}
   const send = (to, msg) => {
     let client = clients[to]
     if (!client) {
       const [host, port] = to.split(`:`)
-      client = clients[to] = tcpClient(sodium, key, host, parseInt(port)).then((sock) => sock)
+      client = clients[to] = tcpClient(key, host, parseInt(port)).then((sock) => sock)
     }
     return client.then((sock) => sock.write(msg))
   }
-  const encoder = new EncryptingEncoder(sodium, key)
+  const encoder = new XxHashEncoder(true)
   let log = new FsLog('/tmp/', 'node'+id, { encoder })
   log = new TimeoutLog(log, { default: 1_000 })
   const node = new RaftNode(id, ids, send, log, opts)
   const port = parseInt(id.split(`:`)[1])
   const msgCb = (sock, msg) => node.onReceive(msg.from, msg)
-  return tcpServer(sodium, key, port, msgCb, errCb).then((srv) => {
+  return tcpServer(key, port, msgCb, errCb).then((srv) => {
     node.clients = clients
     node.srv = srv
     return node
@@ -46,26 +46,27 @@ function node(sodium, key, id, ids) {
 async function main() {
   console.log('boot')
   await sodium.ready
-  const key = sodium.crypto_generichash(32, sodium.from_string('key'))
+  const key = sodium.crypto_generichash(32, sodium.from_string('secret'))
 
   const ids = new Array(3).fill(0).map((z, idx) => `127.0.0.1:${9000 + idx + 1}`)
-  let nodes = ids.map((id) => node(sodium, key, id, ids))
+  let nodes = ids.map((id) => node(key, id, ids))
   nodes = await Promise.all(nodes)
 
   await Promise.all(nodes.map((node) => node.log.del()))
   await Promise.all(nodes.map((node) => node.open()))
-  await Promise.all(nodes.map((node) => node.awaitLeader()))
+  await Promise.all(nodes.map((node) => node.awaitLeader(1)))
   console.log('ready')
 
-  const leader = nodes.find((node) => node.state === 'leader')
   const buf = Buffer.from(new Array(1024).fill('a').join(''), 'utf8')
-
   let bufs = []
+
   const producer = setInterval(() => {
     bufs.push(buf)
     bufs.push(buf)
     bufs.push(buf)
   }, 500)
+
+  const leader = nodes.find((node) => node.state === 'leader')
 
   const consumer = setInterval(() => {
     const copy = [...bufs]

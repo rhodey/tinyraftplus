@@ -240,7 +240,7 @@ class FsLog {
         })
 
         await this._readOffset().then((ok) => {
-          if (ok === null || ok.off === -1n) {
+          if (ok === null || ok.off <= -1n || ok.seq <= -1n) {
             this.offset = -1n
             this.hlen = -1n
             this.head = null
@@ -308,6 +308,7 @@ class FsLog {
     const callOnce = (fn) => {
       if (!cb) { return Promise.reject(new Error(`${path} txn already commit or abort`)) }
       return fn().then((ok) => {
+        // todo: maybe ignore
         if (!cb) { return Promise.reject(new Error(`${path} txn already commit or abort`)) }
         cb(); cb = null
         return ok
@@ -315,10 +316,10 @@ class FsLog {
     }
     const lock = (seq) => this._writeLock(seq).then(() => sync(this.fhlock))
     const api = this._txn.catch(noop).then(() => {
-      if (seq === undefined) {
-        return lock(this.seq)
-      } else if (seq === null) {
+      if (seq === null) {
         return ready
+      } else if (seq === undefined) {
+        return lock(this.seq)
       } else {
         return lock(seq)
       }
@@ -363,7 +364,7 @@ class FsLog {
       const next = this.seq + 1n
       seq = seq !== null ? seq : next
       if (next !== seq) { throw new Error(`${path} next ${next} !== ${seq}`) }
-      if (!(data instanceof Buffer)) { throw new Error(`${path} data must be buffer`) }
+      if (!Buffer.isBuffer(data)) { throw new Error(`${path} data must be buffer`) }
     }
 
     // auto txn
@@ -410,6 +411,7 @@ class FsLog {
       if (next !== seq) { throw new Error(`${path} next ${next} !== ${seq}`) }
       if (!Array.isArray(data)) { throw new Error(`${path} data must be array`) }
       if (data.length <= 0) { throw new Error(`${path} data must be array with len > 0`) }
+      if (!data.every((buf) => Buffer.isBuffer(buf))) { throw new Error(`${path} data must be array of bufs`) }
       return seq
     }
 

@@ -21,10 +21,11 @@ const ready = Promise.resolve()
 const max = (a, b) => a > b ? a : b
 const min = (a, b) => a < b ? a : b
 const rand = (min, max) => Math.floor(Math.random() * (max - min)) + min
+const isBigInt = (num) => typeof num === 'bigint' && num >= -1n
 
 const terr = new Error('timeout')
 
-// use less OS timers by group 100ms
+// use less timers by group 100ms
 const timeout = (ms) => {
   let timer = null
   const timedout = new Promise((res, rej) => {
@@ -80,6 +81,8 @@ const defaults = {
   apply: undefined,
   // apply <= applyMax bufs per call
   applyMax: 1024,
+  // allow state resume
+  applySeq: -1n,
   // state machine = optional
   read: noop,
   // node group = optional
@@ -87,7 +90,7 @@ const defaults = {
   // called with [{id, group, state}, ...]
   // return true if nodes are quorum
   groupFn: undefined,
-  // alternative to customize quorum
+  // alternative (quorum as number)
   quorum: undefined,
 }
 
@@ -104,8 +107,12 @@ class RaftNode extends EventEmitter {
         msg.from = this.id
         const ok = send(to, msg)
         if (!(ok instanceof Promise)) { return }
-        ok.catch((err) => this.emit('warn', err))
+        ok.catch((err) => {
+          err.message = `(send) ${err.message}`
+          this.emit('warn', err)
+        })
       } catch (err) {
+        err.message = `(send) ${err.message}`
         this.emit('warn', err)
       }
     }
@@ -129,7 +136,7 @@ class RaftNode extends EventEmitter {
     this.opts = opts
     this.opts.rpcMax = BigInt(opts.rpcMax)
     this._commitSeq = -1n
-    this._applySeq = -1n
+    this._applySeq = BigInt(opts.applySeq)
     this._applyPrev = ready
     this._next = new Map()
     this._match = new Map()
@@ -141,6 +148,7 @@ class RaftNode extends EventEmitter {
   }
 
   _readHead(keepTerm=false) {
+    if (!this.log.isOpen) { return }
     this.seq = this.log.seq
     if (!this.log.head) {
       this.term = keepTerm ? this.term : 0n
@@ -199,14 +207,13 @@ class RaftNode extends EventEmitter {
     this.seq = null
     this.head = null
     this._pingms = 0
-    this._votes = []
     this._pongs.clear()
+    this._votes = []
     this._acks.clear()
     this._groups.clear()
-    this._commitSeq = -1n
-    this._applySeq = -1n
     this._next.clear()
     this._match.clear()
+    this._inflight.clear()
     clearTimeout(this._electionTimer)
     clearInterval(this._pingTimer)
   }
@@ -230,7 +237,6 @@ class RaftNode extends EventEmitter {
       return delay >= this.opts.pingTimeout
     })
     this.followers = this.followers.filter((id) => !rm.includes(id))
-    this.followers = this.followers.filter((id) => this.nodes.includes(id))
     return this._isQuorum()
   }
 
@@ -238,9 +244,12 @@ class RaftNode extends EventEmitter {
     this.state = FOLLOWER
     this.leader = leader
     this.followers = []
-    this._votes = []
     this._pingms = 0
     this._pongs.clear()
+    this._votes = []
+    this._next.clear()
+    this._match.clear()
+    this._inflight.clear()
     clearInterval(this._pingTimer)
     this._startElectionTimer()
     this._change()
@@ -256,13 +265,14 @@ class RaftNode extends EventEmitter {
     this._change()
   }
 
-  async awaitLeader(commit=1) {
-    const { id } = this
-    if (this._closing) { throw new Error(`node ${id} is not open`) }
+  async awaitLeader(commit=false) {
+    if (this._closing) { throw new Error(`node ${this.id} is not open`) }
     return new Promise((res, rej) => {
       const isFollower = (state) => state.state === FOLLOWER && state.leader !== null
       const fn = (state) => state.state === LEADER || isFollower(state)
+      const fn2 = (state) => fn(state) && state.term >= 0n && state.term === this.log.term
       if (fn(this) && !commit) { return res() }
+      if (fn2(this)) { return res() }
       const cb = () => {
         this.removeListener('commit', cb)
         res()
@@ -276,8 +286,7 @@ class RaftNode extends EventEmitter {
   }
 
   async awaitEvent(event, fn) {
-    const { id } = this
-    if (this._closing) { throw new Error(`node ${id} is not open`) }
+    if (this._closing) { throw new Error(`node ${this.id} is not open`) }
     return new Promise((res, rej) => {
       const cb = (val) => {
         if (!fn(val)) { return }
@@ -291,16 +300,21 @@ class RaftNode extends EventEmitter {
   _change() {
     const { id, nodes, state, leader, followers, term } = this
     const change = { id, nodes, state, leader, followers, term }
+    change.open = this._open
     this.emit('change', change)
   }
 
   _voteForSelf() {
     this.state = CANDIDATE
+    this.leader = null
     this.followers = []
     const term = ++this.term
-    this._votes = []
     this._pingms = 0
     this._pongs.clear()
+    this._votes = []
+    this._next.clear()
+    this._match.clear()
+    this._inflight.clear()
     this._change()
     const termP = this.log.term
     const seqP = this.log.seq
@@ -309,15 +323,21 @@ class RaftNode extends EventEmitter {
   }
 
   _rxVoteRequest(msg, from) {
+    const { group } = this
     const { term, termP, seqP } = msg
+    const nums = [term, termP, seqP]
 
-    if (term === this.term && this.leader === from) {
-      msg = { type: VOTE, term: this.term, voteGranted: true, group: this.group }
+    if (!nums.every(isBigInt)) {
+      msg = { type: VOTE, term: this.term, voteGranted: false, group }
+      this.send(from, msg)
+      return
+    } else if (term === this.term && this.leader === from) {
+      msg = { type: VOTE, term: this.term, voteGranted: true, group }
       this.send(from, msg)
       this._pingms = Date.now()
       return
     } else if (term < termP || term < this.term || (term === this.term && this.leader !== null)) {
-      msg = { type: VOTE, term: this.term, voteGranted: false }
+      msg = { type: VOTE, term: this.term, voteGranted: false, group }
       this.send(from, msg)
       return
     }
@@ -327,11 +347,11 @@ class RaftNode extends EventEmitter {
     const seqPF = this.log.seq
 
     if (termP > termPF) {
-      msg = { type: VOTE, term, voteGranted: true, group: this.group }
+      msg = { type: VOTE, term, voteGranted: true, group }
     } else if (termP === termPF && seqP >= seqPF) {
-      msg = { type: VOTE, term, voteGranted: true, group: this.group }
+      msg = { type: VOTE, term, voteGranted: true, group }
     } else {
-      msg = { type: VOTE, term, voteGranted: false }
+      msg = { type: VOTE, term: this.term, voteGranted: false, group }
       this.send(from, msg)
       return
     }
@@ -354,9 +374,9 @@ class RaftNode extends EventEmitter {
       const msg = { type: APPEND, term: this.term, termP, seqP, commitSeq }
       this.nodes.filter((id) => id !== this.id).forEach((to, idx) => {
         let [timer, timedout] = timeout(this.opts.pingTimeout)
-        timedout = timedout.catch(() => Promise.reject(new Error(`node ${this.id} node ${to} ping timeout`)))
+        timedout = timedout.catch(() => Promise.reject(new Error(`node ${this.id} ping ${to} timeout`)))
         const msgg = { ...msg, cid: cid + idx }
-        this._awaitAck(to, msgg.cid, timedout)
+        this._awaitAck(to, msgg, timedout)
           .catch((err) => this.emit('warn', err))
           .finally(() => clearTimeout(timer))
         this.send(to, msgg)
@@ -371,6 +391,7 @@ class RaftNode extends EventEmitter {
 
   _rxVote(msg, from) {
     const { term, voteGranted, group } = msg
+    if (!isBigInt(term)) { return }
     if (term > this.term) {
       this.term = term
       this._toFollower()
@@ -379,6 +400,7 @@ class RaftNode extends EventEmitter {
     if (this.state !== CANDIDATE && this.state !== LEADER) { return }
     if (this.term !== term) { return }
     if (!voteGranted) { return }
+    this._pongs.set(from, Date.now())
     this._votes.push(from)
     this._votes = [...new Set(this._votes)].sort()
     this._groups.set(from, group)
@@ -387,12 +409,12 @@ class RaftNode extends EventEmitter {
     const update = change || this.followers.join(',') !== this._votes.join(',')
     this.state = LEADER
     this.leader = this.id
-    this.followers = this._votes
-    this._pongs.set(from, Date.now())
+    this.followers = [...this._votes]
     clearTimeout(this._electionTimer)
     if (change) {
       this._next.clear()
       this._match.clear()
+      this._inflight.clear()
       this.nodes.forEach((id) => {
         this._pongs.set(id, Date.now())
         this._next.set(id, this.seq + 1n)
@@ -407,12 +429,14 @@ class RaftNode extends EventEmitter {
   // allows discover commitSeq
   // raft paper explains this
   async _leaderAppendNoOp() {
-    const { id } = this
-    if (this._closing) { throw new Error(`node ${id} is not open`) }
-    if (this.state !== LEADER) { throw new Error(`node ${id} is not leader`) }
+    if (this._closing) { return }
+    if (this.state !== LEADER) { return }
     const buf = Buffer.alloc(0)
     this._appendToSelfAndFollowers(buf).catch((err) => {
-      this._leaderAppendNoOp().catch(noop)
+      this.emit('warn', err)
+      setTimeout(() => {
+        this._leaderAppendNoOp().catch(noop)
+      }, 100)
     })
   }
 
@@ -423,14 +447,16 @@ class RaftNode extends EventEmitter {
       this.send(from, msg)
     }
 
-    if (term > this.term) {
+    if (!isBigInt(term)) {
+      return error('term not bigint')
+    } else if (term > this.term) {
       this.term = term
       this._toFollower()
-      return error('term mismatch')
+      return error('term is greater')
     } else if (this.term !== term) {
-      return error('term mismatch')
-    } else if (!this.followers.includes(from)) {
-      return error('you are not a follower')
+      return error('term is lesser')
+    } else if (!data) {
+      return error('data is missing')
     }
 
     this._appendToSelfAndFollowers(data).then((ok) => {
@@ -449,34 +475,36 @@ class RaftNode extends EventEmitter {
 
   // begin and end for results
   _apply(cb, rbegin=null, end=null) {
-    end = end === null ? this._commitSeq : end
-    end = min(end, this._commitSeq)
     if (!this.opts.apply) {
-      this._applySeq = end
-      return cb()
+      this._applySeq = this._commitSeq
+      return cb([])
     }
+    end = end ?? this._commitSeq
+    end = min(end, this._commitSeq)
     const apply = async () => {
       if (this._closing) { return }
-      if (this._applySeq >= end) { return cb() }
+      if (this._applySeq >= end) { return cb([]) }
       let results = []
       let next = this._applySeq + 1n
-      rbegin = rbegin === null ? next : rbegin
+      rbegin = rbegin ?? next
       const ridx = Number(rbegin - next)
+
       try {
 
         if (this.seq === next) {
           try {
             let ok = this.head.length ? this.head : null
-            ok = this.opts.apply([ok])
+            ok = this.opts.apply([ok], next)
             if (ok instanceof Promise) { ok = await ok }
             results.push(ok[0])
           } catch (err) {
-            err.message += '_apply_'
+            err.message = `(apply) ${err.message}`
             throw err
           }
           this._applySeq = next
           this.emit('apply', next)
-          return cb(results.slice(ridx))
+          ridx >= 1 && (results = results.slice(ridx))
+          return cb(results)
         }
 
         let arr = []
@@ -487,11 +515,12 @@ class RaftNode extends EventEmitter {
           if (arr.length <= 0) { return }
           try {
             arr = arr.map((buf) => buf.length ? buf : null)
-            let ok = this.opts.apply(arr)
+            const seq = (next + 1n) - BigInt(arr.length)
+            let ok = this.opts.apply(arr, seq)
             if (ok instanceof Promise) { ok = await ok }
             results = results.concat(ok)
           } catch (err) {
-            err.message += '_apply_'
+            err.message = `(apply) ${err.message}`
             throw err
           }
           this._applySeq = next
@@ -505,23 +534,17 @@ class RaftNode extends EventEmitter {
           buf = buf.subarray(8)
           arr.push(buf)
           if (arr.length >= max) { await apply(next) }
-          if (this._closing) { break }
           next++
+          if (this._closing) { break }
         }
         await apply(--next)
-        cb(results.slice(ridx))
+        ridx >= 1 && (results = results.slice(ridx))
+        cb(results)
 
       } catch (err) {
         this._readHead(true)
-        if (err.message.includes('_apply_')) {
-          err.message = err.message.replace('_apply_', '')
-          // apply errors get warn
-          this.emit('warn', err)
-        } else {
-          // others error
-          this.emit('error', err)
-        }
-        cb()
+        this.emit('error', err)
+        cb([])
       }
     }
     this._applyPrev = this._applyPrev.catch(noop).then(apply)
@@ -529,30 +552,36 @@ class RaftNode extends EventEmitter {
 
   async _rxAppendToFollower(msg, from) {
     const { cid, term, termP, seqP, commitSeq, data } = msg
-    const seq = seqP + 1n
-    const ack = (res=[]) => {
-      msg = { type: ACK, term: this.term, cid, seq, res }
-      this.send(from, msg)
-    }
+    const nums = [term, termP, seqP, commitSeq]
+
     const error = (msg) => {
       msg = { type: ERR, term: this.term, cid, msg }
       this.send(from, msg)
     }
 
-    if (term > this.term) {
+    if (!nums.every(isBigInt)) {
+      return error('term, termP, seqP, commitSeq not bigint')
+    } else if (term > this.term) {
       this.term = term
       this._toFollower()
-      return error('term mismatch')
-    } else if (this.leader !== from) {
+      return error('term is greater')
+    } else if (from !== this.leader) {
       this._rxVoteRequest(msg, from)
       return error('leader mismatch')
     } else if (term !== this.term) {
-      return error('term mismatch')
+      return error('term is lesser')
     } else if (this.state !== FOLLOWER) {
-      return error('not a follower')
+      this._rxVoteRequest(msg, from)
+      return error('am not a follower')
     }
 
     this._pingms = Date.now()
+    const seq = seqP + 1n
+
+    const ack = () => {
+      msg = { type: ACK, term: this.term, cid, seq }
+      this.send(from, msg)
+    }
 
     const apply = (ok) => {
       if (this._closing) { return }
@@ -562,7 +591,8 @@ class RaftNode extends EventEmitter {
       if (next <= this._commitSeq) { return ack() }
       this._commitSeq = next
       this.emit('commit', next)
-      this._apply(ack)
+      this._apply(noop)
+      ack()
     }
 
     const termPF = this.log.term
@@ -577,11 +607,10 @@ class RaftNode extends EventEmitter {
         apply(true)
       }).catch((err) => {
         this._readHead(true)
-        txn.abort().catch(noop).finally(() => {
-          this._readHead(true)
-          this.emit('error', err)
-          error(err.message)
-        })
+        this.emit('error', err)
+        error(err.message)
+        txn.abort().catch(noop)
+          .finally(() => this._readHead(true))
       })
     }
 
@@ -593,6 +622,7 @@ class RaftNode extends EventEmitter {
       let termPF = this.log.term
       const seqPF = this.log.seq
       const ok = termPF === termP && seqPF === seqP
+      // todo: test that fast path happens
       if (ok) {
         append(seq, txn)
         txn = null
@@ -603,12 +633,12 @@ class RaftNode extends EventEmitter {
       const begin = max(seqP, 0n)
       for await (let next of this.log.iter(begin, { txn })) {
         have.push(next)
-        if (have.length > data.length) { break }
+        if (have.length >= data.length) { break }
       }
 
-      if (seqP >= 0n && have.length <= 0) { return error(`seqP ${seqP} missing`) }
+      if (seqP >= 0n && have.length <= 0) { return error(`seqP ${seqP} not found (subtract)`) }
       termPF = seqP >= 0n ? have[0].readBigUInt64LE() : -1n
-      if (termPF !== termP) { return error('termP mismatch') }
+      if (termPF !== termP) { return error('termP mismatch (subtract)') }
       seqP >= 0n && (have = have.slice(1))
       let trim = seqP
       for (let i = 0; i < data.length; i++) {
@@ -638,14 +668,14 @@ class RaftNode extends EventEmitter {
       this.send(from, msg)
     }
 
-    if (term > this.term) {
+    if (!isBigInt(term)) {
+      return error('term not bigint')
+    } else if (term > this.term) {
       this.term = term
       this._toFollower()
-      return error('term mismatch')
+      return error('term is greater')
     } else if (this.term !== term) {
-      return error('term mismatch')
-    } else if (!this.followers.includes(from)) {
-      return error('you are not a follower')
+      return error('term is lesser')
     }
 
     this._leaderRead(cmd).then((arr) => {
@@ -689,13 +719,13 @@ class RaftNode extends EventEmitter {
           this._rxReadToLeader(msg, from)
         }
         break
-
     }
     const cb = this._acks.get(msg.cid)
     cb && cb(from, msg)
   }
 
-  _awaitAck(from, cid, timedout) {
+  _awaitAck(from, msg, timedout) {
+    const { type, cid } = msg
     return new Promise((res, rej) => {
       const cb = (fromm, msg) => {
         if (ACK !== msg.type && ERR !== msg.type) { return }
@@ -705,14 +735,14 @@ class RaftNode extends EventEmitter {
           this._pongs.set(from, Date.now())
           return res(msg)
         }
-        rej(new Error(`node ${from} ${msg.msg}`))
+        rej(new Error(`node ${this.id} ${type} ${from} ERR ${msg.msg}`))
       }
       this._acks.set(cid, cb)
       timedout.catch((err) => {
         this._acks.delete(cid)
         if (this._closing) { return }
         if (err.message === 'timeout') {
-          rej(new Error(`node ${this.id} node ${from} ack timeout`))
+          rej(new Error(`node ${this.id} ${type} ${from} ACK timeout`))
         } else {
           rej(err)
         }
@@ -732,11 +762,11 @@ class RaftNode extends EventEmitter {
     }
     let [timer, timedout] = timeout(timeoutms)
     const work = new Promise((res, rej) => {
-      timedout = timedout.catch(() => Promise.reject(new Error(`node ${id} fwd ${which} to leader timeout`)))
       if (this.leader === null) { return rej(new Error(`node ${id} fwd ${which} no leader`)) }
+      timedout = timedout.catch(() => Promise.reject(new Error(`node ${id} fwd ${which} ${this.leader} timeout`)))
       const cid = crypto.randomUUID()
       const msg = { type, term: this.term, cid, data, cmd }
-      const ack = this._awaitAck(this.leader, cid, timedout)
+      const ack = this._awaitAck(this.leader, msg, timedout)
       const cb = (msg) => {
         if (type === READ) {
           res([msg.seq, msg.result])
@@ -753,37 +783,35 @@ class RaftNode extends EventEmitter {
     return work
   }
 
-  _appendToFollower(to, seq, seqH) {
+  _appendToFollower(to, begin, end, term=null) {
     const { id } = this
-    const [timer, timedout] = timeout(this.opts.appendTimeout)
+    term = term ?? this.term
+    let [timer, timedout] = timeout(this.opts.appendTimeout)
+    timedout = timedout.catch(() => Promise.reject(new Error(`node ${id} (append follower) ${to} timeout`)))
     const work = new Promise(async (res, rej) => {
-      timedout.catch(noop)
       if (this._closing) {
-        process.nextTick(() => rej(new Error(`node ${id} is not open`)))
-        return
-      } else if (!this.followers.includes(to)) {
-        process.nextTick(() => rej(new Error(`node ${id} node ${to} is not my follower`)))
-        return
+        return rej(new Error(`node ${id} (append follower) is not open`))
+      } else if (this.state !== LEADER) {
+        return rej(new Error(`node ${id} (append follower) is not leader`))
+      } else if (this.term !== term) {
+        return rej(new Error(`node ${id} (append follower) new term`))
       } else if (this._inflight.has(to)) {
-        process.nextTick(() => rej(new Error(`node ${id} node ${to} has inflight`)))
-        return
+        return rej(new Error(`node ${id} (append follower) ${to} inflight`))
       }
 
-      let termP = null
-      const seqP = seq - 1n
-      const data = []
-
-      termP = seqP < 0n ? -1n : null
-      const begin = seqP < 0n ? seq : seqP
       this._inflight.add(to)
+      const data = []
+      const seqP = begin - 1n
+      let termP = seqP < 0n ? -1n : null
+      const b = seqP < 0n ? begin : seqP
 
       // prevent read too much into mem
-      let count = 1n + seqH - seq
+      let count = 1n + end - begin
       count = min(this.opts.rpcMax, count)
 
       try {
 
-        for await (let buf of this.log.iter(begin)) {
+        for await (let buf of this.log.iter(b)) {
           termP !== null && data.push(buf)
           termP = termP ?? buf.readBigUInt64LE()
           if (BigInt(data.length) >= count) { break }
@@ -792,14 +820,12 @@ class RaftNode extends EventEmitter {
       } catch (err) {
         this._inflight.delete(to)
         this.emit('error', err)
-        process.nextTick(() => rej(err))
-        return
+        return rej(err)
       }
 
-      if (BigInt(data.length) < count) {
+      if (BigInt(data.length) !== count) {
         this._inflight.delete(to)
-        process.nextTick(() => rej(new Error(`node ${id} read ${data.length} wanted ${count}`)))
-        return
+        return rej(new Error(`node ${id} (append follower) read ${data.length} want ${count}`))
       }
 
       const cid = crypto.randomUUID()
@@ -808,21 +834,29 @@ class RaftNode extends EventEmitter {
 
       // no success
       const retry = (err) => {
-        seq = max(0n, --seq)
-        this._next.set(to, seq)
+        const sub = err.message.includes('(subtract)')
+        const next = sub ? max(0n, begin - 1n) : begin
+        this._next.set(to, next)
         rej([null, err])
       }
 
-      this._awaitAck(to, msg.cid, timedout).then((msg) => {
-        this._inflight.delete(to)
-        const seqHH = seqP + count
-        this._match.set(to, seqHH)
-        const next = 1n + seqHH
+      this._awaitAck(to, msg, timedout).then((msg) => {
+        const endd = seqP + count
+        this._match.set(to, endd)
+        const next = endd + 1n
         this._next.set(to, next)
         this._checkCommit()
-        if (seqHH === seqH) { return res(msg) }
-        // partial success due to count
-        rej([seqHH])
+        // full success
+        if (endd === end) {
+          this._inflight.delete(to)
+          if (next > this.seq) { return res(msg) }
+          // proactive sync
+          this._appendToFollower(to, next, this.seq, term).catch(noop)
+          res(msg)
+        }
+        // partial success
+        const err = new Error(`node ${id} (append follower) ${to} ack ${endd} want ${end}`)
+        rej([null, err])
       }).catch(retry)
       this.send(to, msg)
     })
@@ -833,13 +867,10 @@ class RaftNode extends EventEmitter {
         return Promise.reject(err)
       }
       this._inflight.delete(to)
-      const seqHH = err[0]
-      err = err[1]
-      err = err ?? new Error(`node ${id} follower ${to} appended ${seqHH} wanted ${seqH}`)
-      this.emit('warn', err)
+      this.emit('warn', err[1])
       const next = this._next.get(to)
-      this._appendToFollower(to, next, seqH).catch(noop)
-      return Promise.reject(err)
+      this._appendToFollower(to, next, end, term).catch(noop)
+      return Promise.reject(err[1])
     })
   }
 
@@ -870,24 +901,26 @@ class RaftNode extends EventEmitter {
     this.emit('commit', match)
   }
 
-  _appendToFollowers(seq, seqH) {
+  _appendToFollowers(begin, end) {
     const { id } = this
     const [timer, timedout] = timeout(this.opts.appendTimeout)
     const work = new Promise((res, rej) => {
       if (this._closing) { return rej(new Error(`node ${id} is not open`)) }
       if (this.state !== LEADER) { return rej(new Error(`node ${id} is not leader`)) }
-      timedout.catch(() => rej(new Error(`node ${id} followers ack timeout`)))
+      timedout.catch(() => rej(new Error(`node ${id} append to followers ack timeout`)))
       const acks = this.followers.map((to) => {
         let next = this._next.get(to)
-        next = this._appendToFollower(to, next, seqH)
+        next = min(next, begin)
+        next = this._appendToFollower(to, next, end)
         return next.then(() => to).catch(() => Promise.reject(to))
       })
       const q = this._isQuorum.bind(this)
       const qErr = this._isQuorumErr.bind(this)
       awaitResolve(acks, q, qErr).then(() => {
         this._checkCommit()
-        this._apply(res, seq, seqH)
-      }).catch((err) => rej(new Error(`node ${id} followers ack false`)))
+        // todo: time is counted here
+        this._apply(res, begin, end)
+      }).catch((err) => rej(new Error(`node ${id} append to followers ack false`)))
     })
     work.catch(noop).finally(() => clearTimeout(timer))
     return work
@@ -906,9 +939,10 @@ class RaftNode extends EventEmitter {
       return Promise.reject(err)
     }).then((seq) => {
       this._readHead(true)
+      const end = seq + BigInt(data.length - 1)
       const map = (results) => batch ? results : results[0]
       const cb = (results) => this.opts.apply ? [seq, map(results)] : seq
-      return this._appendToFollowers(seq, this.seq).then(cb)
+      return this._appendToFollowers(seq, end).then(cb)
     })
   }
 
@@ -925,9 +959,9 @@ class RaftNode extends EventEmitter {
       const msg = { type: APPEND, term: this.term, termP, seqP, commitSeq, cid }
       const acks = this.followers.map((to, idx) => {
         let [timer, timedout] = timeout(this.opts.pingTimeout)
-        timedout = timedout.catch(() => Promise.reject(new Error(`node ${id} follower ${to} ping timeout`)))
+        timedout = timedout.catch(() => Promise.reject(new Error(`node ${id} ping (read) ${to} timeout`)))
         const msgg = { ...msg, cid: cid + idx }
-        const ack = this._awaitAck(to, msgg.cid, timedout)
+        const ack = this._awaitAck(to, msgg, timedout)
         ack.catch((err) => this.emit('warn', err))
           .finally(() => clearTimeout(timer))
         this.send(to, msgg)
@@ -940,31 +974,37 @@ class RaftNode extends EventEmitter {
         const read = async () => {
           try {
             const seq = this._applySeq
+            // todo: time is counted here
             let ok = this.opts.read(cmd)
             if (!(ok instanceof Promise)) { return res([seq, ok]) }
             ok = await ok
             res([seq, ok])
           } catch (err) {
-            this.emit('warn', err)
+            err.message = `(read) ${err.message}`
+            this.emit('error', err)
             rej(err)
           }
         }
         this._applyPrev = this._applyPrev.catch(noop).then(read)
-      }).catch((err) => rej(new Error(`node ${id} read false`)))
+      }).catch((err) => rej(new Error(`node ${id} read followers ack false`)))
     })
     work.catch(noop).finally(() => clearTimeout(timer))
     return work
   }
 
   async append(data) {
-    if (this._closing) { throw new Error(`node ${this.id} is not open`) }
+    const { id } = this
+    if (this._closing) { throw new Error(`node ${id} is not open`) }
+    if (!Buffer.isBuffer(data)) { throw new Error(`node ${id} data must be buf`) }
     const isLeader = this.state === LEADER
     const work = isLeader ? this._appendToSelfAndFollowers(data) : this._fwdToLeader(data)
     return work
   }
 
   async appendBatch(data) {
-    if (this._closing) { throw new Error(`node ${this.id} is not open`) }
+    if (this._closing) { throw new Error(`node ${id} is not open`) }
+    if (data.length <= 0) { throw new Error(`node ${id} data must be array with len > 0`) }
+    if (!data.every((buf) => Buffer.isBuffer(buf))) { throw new Error(`node ${id} data must be array of bufs`) }
     const isLeader = this.state === LEADER
     const work = isLeader ? this._appendToSelfAndFollowers(data) : this._fwdToLeader(data)
     return work

@@ -31,9 +31,10 @@ function node(id, ids) {
 }
 
 async function main() {
+  await Promise.all(nodes.map((node) => node.log.del()))
   await Promise.all(nodes.map((node) => node.open()))
   console.log('open')
-  await Promise.all(nodes.map((node) => node.awaitLeader()))
+  await Promise.all(nodes.map((node) => node.awaitLeader(1)))
   console.log('have leader')
 
   // append to any node = fwd to leader
@@ -78,7 +79,7 @@ function node(id, ids) {
   // opts may be fn
   const opts = () => {
     let myCount = 0n
-    const apply = (bufs) => {
+    const apply = (bufs, seq) => {
       const results = []
       bufs.forEach((buf) => results.push(buf ? ++myCount : null))
       return results
@@ -95,8 +96,9 @@ function node(id, ids) {
 }
 
 async function main() {
+  await Promise.all(nodes.map((node) => node.log.del()))
   await Promise.all(nodes.map((node) => node.open()))
-  await Promise.all(nodes.map((node) => node.awaitLeader()))
+  await Promise.all(nodes.map((node) => node.awaitLeader(1)))
 
   // return type has changed
   let ok = await nodes[0].append(toBuf({ a: 1 }))
@@ -145,21 +147,20 @@ Change is the same as [TinyRaft](https://www.npmjs.com/package/tinyraft), and co
 Warn (warn) emits an instance of Error and these errors are errors that replication avoids / recovers from
 
 ## Error events
-Error (error) emits an instance of Error and these come only from operations with the log
+Error (error) emits an instance of Error and these come from operations with the log, apply, or read
 
-If you get two error events in <= 60 seconds you should restart the host
+If your apply and read functions are not throwing errors then the log / fs is bad
 
-If node.open fails on restart the host filesystem is bad
+If you suspect the fs then restart the host. If node.open fails on restart then you need to replace the node / host
 
-If your filesystem is suspect use [XxHashEncoder](https://github.com/rhodey/tinyraftplus/blob/master/src/encoder.js#L63) from the start
+Use [XxHashEncoder](https://github.com/rhodey/tinyraftplus/blob/master/src/encoder.js#L63) to identify fs corruption
 
 ## Configuration
 + [FsLog](https://github.com/rhodey/tinyraftplus/blob/master/src/fslog.js#L20)
 + [MultiFsLog](https://github.com/rhodey/tinyraftplus/blob/master/src/multi.js#L35)
 + [TimeoutLog](https://github.com/rhodey/tinyraftplus/blob/master/src/timeout.js#L19)
 + [XxHashEncoder](https://github.com/rhodey/tinyraftplus/blob/master/src/encoder.js#L63)
-+ [EncryptingEncoder](https://github.com/rhodey/tinyraftplus/blob/master/src/encoder.js#L135)
-+ [RaftNode](https://github.com/rhodey/tinyraftplus/blob/master/src/node.js#L68)
++ [RaftNode](https://github.com/rhodey/tinyraftplus/blob/master/src/node.js#L69)
 
 ## Performance
 Node v20.11.0 (LTS) is best
@@ -170,15 +171,15 @@ Node v20.11.0 (LTS) is best
 + RaftNode appendBatch = 100,000 bufs/sec
 
 ## Test
-The [tests](https://github.com/rhodey/tinyraftplus/tree/master/test) include 3744 assertions
+The [tests](https://github.com/rhodey/tinyraftplus/tree/master/test) include 3800+ assertions
 
-The API is stable to dev against but I intend to add approx 20% more tests
+The API is stable to dev against but I intend to add approx 25% more tests
 ```
 npm run test
 ```
 
 ## Tcp
-See [example3.js](https://github.com/rhodey/tinyraftplus/blob/master/example3.js) which shows use TCP and advanced options
+See [example3.js](https://github.com/rhodey/tinyraftplus/blob/master/example3.js) which shows a TCP example and advanced options
 
 ## License
 MIT
