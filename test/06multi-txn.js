@@ -3,6 +3,8 @@ const { FsLog } = require('../src/index.js')
 const { MultiFsLog } = require('../src/index.js')
 const { Encoder, XxHashEncoder } = require('../src/index.js')
 
+const DIR = process.env.TEST_DIR ?? '/tmp/'
+
 const toBuf = (obj) => {
   if (obj === null) { return null }
   obj = JSON.stringify(obj)
@@ -28,7 +30,7 @@ async function testTxnAppend(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -71,7 +73,7 @@ async function testTxnAppendBatch(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -114,7 +116,7 @@ async function testTxnWithOpenClose(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  let log = new MultiFsLog('/tmp/', 'test', opts)
+  let log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -157,7 +159,7 @@ async function testTxnWithOpenClose(t, encoder) {
   await log.close()
 
   // new
-  log = new MultiFsLog('/tmp/', 'test', opts)
+  log = new MultiFsLog(DIR, 'test', opts)
   await log.open()
   t.equal(log.seq, 3n, 'seq = 3 again')
   t.deepEqual(toObj(log.head), data, 'head = data again')
@@ -183,7 +185,7 @@ async function testTxnIsBlocking(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -243,7 +245,7 @@ async function testCloseAwaitsTxn(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -282,7 +284,7 @@ async function testTxnDoubleCommitDoubleAbort(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -334,7 +336,7 @@ async function testTxnTrim(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()

@@ -3,6 +3,8 @@ const { FsLog } = require('../src/index.js')
 const { MultiFsLog } = require('../src/index.js')
 const { Encoder, XxHashEncoder } = require('../src/index.js')
 
+const DIR = process.env.TEST_DIR ?? '/tmp/'
+
 const toBuf = (obj) => {
   if (obj === null) { return null }
   obj = JSON.stringify(obj)
@@ -28,7 +30,7 @@ async function testAppendThreeThenIter(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -59,7 +61,7 @@ async function testAppendThreeThenIter2(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -90,7 +92,7 @@ async function testAppendOneThenIter(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -121,7 +123,7 @@ async function testStepSize1(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -153,7 +155,7 @@ async function testStepSize2(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -185,7 +187,7 @@ async function testStepSize3(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -217,7 +219,7 @@ async function testStepSize4(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -249,7 +251,7 @@ async function testIterWithClose(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -282,7 +284,7 @@ async function testIterEnd(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -315,7 +317,7 @@ async function testIterEnd2(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -342,7 +344,7 @@ async function testIterCloseSelf(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -377,7 +379,7 @@ async function testIterWithThrow(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -413,7 +415,7 @@ async function testIterWithClose2(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -443,7 +445,7 @@ async function testIterWithClose3(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -473,7 +475,7 @@ async function testIterNotClosed(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -507,7 +509,7 @@ async function testIterNotClosed2(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -541,7 +543,7 @@ async function testBatchWithIter(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -574,7 +576,7 @@ async function testAppendEmptyWithIter(t, encoder, time=false) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -624,7 +626,7 @@ async function testAppendBatchEmptyWithIter(t, encoder, time=false) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 128 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()

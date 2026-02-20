@@ -2,12 +2,10 @@ const { FsLog } = require('../src/index.js')
 const { RaftNode } = require('../src/index.js')
 
 const noop = () => {}
-
 const sleep = (ms) => new Promise((res, rej) => setTimeout(res, ms))
-
 const sendAll = (to, from, msg) => true
-
 const delayNone = (to, from, msg) => 0
+const DIR = process.env.TEST_DIR ?? '/tmp/'
 
 function comms(allowSend=sendAll, delaySend=delayNone) {
   const nodes = []
@@ -27,7 +25,7 @@ function comms(allowSend=sendAll, delaySend=delayNone) {
 
 function connect(comms, a=1, b=null, opts={}, logFn=null) {
   b = b ? b : 1
-  logFn = logFn ?? ((id) => new FsLog('/tmp/', `node-${id}`))
+  logFn = logFn ?? ((id) => new FsLog(DIR, `node-${id}`))
   const nodes = []
   for (let i = b; i <= a; i++) { nodes.push(i) }
   return nodes.map((id) => {

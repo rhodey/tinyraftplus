@@ -3,6 +3,8 @@ const { FsLog } = require('../src/index.js')
 const { MultiFsLog } = require('../src/index.js')
 const { Encoder, XxHashEncoder } = require('../src/index.js')
 
+const DIR = process.env.TEST_DIR ?? '/tmp/'
+
 const toBuf = (obj) => {
   if (obj === null) { return null }
   obj = JSON.stringify(obj)
@@ -28,7 +30,7 @@ async function testAppendOpenCloseNew(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  let log = new MultiFsLog('/tmp/', 'test', opts)
+  let log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -90,7 +92,7 @@ async function testAppendOpenCloseNew(t, encoder) {
   await log.close()
 
   // new
-  log = new MultiFsLog('/tmp/', 'test', opts)
+  log = new MultiFsLog(DIR, 'test', opts)
   await log.open()
   t.equal(log.seq, 3n, 'seq = 3 again')
   t.ok(data.equals(log.head), 'head = data again')
@@ -118,7 +120,7 @@ async function testAppendOneCloseOpen(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -158,7 +160,7 @@ async function testRollbackFirst(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, rollbackCb, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -192,7 +194,7 @@ async function testRollbackSecond(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, rollbackCb, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -231,7 +233,7 @@ async function testRollbackThird(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, rollbackCb, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -270,7 +272,7 @@ async function testTrim(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -358,7 +360,7 @@ async function testTrim2(t, encoder, maxLogLen) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -424,7 +426,7 @@ async function testTrim3(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, rollForwardCb, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -452,7 +454,7 @@ async function testBatch(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -495,7 +497,7 @@ async function testBatchOpenCloseNew(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  let log = new MultiFsLog('/tmp/', 'test', opts)
+  let log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -536,7 +538,7 @@ async function testBatchOpenCloseNew(t, encoder) {
   t.deepEqual(toObj(log.head), data[1], 'head = data')
   await log.close()
 
-  log = new MultiFsLog('/tmp/', 'test', opts)
+  log = new MultiFsLog(DIR, 'test', opts)
   await log.open()
   t.equal(log.seq, 5n, 'seq = 5')
   t.deepEqual(toObj(log.head), data[1], 'head = data')
@@ -556,7 +558,7 @@ async function testBatchRollback(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, rollbackCb, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -590,7 +592,7 @@ async function testBatchRollback2(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, rollbackCb, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -627,7 +629,7 @@ async function testBatchRollback3(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, rollbackCb, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -666,7 +668,7 @@ async function testBatchTrim(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -689,7 +691,7 @@ async function testBatchTrim2(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -717,7 +719,7 @@ async function testBatchTrim3(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -749,7 +751,7 @@ async function testAppendBufEmpty(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  let log = new MultiFsLog('/tmp/', 'test', opts)
+  let log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -810,7 +812,7 @@ async function testAppendBufEmpty(t, encoder) {
   await log.close()
 
   // new
-  log = new MultiFsLog('/tmp/', 'test', opts)
+  log = new MultiFsLog(DIR, 'test', opts)
   await log.open()
   t.equal(log.seq, 3n, 'seq = 3 again')
   t.ok(data.equals(log.head), 'head = data again')
@@ -866,7 +868,7 @@ async function testBatchBufEmpty(t, encoder) {
 
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
 
   await log.del()
   await log.open()
@@ -921,7 +923,7 @@ async function testDoubleOpen(t, encoder) {
   t.teardown(() => log.close())
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
   await log.del()
   const p1 = log.open()
   const p2 = log.open()
@@ -936,7 +938,7 @@ async function testDoubleClose(t, encoder) {
   t.teardown(() => log.close())
   const logFn = logFnFn(encoder)
   const opts = { encoder, logFn, maxLogLen: 64 }
-  const log = new MultiFsLog('/tmp/', 'test', opts)
+  const log = new MultiFsLog(DIR, 'test', opts)
   await log.del()
   await log.open()
   const p1 = log.close()
