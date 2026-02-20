@@ -3,6 +3,8 @@ const { FsLog } = require('../src/index.js')
 const { TimeoutLog } = require('../src/index.js')
 const { Encoder, XxHashEncoder } = require('../src/index.js')
 
+const DIR = process.env.TEST_DIR ?? '/tmp/'
+
 const toBuf = (obj) => {
   if (obj === null) { return null }
   obj = JSON.stringify(obj)
@@ -19,7 +21,7 @@ async function testTxnAppend(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -65,7 +67,7 @@ async function testTxnAppendBatch(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -111,7 +113,7 @@ async function testTxnWithOpenClose(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -155,7 +157,7 @@ async function testTxnWithOpenClose(t, encoder, time=false) {
   await log.close()
 
   // new
-  log = new FsLog('/tmp/', 'test', opts)
+  log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
   await log.open()
   t.equal(log.seq, 3n, 'seq = 3 again')
@@ -184,7 +186,7 @@ async function testTxnIsBlocking(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -247,7 +249,7 @@ async function testCloseAwaitsTxn(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -289,7 +291,7 @@ async function testTxnDoubleCommitDoubleAbort(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -344,7 +346,7 @@ async function testTxnTrim(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()

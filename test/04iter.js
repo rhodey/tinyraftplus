@@ -3,6 +3,8 @@ const { FsLog } = require('../src/index.js')
 const { TimeoutLog } = require('../src/index.js')
 const { Encoder, XxHashEncoder } = require('../src/index.js')
 
+const DIR = process.env.TEST_DIR ?? '/tmp/'
+
 const toBuf = (obj) => {
   if (obj === null) { return null }
   obj = JSON.stringify(obj)
@@ -19,7 +21,7 @@ async function testAppendThreeThenIter(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -53,7 +55,7 @@ async function testAppendThreeThenIter2(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -87,7 +89,7 @@ async function testAppendOneThenIter(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -121,7 +123,7 @@ async function testStepSize1(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -156,7 +158,7 @@ async function testStepSize2(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -191,7 +193,7 @@ async function testStepSize3(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -226,7 +228,7 @@ async function testStepSize4(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -261,7 +263,7 @@ async function testIterWithClose(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -297,7 +299,7 @@ async function testIterEnd(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -333,7 +335,7 @@ async function testIterEnd2(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -363,7 +365,7 @@ async function testIterCloseSelf(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -401,7 +403,7 @@ async function testIterWithThrow(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -444,7 +446,7 @@ async function testIterWithClose2(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -477,7 +479,7 @@ async function testIterWithClose3(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -510,7 +512,7 @@ async function testIterNotClosed(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -547,7 +549,7 @@ async function testIterNotClosed2(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
   await log.del()
   await log.open()
@@ -583,7 +585,7 @@ async function testBatchWithIter(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
   await log.del()
   await log.open()
@@ -618,7 +620,7 @@ async function testAppendEmptyWithIter(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
 
   await log.del()
@@ -671,7 +673,7 @@ async function testAppendBatchEmptyWithIter(t, encoder, time=false) {
   t.teardown(() => log.close())
 
   const opts = { encoder }
-  let log = new FsLog('/tmp/', 'test', opts)
+  let log = new FsLog(DIR, 'test', opts)
   log = time ? new TimeoutLog(log, {}) : log
   await log.del()
   await log.open()

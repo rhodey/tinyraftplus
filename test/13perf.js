@@ -6,6 +6,8 @@ const { comms, connect } = require('./util.js')
 const { open, close, ready } = require('./util.js')
 const { leaders, followers } = require('./util.js')
 
+const DIR = process.env.TEST_DIR ?? '/tmp/'
+
 const reset = (nodes) => Promise.all(nodes.map((node) => node.log.del()))
 
 const toBuf = (obj) => {
@@ -17,7 +19,7 @@ const toBuf = (obj) => {
 async function testAppendSmall(t, encoder) {
   t.plan(1)
   const opts = { encoder }
-  const log = new FsLog('/tmp/', 'test', opts)
+  const log = new FsLog(DIR, 'test', opts)
   await log.del()
   await log.open()
 
@@ -54,7 +56,7 @@ test('test append 100 small - xxhash no body', (t) => testAppendSmall(t, new XxH
 async function testAppendLarge(t, encoder) {
   t.plan(1)
   const opts = { encoder }
-  const log = new FsLog('/tmp/', 'test', opts)
+  const log = new FsLog(DIR, 'test', opts)
   await log.del()
   await log.open()
 
@@ -92,7 +94,7 @@ test('test append 100 large - xxhash no body', (t) => testAppendLarge(t, new XxH
 async function testAppendLargeTxn(t, encoder) {
   t.plan(1)
   const opts = { encoder }
-  const log = new FsLog('/tmp/', 'test', opts)
+  const log = new FsLog(DIR, 'test', opts)
   await log.del()
   await log.open()
 
