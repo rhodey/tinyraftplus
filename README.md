@@ -1,4 +1,6 @@
 # TinyRaftPlus
+***(This package has been deprecated, use RaftNode from [MonsterFt](https://github.com/rhodey/MonsterFt))***
+
 This is the [TinyRaft](https://www.npmjs.com/package/tinyraft) API with extras. As with all Raft implementations a leader is elected and the network can survive if any majority of nodes are alive, what has been added to tinyraft is...
 
 ### Log replication
